@@ -29,11 +29,12 @@ function App() {
   return (
 <div className="min-h-screen flex flex-col">
       <Toaster position="top-center" reverseOrder={false} />
+       
+      <CategorySidebarMenu></CategorySidebarMenu>
 
       <TopBar />
       <MainNav />
-      <CategorySidebarMenu></CategorySidebarMenu>
-
+      
       <main className="flex-grow">
         <Routes>
           <Route path="/products" element={<ProductsList />} />

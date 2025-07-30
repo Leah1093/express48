@@ -29,55 +29,63 @@ const categories = [
 
 export default function CategorySidebarMenu() {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [hovered, setHovered] = useState(null);
+  const [hoveredCatIdx, setHoveredCatIdx] = useState(null);
 
   return (
-    <div className="fixed top-0 right-0 h-screen z-40 flex flex-col bg-white border-l shadow-md w-16">
-      {/* כפתור ☰ — כשמרחפים עליו בלבד נפתח התפריט */}
+    <div
+      className="relative z-50"
+      onMouseEnter={() => setIsExpanded(true)}
+      onMouseLeave={() => {
+        setIsExpanded(false);
+        setHoveredCatIdx(null);
+      }}
+    >
       <div
-        className="w-full h-[64px] flex items-center justify-center border-b cursor-pointer"
-        onMouseEnter={() => setIsExpanded(true)}
-        onMouseLeave={() => setIsExpanded(false)}
+        className={`fixed top-0 right-0 h-screen flex flex-col bg-white shadow-md border-l transition-all duration-300
+          ${isExpanded ? "w-64" : "w-16"}`}
       >
-        <div className="space-y-1">
-          <div className="w-6 h-0.5 bg-gray-800"></div>
-          <div className="w-6 h-0.5 bg-gray-800"></div>
-          <div className="w-6 h-0.5 bg-gray-800"></div>
+        {/* כפתור ☰ */}
+        <div className="w-full h-[64px] flex items-center justify-center border-b cursor-pointer">
+          <div className="space-y-1">
+            <div className="w-6 h-0.5 bg-gray-800"></div>
+            <div className="w-6 h-0.5 bg-gray-800"></div>
+            <div className="w-6 h-0.5 bg-gray-800"></div>
+          </div>
         </div>
-      </div>
 
-      {/* אייקונים של הקטגוריות בלבד */}
-      <ul className="overflow-y-auto flex-1">
-        {categories.map((cat, index) => (
-          <li
-            key={index}
-            onMouseEnter={() => setHovered(index)}
-            onMouseLeave={() => setHovered(null)}
-            className="relative group"
-          >
-            {/* אייקון בלבד */}
-            <div className="flex items-center justify-center px-3 py-3 hover:bg-gray-100 cursor-pointer">
-              <img src={cat.icon} alt={cat.name} className="w-6 h-6 object-contain" />
-            </div>
+        {/* תפריט קטגוריות */}
+        <ul className="flex-1 overflow-y-auto">
+          {categories.map((cat, index) => (
+            <li
+              key={index}
+              className="relative group"
+              onMouseEnter={() => setHoveredCatIdx(index)}
+              onMouseLeave={() => setHoveredCatIdx(null)}
+              style={{ height: "56px" }}
+            >
+              <div className="flex items-center justify-end gap-3 px-3 py-2 hover:bg-gray-100 cursor-pointer">
+                {/* שם הקטגוריה בצד שמאל של האייקון */}
+                {isExpanded && (
+                  <span className="text-sm font-medium text-right">{cat.name}</span>
+                )}
+                {/* האייקון בצד ימין */}
+                <img src={cat.icon} alt={cat.name} className="w-6 h-6 object-contain" />
+              </div>
 
-            {/* שמות ותתי קטגוריות — רק אם ☰ פתוח */}
-            {isExpanded && (
-              <div className="absolute right-0 top-0 bg-white border shadow-lg rounded-md px-3 py-2 z-50 min-w-[140px] text-sm text-right">
-                <div className="font-semibold mb-1">{cat.name}</div>
-                {hovered === index && (
+              {/* תתי קטגוריות בצד ימין כשהסייד בר פתוח */}
+              {hoveredCatIdx === index && (
+                <div className="absolute right-full top-0 bg-white border-r shadow-md px-3 py-2 text-xs min-w-[120px] z-[10000]">
                   <ul>
                     {cat.subcategories.map((sub, subIdx) => (
                       <li key={subIdx} className="py-1 hover:text-red-600">{sub}</li>
                     ))}
                   </ul>
-                )}
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
-
-
