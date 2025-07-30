@@ -7,6 +7,8 @@ import 'dotenv/config'
 export default class EntranceController {
 
     async login(req, res, next) {
+console.log("EntranceController 💓");
+
         try {
             const entranceService= new EntranceService();
             const { email, password } = req.body;

@@ -1,10 +1,14 @@
+import { User } from '../models/user.js';
+import { userQueries } from '../mongoQueries/userQueries.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 export class EntranceService {
     async login(email, password) {
-        const user = await User.findOne({ email });
+console.log("EntranceService 😄");
+
+        const user = await User.findOne(userQueries.findByEmail(email));
         if (!user) throw new Error('משתמש לא נמצא');
 
         const isMatch = await bcrypt.compare(password, user.password);
@@ -15,6 +19,8 @@ export class EntranceService {
         });
 
         return { token, email: user.email };
+
+
     }
 
 
