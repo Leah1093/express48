@@ -20,14 +20,18 @@ import Downloads from './components/account/Downloads';
 import Addresses from './components/account/Addresses';
 import Favorites from './components/account/Favorites';
 import Profile from './components/account/Profile';
+import CategorySidebarMenu from './components/CategoryMenu';
 
 function App() {
   return (
     <>
       <TopBar></TopBar>
-      <MainNav/>
-      <Routes >
+       <MainNav/>
 
+     
+
+      <Routes >
+        
         <Route path="/products" element={<ProductsList />} />
         <Route path="/about" element={<About />} />
         <Route path="/faq" element={<Faq />} />
@@ -43,6 +47,9 @@ function App() {
         <Route path="/account/favorites" element={<Favorites />} />
         <Route path="/account/profile" element={<Profile />} />
       </Routes>
+     
+       <CategorySidebarMenu></CategorySidebarMenu>
+     
     </>
   );
 }

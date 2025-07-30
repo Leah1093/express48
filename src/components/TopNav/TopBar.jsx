@@ -55,8 +55,8 @@ import UserMenu from "./UserMenu";
 function TopBar() {
   return (
     <>
-      <header className="w-full fixed top-0 left-0 z-[1000] bg-[#122947]">
-        <div className="flex items-center justify-between max-w-[1200px] mx-auto px-5 py-2 text-white">
+      <header className=" fixed top-0 left-0 z-[1000] bg-[#122947] w-[calc(100%-64px)] mr-16">
+        <div className="flex items-center justify-between max-w-[1200px] mx-auto px-5 py-2 text-white pr-16">
           {/* אייקונים + תפריט */}
           <div className="flex items-center gap-2">
             <IconWithCounter icon="https://cdn-icons-png.flaticon.com/512/3081/3081623.png" count={0} altText="shuffle" />
