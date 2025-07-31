@@ -36,12 +36,12 @@ const Footer = () => {
         <div className="md:col-span-1">
           <h4 className="font-bold mb-4 text-right">מידע</h4>
           <ul className="space-y-2 text-right">
-            <li><button onClick={() => navigate('/terms')} className="hover:underline">תקנון האתר</button></li>
-            <li><button onClick={() => navigate('/cancel')} className="hover:underline">ביטול עסקה</button></li>
-            <li><button onClick={() => navigate('/privacy')} className="hover:underline">מדיניות פרטיות</button></li>
-            <li><button onClick={() => navigate('/warranty')} className="hover:underline">מדיניות אחריות</button></li>
-            <li><button onClick={() => navigate('/shipping')} className="hover:underline">מדיניות הובלה</button></li>
-            <li><button onClick={() => navigate('/returns')} className="hover:underline">מדיניות החלפות וחזרות</button></li>
+            <li><button onClick={() => navigate('/terms-of-use')} className="hover:underline">תקנון האתר</button></li>
+            <li><button onClick={() => navigate('/cancellation-policy')} className="hover:underline">ביטול עסקה</button></li>
+            <li><button onClick={() => navigate('/privacy-policy')} className="hover:underline">מדיניות פרטיות</button></li>
+            <li><button onClick={() => navigate('/warranty-policy')} className="hover:underline">מדיניות אחריות</button></li>
+            <li><button onClick={() => navigate('/shipping-policy')} className="hover:underline">מדיניות הובלה</button></li>
+            <li><button onClick={() => navigate('/returns-policy')} className="hover:underline">מדיניות החלפות וחזרות</button></li>
           </ul>
         </div>
 

@@ -5,7 +5,7 @@ const entranceRouter = express.Router();
 const entrController = new EntranceController();
 
 entranceRouter.post("/login",entrController.login)
-// entranceRouter.post("/register",entrController.register)
+entranceRouter.post("/register",entrController.register)
 
 export {
     entranceRouter 

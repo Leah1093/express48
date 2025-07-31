@@ -7,7 +7,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
-export class PasswordService1 {
+export class PasswordService {
 
 
 
@@ -34,11 +34,6 @@ export class PasswordService1 {
 
     async requestPasswordReset(email) {
 
-        console.log(" לפני 🎈")
-                const resetLink1 = `https://yourfrontend.com/reset-password/`;
-        console.log("אחרי 🎈🎈")
-
-        await sendResetEmail(email, resetLink1);
         const user = await User.findOne(userQueries.findByEmail(email));
         if (!user) {
             const error = new Error("משתמש לא נמצא");

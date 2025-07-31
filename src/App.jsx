@@ -17,16 +17,21 @@ import ForgotPassword from './components/authentication/ForgotPassword';
 import ResetPassword from './components/authentication/ResetPassword';
 import Orders from './components/account/Orders';
 import { Toaster } from 'react-hot-toast';
-
 import Downloads from './components/account/Downloads';
 import Addresses from './components/account/Addresses';
 import Favorites from './components/account/Favorites';
 import Profile from './components/account/Profile';
 import Footer from './components/footer/Footer';
+import TermsOfUse from './components/footer/info/TermsOfUse';
+import CancellationPolicy from './components/footer/info/CancellationPolicy';
+import PrivacyPolicy from './components/footer/info/PrivacyPolicy';
+import WarrantyPolicy from './components/footer/info/WarrantyPolicy';
+import ShippingPolicy from './components/footer/info/ShippingPolicy';
+import ReturnsPolicy from './components/footer/info/ReturnsPolicy';
 
 function App() {
   return (
-<div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <Toaster position="top-center" reverseOrder={false} />
 
       <TopBar />
@@ -36,6 +41,7 @@ function App() {
         <Routes>
           <Route path="/products" element={<ProductsList />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/bestSellers" element={<BestSellers />} />
@@ -49,7 +55,21 @@ function App() {
           <Route path="/account/addresses" element={<Addresses />} />
           <Route path="/account/favorites" element={<Favorites />} />
           <Route path="/account/profile" element={<Profile />} />
+          <Route path="forgotPassword" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+
+
+          <Route path="/terms-of-use" element={<TermsOfUse />} />
+          <Route path="/cancellation-policy" element={<CancellationPolicy />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/warranty-policy" element={<WarrantyPolicy />} />
+          <Route path="/shipping-policy" element={<ShippingPolicy />} />
+          <Route path="/returns-policy" element={<ReturnsPolicy />} />
+
+
         </Routes>
+
       </main>
 
       <Footer />

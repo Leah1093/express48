@@ -19,7 +19,7 @@ const ForgotPassword=()=> {
     const onSubmit = async (data) => {
         try {
             // שלח בקשה לשרת
-            await axios.post("/api/forgot-password", data);
+            await axios.post("http://localhost:8080/password/forgot-password", data);
             toast.success("קישור לאיפוס נשלח לאימייל");
             reset();
         } catch (error) {
