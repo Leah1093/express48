@@ -28,15 +28,18 @@ import PrivacyPolicy from './components/footer/info/PrivacyPolicy';
 import WarrantyPolicy from './components/footer/info/WarrantyPolicy';
 import ShippingPolicy from './components/footer/info/ShippingPolicy';
 import ReturnsPolicy from './components/footer/info/ReturnsPolicy';
+import CategorySidebarMenu from "./components/CategoryMenu";
 
 function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <Toaster position="top-center" reverseOrder={false} />
+       
+      <CategorySidebarMenu></CategorySidebarMenu>
 
       <TopBar />
       <MainNav />
-
+      
       <main className="flex-grow">
         <Routes>
           <Route path="/products" element={<ProductsList />} />
