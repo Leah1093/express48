@@ -3,8 +3,13 @@ import IconWithCounter from "./IconWithCounter";
 import Logo from "./Logo";
 import SearchBar from "./SearchBar";
 import UserMenu from "./UserMenu";
+import React, { useState } from "react";
+import CartDrawer from "./cart/CartDrawer";
+
+
 
 function TopBar() {
+  const [cartOpen, setCartOpen] = useState(false);
   return (
     <>
       <header className=" fixed top-0 left-0 z-[1000] bg-[#122947] w-[calc(100%-64px)] mr-16">
@@ -12,7 +17,12 @@ function TopBar() {
           {/* אייקונים + תפריט */}
           <div className="flex items-center gap-2">
             <IconWithCounter icon="https://cdn-icons-png.flaticon.com/512/3081/3081623.png" count={0} altText="shuffle" />
+            
+            <div onClick={() => setCartOpen(true)}>
             <IconWithCounter icon="https://cdn-icons-png.flaticon.com/512/833/833314.png" count={0} altText="cart" />
+            </div>
+            <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
+           
             <IconWithCounter icon="https://cdn-icons-png.flaticon.com/512/1077/1077035.png" count={0} altText="favorites" />
             <UserMenu />
           </div>
