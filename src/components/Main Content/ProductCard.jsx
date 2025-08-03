@@ -1,4 +1,16 @@
+import React from "react";
+import { useDispatch } from "react-redux";
+import { addItem } from "../../redux/slices/cartSlice"; 
+
+
 function ProductCard({ product }) {
+
+  const dispatch = useDispatch();
+
+  const handleAddToCart = () => {
+    dispatch(addItem(product));
+  };
+
   return (
     <div style={styles.card}>
       {/* תגית NEW */}
@@ -23,7 +35,7 @@ function ProductCard({ product }) {
       </div>
 
       {/* כפתור */}
-      <button style={styles.button}>בחר אפשרויות</button>
+      <button style={styles.button} onClick={handleAddToCart}>בחר אפשרויות</button>
     </div>
   );
 }

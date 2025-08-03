@@ -16,6 +16,8 @@ function CartDrawer({ isOpen, onClose }) {
         <button onClick={onClose} className="text-gray-500 hover:text-black">×</button>
       </div>
 
+      <hr className="my-4 border-gray-300" />
+
       {cartItems.length === 0 ? (
         <div className="flex flex-col justify-center items-center h-[calc(100%-64px)] text-center px-4">
           <img src="https://cdn-icons-png.flaticon.com/512/833/833314.png" alt="עגלת קניות ריקה" className="w-20 h-20 mb-4 opacity-20" />
