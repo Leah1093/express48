@@ -5,13 +5,13 @@ import {
   removeFromCart,
   clearCart
 } from '../controllers/cartController.js';
-import { verifyToken } from '../middlewares/authMiddleware.js'; // אם את משתמשת באימות
+import { authMiddleware } from '../middlewares/authMiddleware.js'; 
 
 const router = express.Router();
 
-router.get('/', verifyToken, getCart);
-router.post('/add', verifyToken, addToCart);
-router.post('/remove', verifyToken, removeFromCart);
-router.post('/clear', verifyToken, clearCart);
+router.get('/', authMiddleware, getCart);
+router.post('/add', authMiddleware, addToCart);
+router.post('/remove', authMiddleware, removeFromCart);
+router.post('/clear', authMiddleware, clearCart);
 
 export default router;
