@@ -24,17 +24,35 @@ export class CartService {
   }
 
   async removeFromCart(userId, productId) {
+    // שליפת העגלה של המשתמש
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
-    if (!cart) throw new Error('Cart not found');
-    const itemExists = cart.items.some(item => item.productId.toString() === productId);
-    if (!itemExists) {
-      // במקום לזרוק שגיאה, פשוט נחזיר את העגלה כמו שהיא
+  
+    if (!cart) {
+      throw new Error('Cart not found');
+    }
+  
+    // מציאת המוצר בעגלה לפי productId
+    const item = cart.items.find(item => item.productId.toString() === productId);
+  
+    // אם לא נמצא פריט מתאים - נחזיר את העגלה כמו שהיא
+    if (!item) {
       return cart;
     }
-    cart.items = cart.items.filter(item => item.productId.toString() !== productId);
+  
+    if (item.quantity > 1) {
+      // אם יש יותר מאחד - נוריד באחד
+      item.quantity -= 1;
+    } else {
+      // אם יש רק אחד - נסיר את הפריט מהעגלה
+      cart.items = cart.items.filter(item => item.productId.toString() !== productId);
+    }
+  
+    // שמירה של השינויים בעגלה
     await cart.save();
+  
     return cart;
   }
+  
 
   async clearCart(userId) {
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));

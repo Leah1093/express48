@@ -80,28 +80,19 @@ const id = typeof item.productId === 'object' ? item.productId._id : item.produc
     dispatch(removeItemAsync(id));
   };
 
-  const handleIncrease = () => {
-    dispatch(addItemAsync(id));
+  const handleclearCart = () => {
+    dispatch(clearCartAsync(id));
   };
 
-  const handleDecrease = () => {
-    if (item.quantity > 1) {
-      // הסרה מוחלטת
-      dispatch(removeItemAsync(id));
-      // ואז הוספה בכמות אחת פחות
-      for (let i = 0; i < item.quantity - 1; i++) {
-        dispatch(addItemAsync(id));
-      }
-    } else {
-      dispatch(removeItemAsync(id));
-    }
+  const handleAdd = () => {
+    dispatch(addItemAsync(id));
   };
 
   return (
     <div className="relative flex flex-row-reverse items-center border-b py-4 px-4 gap-4 text-right">
       {/* כפתור מחיקה מוחלטת */}
       <button
-        onClick={handleRemove}
+        onClick={handleclearCart}
         className="absolute top-2 left-2 text-gray-500 hover:text-red-500 text-xl"
       >
         ×
@@ -124,14 +115,14 @@ const id = typeof item.productId === 'object' ? item.productId._id : item.produc
 
         <div className="flex items-center justify-start mt-3 gap-2">
           <button
-            onClick={handleDecrease}
+            onClick={handleRemove}
             className="border rounded px-3 py-1 text-lg font-bold"
           >
             -
           </button>
           <span className="text-md w-6 text-center">{item.quantity}</span>
           <button
-            onClick={handleIncrease}
+            onClick={handleAdd}
             className="border rounded px-3 py-1 text-lg font-bold"
           >
             +
