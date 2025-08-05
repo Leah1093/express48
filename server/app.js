@@ -33,7 +33,12 @@ import 'dotenv/config';
 import { passwordRouter } from "./router/pwdRouter.js";
 import { entranceRouter } from "./router/entranceRouter.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+
 import { contactRouter } from "./router/contactRouter.js";
+
+import cartRouter from './router/cartRouter.js';
+import productRoutes  from "./router/productRoutes.js";
+
 
 const app = express();
 
@@ -51,6 +56,9 @@ app.use('/entrance', entranceRouter);
 app.use('/password', passwordRouter);
 app.use('/contact', contactRouter);
 app.use(errorHandler);
+
+app.use('/cart', cartRouter);
+app.use('/products', productRoutes);
 
 app.listen(process.env.PORT, () => {
     console.log(`start server port: ${process.env.PORT}`);

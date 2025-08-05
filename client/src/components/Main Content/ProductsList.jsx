@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
+import axios from 'axios';
 
 function ProductsList() {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    fetch("https://fakestoreapi.com/products/category/electronics")  
-      .then((res) => res.json())
-      .then((data) => setProducts(data))
+    axios.get("http://localhost:8080/products")  
+      .then(res => setProducts(res.data))
       .catch((err) => console.error("שגיאה בטעינה:", err));
   }, []);
 
