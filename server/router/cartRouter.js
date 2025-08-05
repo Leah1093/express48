@@ -5,13 +5,13 @@ import {
   removeFromCart,
   clearCart
 } from '../controllers/cartController.js';
-import { authMiddleware } from '../middlewares/authMiddleware.js'; 
+import { authCookieMiddleware } from "../middlewares/authCookieMiddleware.js";
 
 const router = express.Router();
 
-router.get('/', authMiddleware, getCart);
-router.post('/add', authMiddleware, addToCart);
-router.post('/remove', authMiddleware, removeFromCart);
-router.post('/clear', authMiddleware, clearCart);
+router.get('/', authCookieMiddleware, getCart);
+router.post('/add', authCookieMiddleware, addToCart);
+router.delete('/remove', authCookieMiddleware, removeFromCart);
+router.delete('/clear', authCookieMiddleware, clearCart);
 
 export default router;

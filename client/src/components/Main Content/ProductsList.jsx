@@ -14,7 +14,7 @@ function ProductsList() {
   return (
     <div style={listStyles.wrapper}>
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard key={product._id} product={product} />
       ))}
     </div>
   );

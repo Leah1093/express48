@@ -26,7 +26,7 @@ function CartDrawer({ isOpen, onClose }) {
         </div>
       ) : (
         <div className="overflow-y-auto max-h-[calc(100%-64px)]">
-          {cartItems.map(item => <CartItem key={item.id} item={item} />)}
+          {cartItems.map(item => <CartItem key={item._id} item={item} />)}
         </div>
       )}
     </div>

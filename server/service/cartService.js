@@ -26,6 +26,11 @@ export class CartService {
   async removeFromCart(userId, productId) {
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
     if (!cart) throw new Error('Cart not found');
+    const itemExists = cart.items.some(item => item.productId.toString() === productId);
+    if (!itemExists) {
+      // במקום לזרוק שגיאה, פשוט נחזיר את העגלה כמו שהיא
+      return cart;
+    }
     cart.items = cart.items.filter(item => item.productId.toString() !== productId);
     await cart.save();
     return cart;

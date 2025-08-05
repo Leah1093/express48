@@ -1,6 +1,6 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-import { addItem } from "../../redux/slices/cartSlice"; 
+import { addItemAsync } from "../../redux/thunks/cartThunks"; 
 
 
 function ProductCard({ product }) {
@@ -8,7 +8,7 @@ function ProductCard({ product }) {
   const dispatch = useDispatch();
 
   const handleAddToCart = () => {
-    dispatch(addItem(product));
+    dispatch(addItemAsync(product));
   };
 
   return (
