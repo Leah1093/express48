@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 // סכמה עם אימות סיסמה
 const schema = z
   .object({
-    name: z.string().min(2, "שם מלא חובה"),
+    username: z.string().min(2, "שם מלא חובה"),
     email: z.string().email("כתובת מייל לא תקינה"),
     phone: z
       .string()
@@ -34,9 +34,10 @@ const Register = () => {
 
   const onSubmit = async (data) => {
     const { confirmPassword, ...formData } = data;
+    console.log("📦 נשלח לשרת:", formData);
 
     try {
-      await axios.post("http://localhost:8080/register", formData);
+      await axios.post("http://localhost:8080/entrance/register", formData);
       toast.success("נרשמת בהצלחה!");
       reset();
     } catch (err) {
@@ -55,10 +56,10 @@ const Register = () => {
       <input
         type="text"
         placeholder="שם מלא"
-        {...register("name")}
+        {...register("username")}
         className="w-full p-3 border rounded"
       />
-      {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
+      {errors.username && <p className="text-red-500 text-sm">{errors.username.message}</p>}
 
       <input
         type="email"

@@ -1,9 +1,14 @@
 // קומפוננטת לוגו / שם אתר
 function Logo() {
   return (
-    <div style={{ color: "orange", fontWeight: "bold", fontSize: 20, cursor: "pointer" }}>
-      Express48
+    <div className="cursor-pointer">
+      <img
+        src="/logoExpress.png"
+        alt="Express48 Logo"
+        className="h-16 w-auto"
+      />
     </div>
   );
 }
+
 export default Logo;

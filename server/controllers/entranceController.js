@@ -1,9 +1,6 @@
 import { EntranceService } from '../service/entranceService.js';
 import 'dotenv/config'
 
-
-
-
 export default class EntranceController {
 
     async login(req, res, next) {
@@ -17,7 +14,24 @@ export default class EntranceController {
                 throw error;
             }
             const result = await entranceService.login(email, password);
-            res.status(200).json(result);
+
+            res.cookie("token", result.token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production", // ב־https בלבד בפרודקשן
+                sameSite: "Lax",
+                maxAge: 1000 * 60 * 60, // שעה
+            });
+
+            // res.status(200).json({
+            //     success: true,
+            //     message: "התחברת בהצלחה",
+            //     data: { email: result.email },
+            // });
+            res.status(200).json({
+                success: true,
+                message: "התחברת בהצלחה",
+                data: result.user,
+            });
         } catch (err) {
             next(err);
         }
@@ -28,21 +42,43 @@ export default class EntranceController {
 
         try {
             const entranceService = new EntranceService();
-            const { name, email, phone, password } = req.body;
-            if (!name || !email || !phone || !password) {
+            const { username, email, phone, password } = req.body;
+            if (!username || !email || !phone || !password) {
                 const error = new Error("נא למלא את כל השדות");
                 error.statusCode = 400;
                 throw error;
             }
-            const user = await entranceService.registerUser({ name, email, phone, password });
+            const result = await entranceService.registerUser({ username, email, phone, password });
+            res.cookie("token", result.token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "Strict",
+                maxAge: 1000 * 60 * 60 * 24,
+            });
             res.status(201).json({
+                success: true,
                 message: "נרשמת בהצלחה",
-                user: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    phone: user.phone,
-                },
+                data: result.user,
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    async getCurrentUser(req, res, next) {
+        console.log("hi")
+        try {
+            const userId = req.user.userId;
+            const entranceService = new EntranceService();
+            const user = await entranceService.getUserById(userId);
+
+            if (!user) {
+                return res.status(404).json({ error: "משתמש לא נמצא" });
+            }
+
+            res.status(200).json({
+                success: true,
+                user,
             });
         } catch (err) {
             next(err);

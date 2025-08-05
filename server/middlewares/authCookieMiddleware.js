@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
 
-export function authMiddleware(req, res, next) {
-  const token = req.cookies?.token;
-
+export function authCookieMiddleware(req, res, next) {
+  const token = req.cookies.token;
+console.log("hi coo")
   if (!token) {
     return res.status(401).json({ error: "Missing authentication token" });
   }

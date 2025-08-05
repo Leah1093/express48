@@ -25,6 +25,9 @@ export default class PasswordController{
     }
 
     async forgotPassword(req, res, next) {
+       console.log("📩 בקשת שכחת סיסמה התקבלה");
+
+
         try {
             const { email } = req.body;
             if (!email) {

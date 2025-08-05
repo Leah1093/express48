@@ -29,8 +29,28 @@ import WarrantyPolicy from './components/footer/info/WarrantyPolicy';
 import ShippingPolicy from './components/footer/info/ShippingPolicy';
 import ReturnsPolicy from './components/footer/info/ReturnsPolicy';
 import CategorySidebarMenu from "./components/CategoryMenu";
-
+import axios from "axios";
+import { useDispatch } from "react-redux";
+import { setUser, clearUser } from "./redux/slices/userSlice";
 function App() {
+
+    const dispatch = useDispatch();
+
+  useEffect(() => {
+    const checkLoggedInUser = async () => {
+      try {
+        const res = await axios.get("http://localhost:8080/entrance/me", {
+          withCredentials: true,
+        });
+        console.log("🤣",res.data)
+        dispatch(setUser(res.data.user));
+      } catch (err) {
+        dispatch(clearUser());
+      }
+    };
+
+    checkLoggedInUser();
+  }, []);
   return (
     <div className="min-h-screen flex flex-col">
       <Toaster position="top-center" reverseOrder={false} />
