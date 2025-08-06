@@ -5,16 +5,13 @@ import { userQueries } from '../mongoQueries/userQueries.js';
 import { PasswordResetToken } from '../models/passwordResetToken.js';
 // import { sendResetEmail } from "../utils/sendEmail.js";
 import { sendResetEmail } from '../utils/email/sendResetEmail.js';
-
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-
+import { sendPasswordChangedEmail } from '../utils/email/sendPasswordChangedEmail.js';
 import dotenv from 'dotenv';
 dotenv.config();
 export class PasswordService {
-
-
 
     async changePassword(userId, currentPassword, newPassword) {
         const passwordRecord = await Password.findOne({ userId });
@@ -30,10 +27,16 @@ export class PasswordService {
             error.statusCode = 401;
             throw error;
         }
-
+        const isSameAsCurrent = await bcrypt.compare(newPassword, passwordRecord.password);
+        if (isSameAsCurrent) {
+            const error = new Error("הסיסמה החדשה חייבת להיות שונה מהסיסמה הנוכחית");
+            error.statusCode = 400;
+            throw error;
+        }
         const hashedNewPassword = await bcrypt.hash(newPassword, 10);
         passwordRecord.password = hashedNewPassword;
         await passwordRecord.save();
+        await sendPasswordChangedEmail(userId);
     }
 
 
@@ -46,23 +49,32 @@ export class PasswordService {
             throw error;
         }
 
+        // const token = crypto.randomBytes(32).toString("hex");
+        // const expiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 דקות תוקף
+        // await PasswordResetToken.create({ userId: user._id, token, expires: expiresAt });
+        // const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
-        const token = crypto.randomBytes(32).toString("hex");
-        const expiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 דקות תוקף
+        const rawToken = crypto.randomBytes(32).toString("hex");
+        const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+        const expiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 דקות
+        await PasswordResetToken.create({ userId: user._id, token: hashedToken, expires: expiresAt });
+        const resetLink = `${process.env.FRONTEND_URL}/reset-password/${rawToken}`;
 
-        await PasswordResetToken.create({ userId: user._id, token,expires: expiresAt });
 
-        // כאן שליחת מייל עם הקישור לדוגמה בלבד
-        const resetLink = `http://localhost:5173/reset-password/${token}`;
         console.log("🔗 Reset link:", resetLink);
-        // אפשר לשלב כאן nodemailer לשליחה בפועל
+
         await sendResetEmail(user.email, resetLink);
 
     }
 
     async resetPassword(token, newPassword) {
-        const tokenRecord = await PasswordResetToken.findOne({ token });
-        if (!tokenRecord || tokenRecord.expiresAt < new Date()) {
+        // const tokenRecord = await PasswordResetToken.findOne({ token });
+
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+        const tokenRecord = await PasswordResetToken.findOne({ token: hashedToken });
+
+        if (!tokenRecord || tokenRecord.expires < new Date()) {
             const error = new Error("הקישור לא תקף או שפג תוקפו");
             error.statusCode = 400;
             throw error;
@@ -74,7 +86,9 @@ export class PasswordService {
             { password: hashedNewPassword },
             { new: true }
         );
+        await PasswordResetToken.deleteMany({ userId: tokenRecord.userId });
 
-        await PasswordResetToken.deleteOne({ token });
+        console.log(`הסיסמה עודכנה עבור משתמש: ${tokenRecord.userId}`);
+        await sendPasswordChangedEmail(tokenRecord.userId)
     }
 }

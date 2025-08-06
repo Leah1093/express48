@@ -1,7 +1,6 @@
 export const errorHandler = (err, req, res, next) => {
   const statusCode = err.statusCode || (res.statusCode !== 200 ? res.statusCode : 500);
-  const message = errMessageForClient(statusCode);
-
+  const message = err.message || errMessageForClient(statusCode);
   console.error(`❌ Error [${statusCode}]: ${err.message}`);
 
   res.status(statusCode).json({

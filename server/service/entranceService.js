@@ -39,7 +39,7 @@ export class EntranceService {
         const existingUser = await User.findOne(userQueries.findByEmail(email));
         if (existingUser) {
             const error = new Error("המייל כבר קיים במערכת");
-            error.statusCode = 400;
+            error.statusCode = 409;
             throw error;
         }
 
@@ -63,6 +63,25 @@ export class EntranceService {
     async getUserById(userId) {
         const user = await User.findById(userId).select("username email phone");
         return user;
+    }
+    async findOrCreateGoogleUser({ email, name }) {
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            user = await User.create({
+                username: name,
+                email,
+                // אפשר לשמור picture אם אתה רוצה
+            });
+        }
+
+        return user;
+    }
+
+    generateToken(userId) {
+        return jwt.sign({ userId }, process.env.JWT_SECRET, {
+            expiresIn: "1h",
+        });
     }
 
 }

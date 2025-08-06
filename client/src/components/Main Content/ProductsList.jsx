@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
 import axios from 'axios';
+import LogoutButton from "../authentication/LogoutButton";
 
 function ProductsList() {
   const [products, setProducts] = useState([]);
@@ -16,6 +17,7 @@ function ProductsList() {
       {products.map((product) => (
         <ProductCard key={product._id} product={product} />
       ))}
+      <LogoutButton/>
     </div>
   );
 }

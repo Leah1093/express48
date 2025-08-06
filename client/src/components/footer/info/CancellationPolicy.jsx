@@ -1,4 +1,3 @@
-// ביטול עסקה
 import React from 'react';
 
 const CancellationPolicy = () => {
