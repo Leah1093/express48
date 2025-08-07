@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
 import axios from 'axios';
+import LogoutButton from "../authentication/LogoutButton";
 
 function ProductsList() {
   const [products, setProducts] = useState([]);
@@ -13,12 +14,14 @@ function ProductsList() {
 
   return (
     <div style={listStyles.wrapper}>
+
       {products.map((product) => {
         // console.log(product); // כאן רואים מה מגיע
         return (
           <ProductCard key={product._id} product={product} />
         );
       })}
+
 
     </div>
   );

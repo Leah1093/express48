@@ -32,6 +32,7 @@ import CategorySidebarMenu from "./components/CategoryMenu";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { setUser, clearUser } from "./redux/slices/userSlice";
+import LogoutButton from './components/authentication/LogoutButton';
 function App() {
 
     const dispatch = useDispatch();
@@ -78,7 +79,7 @@ function App() {
           <Route path="/account/addresses" element={<Addresses />} />
           <Route path="/account/favorites" element={<Favorites />} />
           <Route path="/account/profile" element={<Profile />} />
-          <Route path="forgotPassword" element={<ForgotPassword />} />
+          <Route path="forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
 
 

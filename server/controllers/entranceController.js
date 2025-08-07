@@ -1,87 +1,121 @@
 import { EntranceService } from '../service/entranceService.js';
+import { registerSchema } from '../validations/registerSchema.js';
+import { loginSchema } from "../validations/loginSchema.js";
+
 import 'dotenv/config'
 
 export default class EntranceController {
 
-    async login(req, res, next) {
-        console.log("EntranceController 💓");
-        try {
-            const entranceService = new EntranceService();
-            const { email, password } = req.body;
-            if (!email || !password) {
-                const error = new Error('Email and password are required');
-                error.statusCode = 400;
-                throw error;
-            }
-            const result = await entranceService.login(email, password);
+  async login(req, res, next) {
+    try {
+      const entranceService = new EntranceService();
 
-            res.cookie("token", result.token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production", // ב־https בלבד בפרודקשן
-                sameSite: "Lax",
-                maxAge: 1000 * 60 * 60, // שעה
-            });
+      // ✨ ולידציה עם zod
+      const validatedData = loginSchema.parse(req.body);
+      const { email, password } = validatedData;
 
-            // res.status(200).json({
-            //     success: true,
-            //     message: "התחברת בהצלחה",
-            //     data: { email: result.email },
-            // });
-            res.status(200).json({
-                success: true,
-                message: "התחברת בהצלחה",
-                data: result.user,
-            });
-        } catch (err) {
-            next(err);
-        }
+      const result = await entranceService.login(email, password);
+
+      res.cookie("token", result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Lax",
+        maxAge: 1000 * 60 * 60,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "התחברת בהצלחה",
+        user: result.user, // או data: result.user אם את רוצה לשמור אחידות
+      });
+    } catch (err) {
+      if (err.name === "ZodError") {
+        return res.status(400).json({
+          success: false,
+          message: "ולידציה נכשלה",
+          errors: err.errors,
+        });
+      }
+
+      next(err);
     }
+  }
 
-    async register(req, res, next) {
-        console.log("EntranceController 📝 register");
+  async register(req, res, next) {
+    console.log("EntranceController 📝 register");
 
-        try {
-            const entranceService = new EntranceService();
-            const { username, email, phone, password } = req.body;
-            if (!username || !email || !phone || !password) {
-                const error = new Error("נא למלא את כל השדות");
-                error.statusCode = 400;
-                throw error;
-            }
-            const result = await entranceService.registerUser({ username, email, phone, password });
-            res.cookie("token", result.token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "Strict",
-                maxAge: 1000 * 60 * 60 * 24,
-            });
-            res.status(201).json({
-                success: true,
-                message: "נרשמת בהצלחה",
-                data: result.user,
-            });
-        } catch (err) {
-            next(err);
-        }
+    try {
+      // 1. ולידציה עם zod
+      const validatedData = registerSchema.parse(req.body);
+
+      // 2. destructure (כדי לעבוד עם אותו קוד שהיה לך)
+      const { username, email, phone, password } = validatedData;
+
+      // 3. המשך רגיל
+      const entranceService = new EntranceService();
+      const result = await entranceService.registerUser({ username, email, phone, password });
+
+      res.cookie("token", result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Strict",
+        maxAge: 1000 * 60 * 60 * 24,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: "נרשמת בהצלחה",
+        data: result.user,
+      });
+    } catch (err) {
+      // 4. טיפול בשגיאה של Zod (במידה ויש)
+      if (err.name === "ZodError") {
+        return res.status(400).json({
+          success: false,
+          message: "ולידציה נכשלה",
+          errors: err.errors,
+        });
+      }
+
+      next(err); // שגיאות אחרות
     }
+  }
 
-    async getCurrentUser(req, res, next) {
-        console.log("hi")
-        try {
-            const userId = req.user.userId;
-            const entranceService = new EntranceService();
-            const user = await entranceService.getUserById(userId);
 
-            if (!user) {
-                return res.status(404).json({ error: "משתמש לא נמצא" });
-            }
+  async getCurrentUser(req, res, next) {
+    console.log("hi")
+    try {
+      const userId = req.user.userId;
+      const entranceService = new EntranceService();
+      const user = await entranceService.getUserById(userId);
 
-            res.status(200).json({
-                success: true,
-                user,
-            });
-        } catch (err) {
-            next(err);
-        }
+      if (!user) {
+        return res.status(404).json({ error: "משתמש לא נמצא" });
+      }
+
+      res.status(200).json({
+        success: true,
+        user,
+      });
+    } catch (err) {
+      next(err);
     }
+  }
+
+
+
+  async logout(req, res) {
+    try {
+      res.clearCookie("token", {
+        httpOnly: true,
+        sameSite: "None",
+        secure: true,
+      });
+
+      res.status(200).json({ message: "התנתקת בהצלחה" });
+    } catch (err) {
+      console.error("Logout error:", err);
+      res.status(500).json({ message: "שגיאה בהתנתקות" });
+    }
+  };
 }

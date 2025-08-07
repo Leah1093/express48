@@ -3,8 +3,10 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { setUser } from "../../redux/slices/userSlice";
+import { useNavigate } from "react-router-dom";
 
-// סכמה עם אימות סיסמה
 const schema = z
   .object({
     username: z.string().min(2, "שם מלא חובה"),
@@ -32,17 +34,31 @@ const Register = () => {
     resolver: zodResolver(schema),
   });
 
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const onSubmit = async (data) => {
     const { confirmPassword, ...formData } = data;
-    console.log("📦 נשלח לשרת:", formData);
 
     try {
-      await axios.post("http://localhost:8080/entrance/register", formData);
+      const res = await axios.post("http://localhost:8080/entrance/register", formData, {
+        withCredentials: true,
+      });
+
+      dispatch(setUser(res.data.user)); 
       toast.success("נרשמת בהצלחה!");
       reset();
+      navigate("/");
     } catch (err) {
-      toast.error("שגיאה בהרשמה");
-      console.error(err);
+      if (err.response?.status === 409) {
+        toast.error("משתמש כבר קיים, נא להתחבר");
+        navigate("/login"); 
+      } else if (err.response?.data?.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error("שגיאה בהרשמה");
+      }
+      console.error("Registration error:", err);
     }
   };
 
