@@ -1,15 +1,19 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import CartItem from "./CartItem";
+import { getLocalCart } from "../../../helpers/localCart";
 
 function CartDrawer({ isOpen, onClose }) {
-  const cartItems = useSelector(state => state.cart);
+
+  const user = useSelector((state) => state.user.user);
+  const reduxCart = useSelector((state) => state.cart);
+  const guestCart = useSelector((state) => state.guestCart);
+
+  const cartItems = user ? reduxCart : guestCart;
+
 
   return (
-    <div
-      className={`fixed top-0 left-0 h-full w-full sm:w-[400px] bg-white shadow-lg z-50 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full" }`}
-    >
+    <div className={`fixed top-0 left-0 h-full w-full sm:w-[400px] bg-white shadow-lg z-50 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
       {/* Header */}
       <div className="flex justify-between items-center px-4 py-4 border-b">
         <h2 className="text-lg font-semibold text-black">עגלת קניות</h2>
@@ -26,7 +30,13 @@ function CartDrawer({ isOpen, onClose }) {
         </div>
       ) : (
         <div className="overflow-y-auto max-h-[calc(100%-64px)]">
-          {cartItems.map(item => <CartItem key={item._id} item={item} />)}
+          {cartItems.map((item) => (
+            <CartItem key={
+              item._id ||
+              (item.product && item.product._id) ||
+              (typeof item.productId === 'object' ? item.productId._id : item.productId)
+            } item={item} />
+          ))}
         </div>
       )}
     </div>

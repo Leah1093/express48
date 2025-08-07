@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { loadCart, addItemAsync, removeItemAsync, clearCartAsync } from '../thunks/cartThunks';
+import { loadCart, addItemAsync, removeItemAsync, clearCartAsync , removeProductCompletelyThunk } from '../thunks/cartThunks';
 
 const cartSlice = createSlice({
   name: 'cart',
@@ -18,6 +18,9 @@ const cartSlice = createSlice({
       })
       .addCase(clearCartAsync.fulfilled, () => {
         return [];
+      })
+      .addCase(removeProductCompletelyThunk.fulfilled, (state, action) => {
+        return action.payload;
       });
   },
 });

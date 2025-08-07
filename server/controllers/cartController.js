@@ -33,6 +33,18 @@ export const removeFromCart = async (req, res) => {
   }
 };
 
+export const removeProductCompletely = async (req, res) => {
+  try {
+    const userId = req.user.id; 
+    const { productId } = req.body;
+
+    const updatedCart = await cartService.removeProductCompletely(userId, productId);
+    res.status(200).json(updatedCart);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export const clearCart = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -40,5 +52,15 @@ export const clearCart = async (req, res) => {
     res.json(cart);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+export const mergeLocalCart = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const localItems = req.body.items; // [{ productId, quantity }]
+    const mergedCart = await cartService.mergeLocalCart(userId, localItems);
+    res.json(mergedCart);
+  } catch (err) {
+    next(err);
   }
 };

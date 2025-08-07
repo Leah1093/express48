@@ -1,14 +1,22 @@
 import React from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch , useSelector } from "react-redux";
 import { addItemAsync } from "../../redux/thunks/cartThunks"; 
+import {addGuestItem} from "../../redux/slices/guestCartSlice";
 
 
 function ProductCard({ product }) {
 
   const dispatch = useDispatch();
+  const user = useSelector((state) => state.user.user);
 
   const handleAddToCart = () => {
-    dispatch(addItemAsync(product));
+    console.log("product._id:", product._id); 
+    if(user){
+      dispatch(addItemAsync(product));
+    }else{
+      dispatch(addGuestItem(product));
+    }
+    
   };
 
   return (

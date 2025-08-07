@@ -63,36 +63,66 @@
 // export default CartItem;
 
 import React from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   addItemAsync,
   removeItemAsync,
-  clearCartAsync
+  clearCartAsync ,
+  removeProductCompletelyThunk
 } from "../../../redux/thunks/cartThunks";
+import {
+  clearGuestCart,
+  removeGuestItem,
+  addGuestItem,
+  removeGuestProductCompletely
+} from "../../../redux/slices/guestCartSlice";
 
 const CartItem = ({ item }) => {
   const dispatch = useDispatch();
+  const user = useSelector((state) => state.user.user);
 
-const id = typeof item.productId === 'object' ? item.productId._id : item.productId;
+  const id = item._id || (item.product && item.product._id);
+  const idUser = typeof item.productId === 'object' ? item.productId._id : item.productId;
+
 
 
   const handleRemove = () => {
-    dispatch(removeItemAsync(id));
+    if (user) {
+      dispatch(removeItemAsync(idUser));
+    } else {
+      dispatch(removeGuestItem(id));
+    }
   };
 
   const handleclearCart = () => {
-    dispatch(clearCartAsync(id));
+    if (user) {
+      dispatch(clearCartAsync(idUser));
+    } else {
+      dispatch(clearGuestCart(item));
+    }
   };
 
   const handleAdd = () => {
-    dispatch(addItemAsync(id));
+    if (user) {
+      dispatch(addItemAsync(idUser));
+    } else {
+      dispatch(addGuestItem(item.product || item));
+    }
   };
+
+  const handleRemoveCompletely = () => {
+  if (user) {
+    dispatch(removeProductCompletelyThunk(idUser));
+  } else {
+    dispatch(removeGuestProductCompletely(id));
+  }
+};
 
   return (
     <div className="relative flex flex-row-reverse items-center border-b py-4 px-4 gap-4 text-right">
       {/* כפתור מחיקה מוחלטת */}
       <button
-        onClick={handleclearCart}
+        onClick={handleRemoveCompletely}
         className="absolute top-2 left-2 text-gray-500 hover:text-red-500 text-xl"
       >
         ×
