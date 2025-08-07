@@ -40,15 +40,16 @@ import FavoritesList from "./components/TopNav/favorites/FavoritesList.jsx"
 
 function App() {
 
-    const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
   useEffect(() => {
+     console.log("🤣")
     const checkLoggedInUser = async () => {
       try {
         const res = await axios.get("http://localhost:8080/entrance/me", {
           withCredentials: true,
         });
-        console.log("🤣",res.data)
+        console.log("🤣", res.data)
         dispatch(setUser(res.data.user));
       } catch (err) {
         dispatch(clearUser());
@@ -56,6 +57,8 @@ function App() {
     };
 
     checkLoggedInUser();
+     console.log("🤣ff")
+
   }, []);
 
   const user = useSelector((state) => state.user?.user);
@@ -68,12 +71,12 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <Toaster position="top-center" reverseOrder={false} />
-       
+
       <CategorySidebarMenu></CategorySidebarMenu>
 
       <TopBar />
       <MainNav />
-      
+
       <main className="flex-grow">
         <Routes>
           <Route path="/products" element={<ProductsList />} />

@@ -83,7 +83,7 @@ export default class EntranceController {
 
 
   async getCurrentUser(req, res, next) {
-    console.log("hi")
+    console.log("getCurrentUser me")
     try {
       const userId = req.user.userId;
       const entranceService = new EntranceService();
@@ -92,6 +92,7 @@ export default class EntranceController {
       if (!user) {
         return res.status(404).json({ error: "משתמש לא נמצא" });
       }
+    console.log("getCurrentUser")
 
       res.status(200).json({
         success: true,

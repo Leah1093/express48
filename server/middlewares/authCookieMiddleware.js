@@ -2,12 +2,14 @@ import jwt from "jsonwebtoken";
 
 export function authCookieMiddleware(req, res, next) {
   const token = req.cookies.token;
-console.log("hi coo")
+  console.log("hi coo")
   if (!token) {
     return res.status(401).json({ error: "Missing authentication token" });
   }
 
   try {
+    console.log("token")
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = { userId: decoded.userId };
     console.log("Decoded token:", decoded);
