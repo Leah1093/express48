@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { loadCart, addItemAsync, removeItemAsync, clearCartAsync , removeProductCompletelyThunk } from '../thunks/cartThunks';
+import { loadCart, addItemAsync, removeItemAsync, clearCartAsync, removeProductCompletelyThunk,updateItemQuantityThunk } from '../thunks/cartThunks';
 
 const cartSlice = createSlice({
   name: 'cart',
@@ -21,7 +21,11 @@ const cartSlice = createSlice({
       })
       .addCase(removeProductCompletelyThunk.fulfilled, (state, action) => {
         return action.payload;
+      })
+      .addCase(updateItemQuantityThunk.fulfilled, (state, action) => {
+        return action.payload; // מחליף את העגלה בגרסה המעודכנת
       });
+
   },
 });
 

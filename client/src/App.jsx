@@ -30,9 +30,11 @@ import ShippingPolicy from './components/footer/info/ShippingPolicy';
 import ReturnsPolicy from './components/footer/info/ReturnsPolicy';
 import CategorySidebarMenu from "./components/CategoryMenu";
 import axios from "axios";
-import { useDispatch } from "react-redux";
+import { useDispatch,useSelector } from "react-redux";
 import { setUser, clearUser } from "./redux/slices/userSlice";
 import LogoutButton from './components/authentication/LogoutButton';
+import { loadCart } from "./redux/thunks/cartThunks.js";
+
 function App() {
 
     const dispatch = useDispatch();
@@ -52,6 +54,14 @@ function App() {
 
     checkLoggedInUser();
   }, []);
+
+  const user = useSelector((state) => state.user?.user);
+   useEffect(() => {
+    if (user) {
+      console.log("🔄 טוען עגלה ממונגו אחרי ריפרוש...");
+      dispatch(loadCart());
+    }
+  }, [user, dispatch]);
   return (
     <div className="min-h-screen flex flex-col">
       <Toaster position="top-center" reverseOrder={false} />

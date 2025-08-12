@@ -6,6 +6,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../redux/slices/userSlice";
+import { mergeCartThunk, loadCart } from "../../redux/thunks/cartThunks";
+import { getLocalCart } from "../../helpers/localCart";
+
 import GoogleLoginButton from "./GoogleLoginButton";
 
 const schema = z.object({
@@ -33,6 +36,32 @@ const Login = () => {
       });
 
       dispatch(setUser(res.data.user));
+
+      // מיזוג עגלת אורח אם קיימת
+      const localCart = getLocalCart();
+      console.log("📦 localCart:", localCart);
+      if (localCart.length > 0) {
+        const itemsToMerge = localCart.map((item) => ({
+          productId: item.product?._id || item.productId,
+          quantity: item.quantity,
+        }));
+        console.log("🚀 מנסה למזג עגלה...");
+
+        const result = await dispatch(mergeCartThunk({
+          userId: res.data.user._id,
+          guestCart: itemsToMerge,
+        }));
+
+        console.log("🛒 עגלה מוזגת מהשרת:", result.payload);
+
+        await dispatch(loadCart());
+      } else {
+        // אין עגלת אורח → פשוט טוענים את העגלה מהשרת
+        console.log("📭 אין עגלת אורח, טוען עגלה ממונגו...");
+        await dispatch(loadCart());
+      }
+
+
 
       toast.success("התחברת בהצלחה");
       reset();

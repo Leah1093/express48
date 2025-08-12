@@ -9,7 +9,9 @@ function CartDrawer({ isOpen, onClose }) {
   const reduxCart = useSelector((state) => state.cart);
   const guestCart = useSelector((state) => state.guestCart);
 
-  const cartItems = user ? reduxCart : guestCart;
+  const cartItems = Array.isArray(user ? reduxCart : guestCart)
+  ? (user ? reduxCart : guestCart)
+  : [];
 
 
   return (

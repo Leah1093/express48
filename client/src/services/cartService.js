@@ -4,15 +4,19 @@ export const mergeCartService = async (userId, guestCart) => {
   if (!guestCart?.length) return;
 
   const formattedItems = guestCart.map(item => ({
-    productId: typeof item.product._id === 'string' ? item.product._id : item.product.id,
+    productId:
+      item.product?._id ||
+      item.product?.id ||
+      item.productId, // ברירת מחדל
     quantity: item.quantity
   }));
+
 
   const response = await axios.post(
     "http://localhost:8080/cart/merge",
     {
       userId,
-      localItems: formattedItems
+      items: formattedItems
     },
     { withCredentials: true }
   );

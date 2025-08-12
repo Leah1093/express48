@@ -50,6 +50,30 @@ const guestCartSlice = createSlice({
       clearStorage();
       return [];
     },
+    // ⭐ חדש: עדכון כמות ישירה לפי קלט
+    setGuestItemQuantity: (state, action) => {
+      const { productId, quantity } = action.payload;
+
+      // חפש מוצר גם לפי product._id וגם productId (למקרה של פורמטים שונים)
+      const index = state.findIndex(
+        item =>
+          (item.product && item.product._id === productId) ||
+          item.productId === productId
+      );
+
+      if (index === -1) {
+        // לא קיים בעגלה – לא עושים כלום (או שאפשר להחליט להוסיף אם quantity>0)
+        return;
+      }
+
+      if (quantity <= 0) {
+        // הסרה מלאה אם ביקשו 0 או פחות
+        state.splice(index, 1);
+      } else {
+        state[index].quantity = quantity;
+      }
+      saveLocalCart(state);
+    },
 
     loadGuestCart: (state) => {
       return getLocalCart();
@@ -57,5 +81,5 @@ const guestCartSlice = createSlice({
   },
 });
 
-export const { addGuestItem, removeGuestItem, clearGuestCart, loadGuestCart,removeGuestProductCompletely } = guestCartSlice.actions;
+export const { addGuestItem, removeGuestItem, clearGuestCart, loadGuestCart,removeGuestProductCompletely,setGuestItemQuantity } = guestCartSlice.actions;
 export default guestCartSlice.reducer;

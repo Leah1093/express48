@@ -5,7 +5,8 @@ import {
   removeFromCart,
   clearCart,
   removeProductCompletely,
-  mergeLocalCart
+  mergeLocalCart,
+  updateItemQuantity
 } from '../controllers/cartController.js';
 import { authCookieMiddleware } from "../middlewares/authCookieMiddleware.js";
 
@@ -17,5 +18,7 @@ router.delete('/remove', authCookieMiddleware, removeFromCart);
 router.delete('/clear', authCookieMiddleware, clearCart);
 router.delete('/remove-completely', authCookieMiddleware, removeProductCompletely);
 router.post('/merge',authCookieMiddleware, mergeLocalCart);
+router.put("/update-quantity", authCookieMiddleware, updateItemQuantity);
+
 
 export default router;

@@ -10,3 +10,5 @@ export const addToCart = (productId, quantity = 1) => API.post('/add', { product
 export const removeFromCart = (productId) => API.delete('/remove', { data: { productId } });
 export const removeProductCompletely = (productId) => API.delete('/remove-completely', { data: { productId } });
 export const clearCart = () => API.delete('/clear');
+export const updateItemQuantity = (productId, quantity) => API.put("/update-quantity", { productId, quantity });
+

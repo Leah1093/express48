@@ -12,7 +12,7 @@ export class CartService {
     if (!cart) {
       cart = new Cart({ userId, items: [{ productId, quantity }] });
     } else {
-      const existingItem = cart.items.find(item => item.productId.toString() === productId);
+      const existingItem = cart.items.find(item => item.productId.toString() === productId.toString());
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
@@ -22,6 +22,25 @@ export class CartService {
     await cart.save();
     return cart;
   }
+//   async addToCart(userId, productId, quantity = 1) {
+//   const cart = await Cart.findOneAndUpdate(
+//     { userId, 'items.productId': productId },
+//     {
+//       $inc: { 'items.$.quantity': quantity }, // אם הפריט קיים – תגדיל כמות
+//     },
+//     { new: true }
+//   );
+
+//   if (cart) return cart;
+
+//   // אם לא קיים פריט כזה – הוסף חדש
+//   return await Cart.findOneAndUpdate(
+//     { userId },
+//     { $push: { items: { productId, quantity } } },
+//     { upsert: true, new: true }
+//   );
+// }
+
 
   async removeFromCart(userId, productId) {
     // שליפת העגלה של המשתמש
@@ -46,21 +65,23 @@ export class CartService {
     await cart.save();
     return cart;
   }
-  
+
   async removeProductCompletely(userId, productId) {
-  // שליפת העגלה של המשתמש
-  const cart = await Cart.findOne(cartQueries.findByUserId(userId));
-  if (!cart) {
-    throw new Error('Cart not found');
+    // שליפת העגלה של המשתמש
+    const cart = await Cart.findOne(cartQueries.findByUserId(userId));
+    if (!cart) {
+      throw new Error('Cart not found');
+    }
+
+    // סינון כל הפריטים שאינם המוצר הרצוי (כלומר - הסרה מוחלטת)
+    cart.items = cart.items.filter(item => item.productId.toString() !== productId);
+
+
+
+    // שמירה של השינויים בעגלה
+    await cart.save();
+    return cart;
   }
-
-  // סינון כל הפריטים שאינם המוצר הרצוי (כלומר - הסרה מוחלטת)
-  cart.items = cart.items.filter(item => item.productId.toString() !== productId);
-
-  // שמירה של השינויים בעגלה
-  await cart.save();
-  return cart;
-}
 
 
   async clearCart(userId) {
@@ -85,26 +106,68 @@ export class CartService {
           quantity: item.quantity
         }))
       });
+      console.log("🆕 created new cart with items:", cart.items.map(i => ({
+        productId: toIdStr(i.productId), quantity: i.quantity
+      })));
     } else {
       // עגלה קיימת – נבצע מיזוג
       localItems.forEach(localItem => {
+        console.log("🟡 בודק פריט לפני מיזוג:", {
+          localProductId: localItem.productId,
+          localQuantity: localItem.quantity
+        });
+
         const existingItem = cart.items.find(item =>
           item.productId.toString() === localItem.productId
         );
 
+        console.log("🔍 נמצא בעגלה?:", !!existingItem, existingItem ? {
+          existingProductId: existingItem.productId,
+          existingQuantity: existingItem.quantity
+        } : null);
+
         if (existingItem) {
           existingItem.quantity += localItem.quantity;
+          console.log("🟢 עודכן פריט קיים:", {
+            productId: existingItem.productId,
+            added: localItem.quantity,
+            newQuantity: existingItem.quantity
+          });
         } else {
           cart.items.push({
             productId: localItem.productId,
             quantity: localItem.quantity
           });
+          console.log("🔵 נוסף פריט חדש:", {
+            productId: localItem.productId,
+            quantity: localItem.quantity
+          });
         }
       });
+
+      console.log("✅ מצב סופי של העגלה אחרי מיזוג:", cart.items.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity
+      })));
+
+      await cart.save();
+      return cart;
     }
 
-    await cart.save();
-    return cart;
   }
 
+  async updateItemQuantity(userId, productId, quantity) {
+    const cart = await Cart.findOne(cartQueries.findByUserId(userId));
+    if (!cart) {
+      throw new Error("Cart not found");
+    }
+    const item = cart.items.find((i) => i.productId.toString() === productId.toString());
+    if (!item) {
+      throw new Error("Product not found in cart");
+    }
+    item.quantity = quantity; // ⬅️ עדכון הכמות
+    await cart.save();
+
+    return cart;
+  }
 }

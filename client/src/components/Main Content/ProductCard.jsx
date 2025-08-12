@@ -12,7 +12,7 @@ function ProductCard({ product }) {
   const handleAddToCart = () => {
     console.log("product._id:", product._id); 
     if(user){
-      dispatch(addItemAsync(product));
+      dispatch(addItemAsync(product._id));
     }else{
       dispatch(addGuestItem(product));
     }

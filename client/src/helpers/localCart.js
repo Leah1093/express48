@@ -1,7 +1,14 @@
 
 export const getLocalCart = () => {
-  return JSON.parse(localStorage.getItem('cart')) || [];
+  const cart = localStorage.getItem('cart');
+  try {
+    return cart ? JSON.parse(cart) : [];
+  } catch (e) {
+    console.error("❌ Error parsing local cart:", e);
+    return [];
+  }
 };
+
 
 export const saveLocalCart = (cart) => {
   localStorage.setItem('cart', JSON.stringify(cart));
@@ -60,3 +67,26 @@ export const removeProductCompletelyFromLocalCart = (productId) => {
 export const clearLocalCart = () => {
   localStorage.removeItem('cart');
 };
+
+export const updateItemQuantityInLocalCart = (productId, quantity) => {
+  if (!productId || typeof quantity !== 'number' || quantity < 1) {
+    console.error("❌ ערכי עדכון כמות לא תקינים", { productId, quantity });
+    return;
+  }
+
+  const cart = getLocalCart();
+
+  // מוצאים את המוצר
+  const index = cart.findIndex(item =>
+    (item.product && item.product._id === productId) ||
+    item.productId === productId
+  );
+
+  if (index >= 0) {
+    cart[index].quantity = quantity; // עדכון הכמות
+    saveLocalCart(cart);
+  } else {
+    console.warn(`⚠️ מוצר עם ID ${productId} לא נמצא בעגלה`);
+  }
+};
+

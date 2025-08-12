@@ -9,7 +9,7 @@ console.log("hi coo")
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { id: decoded.userId };
+    req.user = { userId: decoded.userId };
     console.log("Decoded token:", decoded);
 
     next();
