@@ -8,6 +8,9 @@ import { useDispatch } from "react-redux";
 import { setUser } from "../../redux/slices/userSlice";
 import { mergeCartThunk, loadCart } from "../../redux/thunks/cartThunks";
 import { getLocalCart } from "../../helpers/localCart";
+import { favoritesApi } from "../../redux/api/favoritesApi";
+import { clearGuests } from "../../redux/slices/guestFavoritesSlice";
+import { mergeGuestFavoritesIfAny } from "../../helpers/mergeGuestFavorites";
 
 import GoogleLoginButton from "./GoogleLoginButton";
 
@@ -61,6 +64,16 @@ const Login = () => {
         await dispatch(loadCart());
       }
 
+      // 1) מיזוג מועדפים של אורח לשרת
+      await mergeGuestFavoritesIfAny();          // ← אם יצרת את הפונקציה helper
+
+      // 2) נקה סטייט של אורחים ב-Redux (שלא יישאר כפול)
+      dispatch(clearGuests());
+
+      // 3) רענון רשימת המועדפים מהשרת (RTK Query)
+      dispatch(favoritesApi.util.invalidateTags?.(["Favorites"]));
+      // או:
+      // await dispatch(favoritesApi.endpoints.listFavorites.initiate(undefined, { forceRefetch: true }));
 
 
       toast.success("התחברת בהצלחה");

@@ -23,6 +23,7 @@ const cartSlice = createSlice({
         return action.payload;
       })
       .addCase(updateItemQuantityThunk.fulfilled, (state, action) => {
+        // console.log('after plus/minus payload:', action.payload);
         return action.payload; // מחליף את העגלה בגרסה המעודכנת
       });
 

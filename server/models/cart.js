@@ -11,7 +11,12 @@ const cartItemSchema = new mongoose.Schema({
     required: true,
     min: 1,
     default: 1
-  }
+  },
+  unitPrice: { 
+    type: Number, 
+    required: true 
+  } // חדש
+  
 });
 
 const cartSchema = new mongoose.Schema({

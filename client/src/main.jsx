@@ -5,7 +5,7 @@ import App from './App.jsx';
 import './index.css';
 import { Toaster } from 'react-hot-toast';
 import { Provider } from 'react-redux';
-import { store } from "./redux/store.js";
+import { store } from "./redux/store";
 import AuthInit from './components/AuthInit'; // ⬅️ נשתמש בזה כדי למשוך את המשתמש משרת
 import { GoogleOAuthProvider } from '@react-oauth/google'; // ⬅️ הוסיפי את זה
 

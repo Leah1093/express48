@@ -5,6 +5,8 @@ import SearchBar from "./SearchBar";
 import UserMenu from "./UserMenu";
 import React, { useState } from "react";
 import CartDrawer from "./cart/CartDrawer";
+import { Link } from "react-router-dom";
+import { Shuffle, ShoppingCart, Heart, User } from "lucide-react";
 
 
 
@@ -12,18 +14,22 @@ function TopBar() {
   const [cartOpen, setCartOpen] = useState(false);
   return (
     <>
-      <header className=" fixed top-0 left-0 z-[1000] bg-[#122947] w-[calc(100%-64px)] mr-16">
+      <header className=" fixed top-0 left-0 z-[9999] bg-[#122947] w-[calc(100%-64px)] mr-16">
         <div className="flex items-center justify-between max-w-[1200px] mx-auto px-5 py-2 text-white pr-16">
           {/* אייקונים + תפריט */}
-          <div className="flex items-center gap-2">
-            <IconWithCounter icon="https://cdn-icons-png.flaticon.com/512/3081/3081623.png" count={0} altText="shuffle" />
-            
+          <div className="flex items-center gap-4">
+            <Shuffle className="w-6 h-6 text-white" />
+
             <div onClick={() => setCartOpen(true)}>
-            <IconWithCounter icon="https://cdn-icons-png.flaticon.com/512/833/833314.png" count={0} altText="cart" />
+              <ShoppingCart className="w-6 h-6 text-white" />
             </div>
+
             <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
-           
-            <IconWithCounter icon="https://cdn-icons-png.flaticon.com/512/1077/1077035.png" count={0} altText="favorites" />
+
+            <Link to="/favorites">
+              <Heart className="w-6 h-6 text-white" />
+            </Link>
+
             <UserMenu />
           </div>
 
@@ -33,9 +39,11 @@ function TopBar() {
           </div>
 
           {/* לוגו בצד ימין */}
-          <div className="shrink-0">
-            <Logo />
-          </div>
+          <Link to="/products">
+            <div className="shrink-0">
+              <Logo />
+            </div>
+          </Link>
         </div>
       </header>
 

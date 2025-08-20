@@ -34,6 +34,9 @@ import { useDispatch,useSelector } from "react-redux";
 import { setUser, clearUser } from "./redux/slices/userSlice";
 import LogoutButton from './components/authentication/LogoutButton';
 import { loadCart } from "./redux/thunks/cartThunks.js";
+import CartPage from "./components/TopNav/cart/CartPage .jsx"
+import CartCheckout from "./components/TopNav/cart/CartCheckout.jsx";
+import FavoritesList from "./components/TopNav/favorites/FavoritesList.jsx"
 
 function App() {
 
@@ -74,6 +77,9 @@ function App() {
       <main className="flex-grow">
         <Routes>
           <Route path="/products" element={<ProductsList />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CartCheckout />} />
+          <Route path="/favorites" element={<FavoritesList />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/about" element={<About />} />

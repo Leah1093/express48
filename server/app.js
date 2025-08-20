@@ -13,7 +13,8 @@ import cartRouter from './router/cartRouter.js';
 import productRoutes  from "./router/productRoutes.js";
 import passport from "passport";
 import session from "express-session";
-import './config/googleOAuthConfig.js'
+import './config/googleOAuthConfig.js';
+import { favoritesRouter } from "./router/favoritesRoutes.js";
 
 const app = express();
 
@@ -40,10 +41,14 @@ app.use('/password', passwordRouter);
 app.use('/contact', contactRouter);
 app.use("/user", userRouter);
 app.use("/auth", googleAuthRouter);
-app.use(errorHandler);
+
 
 app.use('/cart', cartRouter);
 app.use('/products', productRoutes);
+app.use("/favorites", favoritesRouter);
+
+app.use(errorHandler);
+
 
 app.listen(process.env.PORT, () => {
     console.log(`start server port: ${process.env.PORT}`);

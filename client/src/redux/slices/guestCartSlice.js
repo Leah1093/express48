@@ -14,7 +14,7 @@ const guestCartSlice = createSlice({
       if (index >= 0) {
         state[index].quantity += 1;
       } else {
-        state.push({ product, quantity: 1 });
+        state.push({ product, quantity: 1, unitPrice: product.price });// ⬅️ כאן את מוסיפה 
       }
 
       saveLocalCart(state); // עדכון localStorage
