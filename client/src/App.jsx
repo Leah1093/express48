@@ -30,20 +30,32 @@ import ShippingPolicy from './components/footer/info/ShippingPolicy';
 import ReturnsPolicy from './components/footer/info/ReturnsPolicy';
 import CategorySidebarMenu from "./components/CategoryMenu";
 import axios from "axios";
-import { useDispatch,useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { setUser, clearUser } from "./redux/slices/userSlice";
 import LogoutButton from './components/authentication/LogoutButton';
-import { loadCart } from "./redux/thunks/cartThunks.js";
-import CartPage from "./components/TopNav/cart/CartPage .jsx"
-import CartCheckout from "./components/TopNav/cart/CartCheckout.jsx";
-import FavoritesList from "./components/TopNav/favorites/FavoritesList.jsx"
-
+import SellerDashboard from './components/seller/SellerDashboard';
+import MarketplaceInfo from './components/footer/support/MarketplaceInfo';
+import RoleGate from './components/auth/RoleGate';
+import MarketplaceApplications from './components/admin/MarketplaceApplications';
+import StorefrontList from './components/storefront/StorefrontList';
+import StorefrontProduct from './components/storefront/StorefrontProduct';
+import AdminApplicationsPage from './components/admin/AdminApplicationsPage';
+import SellerLayout from './components/seller/SellerLayout';
+import StoreSettings from './components/seller/settings/StoreSettings';
+import Products from './components/seller/Products';
+import Reviews from './components/seller/Reviews';
+import Reports from './components/seller/Reports';
+import OrdersSeller from './components/seller/OrdersSeller';
+import StorePage from './components/store/StorePage';
+// import StoreProducts from './components/store/StoreProducts';
+// import StoreAbout from './components/store/StoreAbout';
+// import StoreReviews from './components/store/StoreReviews';
 function App() {
 
   const dispatch = useDispatch();
 
   useEffect(() => {
-     console.log("🤣")
+    console.log("🤣")
     const checkLoggedInUser = async () => {
       try {
         const res = await axios.get("http://localhost:8080/entrance/me", {
@@ -57,17 +69,9 @@ function App() {
     };
 
     checkLoggedInUser();
-     console.log("🤣ff")
+    console.log("🤣ff")
 
   }, []);
-
-  const user = useSelector((state) => state.user?.user);
-   useEffect(() => {
-    if (user) {
-      console.log("🔄 טוען עגלה ממונגו אחרי ריפרוש...");
-      dispatch(loadCart());
-    }
-  }, [user, dispatch]);
   return (
     <div className="min-h-screen flex flex-col">
       <Toaster position="top-center" reverseOrder={false} />
@@ -80,9 +84,6 @@ function App() {
       <main className="flex-grow">
         <Routes>
           <Route path="/products" element={<ProductsList />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CartCheckout />} />
-          <Route path="/favorites" element={<FavoritesList />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/about" element={<About />} />
@@ -100,16 +101,41 @@ function App() {
           <Route path="/account/profile" element={<Profile />} />
           <Route path="forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path='/seller-dashboard' element={<SellerDashboard />} />
 
 
-
+          <Route path="/marketplace" element={<MarketplaceInfo />} />
           <Route path="/terms-of-use" element={<TermsOfUse />} />
           <Route path="/cancellation-policy" element={<CancellationPolicy />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/warranty-policy" element={<WarrantyPolicy />} />
           <Route path="/shipping-policy" element={<ShippingPolicy />} />
           <Route path="/returns-policy" element={<ReturnsPolicy />} />
+          <Route path="/" element={<StorefrontList />} />
+          <Route path="/p/:idOrSlug" element={<StorefrontProduct />} />
+          <Route
+            path="/admin/marketplace/applications"
+            element={
+              <RoleGate allow={["admin"]} mode="route" redirectTo="/">
+                <MarketplaceApplications />
+              </RoleGate>
+            }
+          />
+          <Route path="/admin/applications" element={<AdminApplicationsPage />} />
 
+          <Route path="/seller" element={<SellerLayout />}>
+            <Route index element={<SellerDashboard />} />
+            <Route path="settings" element={<StoreSettings />} />
+            <Route path="products" element={<Products />} />
+            <Route path="orders" element={<OrdersSeller />} />
+            <Route path="reviews" element={<Reviews />} />
+            <Route path="reports" element={<Reports />} />
+          </Route>
+          <Route path="/store/:slug" element={<StorePage />}>
+            {/* <Route index element={<StoreProducts />} /> */}
+            {/* <Route path="about" element={<StoreAbout />} />
+            <Route path="reviews" element={<StoreReviews />} /> */}
+          </Route>
 
         </Routes>
 

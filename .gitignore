@@ -2,6 +2,9 @@ server/node_modules/
 node_modules/
 /server/.env
 /client/.env
+uploads/
+
+# local ignores (added)
 .env
 server/.env
 server/uploads/

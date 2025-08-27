@@ -17,6 +17,7 @@ const schema = yup.object().shape({
 const Support = () => {
   const recaptchaRef = useRef();
   const user = useSelector((state) => state.user.user);
+  console.log(user)
   const [loading, setLoading] = useState(false);
 
   const {

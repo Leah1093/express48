@@ -23,6 +23,8 @@ console.log("vh")
         token,
         newPassword,
       });
+      
+
       toast.success("הסיסמה עודכנה בהצלחה");
       navigate("/login");
     }

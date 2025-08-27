@@ -34,6 +34,7 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     try {
+      console.log("log in")
       const res = await axios.post("http://localhost:8080/entrance/login", data, {
         withCredentials: true,
       });
