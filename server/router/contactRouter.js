@@ -1,5 +1,5 @@
 import express from 'express';
-import ContactController from '../controllers/contactController.js';
+import ContactController from '../controllers/contact.controller.js';
 // import { contactLimiter } from '../middlewares/contactLimiter.js';
 import { contactLimiter } from '../middlewares/contactLimiter.js';
 import { verifyRecaptcha } from '../middlewares/verifyRecaptcha.js';

@@ -1,7 +1,7 @@
 import { User } from '../models/user.js';
 // import { UserPassword } from '../models/userPassword.js';
 import { Password } from '../models/password.js';
-import { userQueries } from '../mongoQueries/userQueries.js';
+import { userQueries } from '../mongoQueries/user.queries.js';
 // import { sendResetEmail } from "../utils/sendEmail.js";
 import { sendResetEmail } from '../utils/email/sendResetEmail.js';
 import { PasswordResetToken } from '../models/passwordResetToken.js';
@@ -38,7 +38,7 @@ export class PasswordService1 {
     async requestPasswordReset(email) {
 
         console.log(" לפני 🎈")
-                const resetLink1 = `https://yourfrontend.com/reset-password/`;
+        const resetLink1 = `https://yourfrontend.com/reset-password/`;
         console.log("אחרי 🎈🎈")
 
         await sendResetEmail(email, resetLink1);

@@ -8,7 +8,7 @@ import {
   mergeLocalCart,
   updateItemQuantity
 } from '../controllers/cartController.js';
-import { authCookieMiddleware } from "../middlewares/authCookieMiddleware.js";
+import { authCookieMiddleware } from "../middlewares/authCookie.middleware.js";
 
 const router = express.Router();
 
