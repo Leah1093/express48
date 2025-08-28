@@ -30,9 +30,6 @@ import ShippingPolicy from './components/footer/info/ShippingPolicy';
 import ReturnsPolicy from './components/footer/info/ReturnsPolicy';
 import CategorySidebarMenu from "./components/Categories/CategoryMenu.jsx";
 import axios from "axios";
-import { useDispatch } from "react-redux";
-import { setUser, clearUser } from "./redux/slices/userSlice";
-import LogoutButton from './components/authentication/LogoutButton';
 import SellerDashboard from './components/seller/SellerDashboard';
 import MarketplaceInfo from './components/footer/support/MarketplaceInfo';
 import RoleGate from './components/auth/RoleGate';
@@ -52,7 +49,6 @@ import StorePage from './components/store/StorePage';
 // import StoreReviews from './components/store/StoreReviews';
 import { useDispatch, useSelector } from "react-redux";
 import { setUser, clearUser } from "./redux/slices/userSlice";
-import LogoutButton from './components/authentication/LogoutButton';
 import { loadCart } from "./redux/thunks/cartThunks.js";
 import CartPage from "./components/TopNav/cart/CartPage .jsx"
 import CartCheckout from "./components/TopNav/cart/CartCheckout.jsx";

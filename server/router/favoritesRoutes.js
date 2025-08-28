@@ -1,7 +1,7 @@
 
 import express from "express";
 import { FavoritesController } from "../controllers/favoritesController.js";
-import { authCookieMiddleware } from "../middlewares/authCookieMiddleware.js";
+import { authCookieMiddleware } from "../middlewares/authCookie.middleware.js";
 
 export const favoritesRouter = express.Router();
 const  favoritesController = new FavoritesController();

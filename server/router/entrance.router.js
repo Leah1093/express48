@@ -6,7 +6,7 @@ import { authCookieMiddleware } from "../middlewares/authCookie.middleware.js";
 const entranceRouter = express.Router();
 const entrController = new EntranceController();
 
-entranceRouter.post("/login",entrController.login)
+
 entranceRouter.post("/register",entrController.register)
 entranceRouter.post("/login",entrController.login)
 entranceRouter.post("/logout", entrController.logout);

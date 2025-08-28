@@ -25,9 +25,7 @@ import { marketplaceRouter } from "./router/marketplace.router.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import './config/googleOAuthConfig.js';
 import { favoritesRouter } from "./router/favoritesRoutes.js";
-import path from "path";
 import categoryRoutes from "./router/categoryRoutes.js"
 
 const app = express();
