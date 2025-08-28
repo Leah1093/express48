@@ -15,6 +15,8 @@ import passport from "passport";
 import session from "express-session";
 import './config/googleOAuthConfig.js';
 import { favoritesRouter } from "./router/favoritesRoutes.js";
+import path from "path";
+import categoryRoutes from "./router/categoryRoutes.js"
 
 const app = express();
 
@@ -46,6 +48,8 @@ app.use("/auth", googleAuthRouter);
 app.use('/cart', cartRouter);
 app.use('/products', productRoutes);
 app.use("/favorites", favoritesRouter);
+app.use("/categories", categoryRoutes);
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use(errorHandler);
 

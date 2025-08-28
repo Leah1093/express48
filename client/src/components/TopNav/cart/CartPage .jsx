@@ -12,24 +12,34 @@ export default function CartPage() {
   // פריטים מה-Redux לחישוב סכומים
   const rawItems = useSelector(selectCartItems);
 
+  const [selectedItems, setSelectedItems] = useState([]);
+
   // פונקציות עזר ליחידת מחיר וכמות גם כשהמבנה שונה
   const getUnitPrice = (it) =>
     Number(it?.unitPrice ?? it?.productId?.price ?? it?.product?.price ?? it?.price ?? 0);
   const getQty = (it) => Number(it?.quantity ?? 0);
 
-  const subtotal = useMemo(
-    () =>
-      Array.isArray(rawItems)
-        ? rawItems.reduce((sum, it) => sum + getUnitPrice(it) * getQty(it), 0)
-        : 0,
-    [rawItems]
-  );
+  // const subtotal = useMemo(
+  //   () =>
+  //     Array.isArray(rawItems)
+  //       ? rawItems.reduce((sum, it) => sum + getUnitPrice(it) * getQty(it), 0)
+  //       : 0,
+  //   [rawItems]
+  // );
+  const subtotal = useMemo(() => {
+    return Array.isArray(rawItems)
+      ? rawItems
+        .filter((it) => selectedItems.includes(it.product._id || it.product.id))
+        .reduce((sum, it) => sum + getUnitPrice(it) * getQty(it), 0)
+      : 0;
+  }, [rawItems, selectedItems]);
+
 
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(null);
 
   const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
-const shipping = (subtotal - discount <= 0 || subtotal - discount >= 300) ? 0 : 25;
+  const shipping = (subtotal - discount <= 0 || subtotal - discount >= 300) ? 0 : 25;
   const grandTotal = Math.max(subtotal - discount + shipping, 0);
 
   const handleApplyCoupon = () => {
@@ -38,30 +48,53 @@ const shipping = (subtotal - discount <= 0 || subtotal - discount >= 300) ? 0 : 
     setCoupon("");
   };
 
+  // בתוך CartPage
+  // בדיקה אם כל המוצרים נבחרו
+  const allSelected = rawItems.length > 0 && selectedItems.length === rawItems.length;
+
+  // פונקציה לבחירת מוצר בודד
+  const toggleItemSelection = (id) => {
+    setSelectedItems((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  // פונקציה לבחירת כל המוצרים
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(rawItems.map((it) => it.product._id || it.product.id));
+    }
+  };
+  // 👇 כאן מגדירים את ה־SelectableCartRow
+  function SelectableCartRow({ item }) {
+    const id = getKey(item);
+    const selected = selectedItems.includes(id);
+
+    return (
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={() => toggleItemSelection(id)}
+          className="w-5 h-5 cursor-pointer ml-2"
+        />
+        <CartRow item={item} />
+      </div>
+    );
+  }
+  const getKey = (item) =>
+    item._id ||
+    item.id ||
+    item?.product?._id ||
+    (typeof item?.productId === "object" ? item.productId._id : item?.productId);
+
+
+
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50">
-      {/* פס עליון כחול עם קישורים */}
-      <div className="bg-[#0E3556] text-white">
-        <div className="mx-auto max-w-7xl px-4 py-6">
-          <nav className="flex items-center gap-3 text-lg">
-            <Link
-              to="/cart"
-              className="font-bold underline decoration-white/60 underline-offset-4"
-            >
-              עגלת קניות
-            </Link>
-            <span className="opacity-70">←</span>
-            <Link to="/checkout" className="opacity-90 hover:opacity-100">
-              לקופה
-            </Link>
-            <span className="opacity-70">←</span>
-            <Link to="/order/success" className="opacity-90 hover:opacity-100">
-              ההזמנה הושלמה
-            </Link>
-          </nav>
-        </div>
-      </div>
-
+      
       {/* אזור התוכן */}
       <div className="mx-auto max-w-7xl px-4 py-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -130,9 +163,35 @@ const shipping = (subtotal - discount <= 0 || subtotal - discount >= 300) ? 0 : 
               </div>
               <div className="mt-4 border-t-4 border-dashed border-[#0E3556]" />
             </div>
+            {rawItems.length > 0 && (
+            <div className="flex items-center mb-2">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={toggleSelectAll}
+                className="w-5 h-5 cursor-pointer ml-2"
+              />
+              <span className="text-sm font-medium">לבחור הכל</span>
+            </div>)}
+
 
             {/* כאן מחליפים את הרשימה הישנה */}
-            <CartItemsTable itemComponent={CartRow}/>
+            {/* <CartItemsTable itemComponent={SelectableCartRow} /> */}
+            {!rawItems.length ? (
+              <div className="rounded-xl border bg-white p-6 text-center text-gray-500">
+                העגלה ריקה
+              </div>
+            ) : (
+              <div className="rounded-xl border bg-white shadow-sm overflow-y-auto">
+                {rawItems.map((item) => (
+                  <SelectableCartRow key={getKey(item)} item={item} />
+                ))}
+              </div>
+            )}
+
+
+
+
 
             {/* קופון */}
             <div className="mt-4 flex gap-2 max-w-sm">

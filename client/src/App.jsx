@@ -28,19 +28,22 @@ import PrivacyPolicy from './components/footer/info/PrivacyPolicy';
 import WarrantyPolicy from './components/footer/info/WarrantyPolicy';
 import ShippingPolicy from './components/footer/info/ShippingPolicy';
 import ReturnsPolicy from './components/footer/info/ReturnsPolicy';
-import CategorySidebarMenu from "./components/CategoryMenu";
+import CategorySidebarMenu from "./components/Categories/CategoryMenu.jsx";
 import axios from "axios";
-import { useDispatch,useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setUser, clearUser } from "./redux/slices/userSlice";
 import LogoutButton from './components/authentication/LogoutButton';
 import { loadCart } from "./redux/thunks/cartThunks.js";
 import CartPage from "./components/TopNav/cart/CartPage .jsx"
 import CartCheckout from "./components/TopNav/cart/CartCheckout.jsx";
 import FavoritesList from "./components/TopNav/favorites/FavoritesList.jsx"
+import CategoryManagementPage from "./components/Categories/CategoryManagementPage.jsx"
+import CartLayout from "./components/TopNav/cart/CartLayout.jsx";
+import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
 
 function App() {
 
-    const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const checkLoggedInUser = async () => {
@@ -48,7 +51,7 @@ function App() {
         const res = await axios.get("http://localhost:8080/entrance/me", {
           withCredentials: true,
         });
-        console.log("🤣",res.data)
+        console.log("🤣", res.data)
         dispatch(setUser(res.data.user));
       } catch (err) {
         dispatch(clearUser());
@@ -59,7 +62,7 @@ function App() {
   }, []);
 
   const user = useSelector((state) => state.user?.user);
-   useEffect(() => {
+  useEffect(() => {
     if (user) {
       console.log("🔄 טוען עגלה ממונגו אחרי ריפרוש...");
       dispatch(loadCart());
@@ -68,18 +71,23 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <Toaster position="top-center" reverseOrder={false} />
-       
+
       <CategorySidebarMenu></CategorySidebarMenu>
 
       <TopBar />
       <MainNav />
-      
+
       <main className="flex-grow">
         <Routes>
           <Route path="/products" element={<ProductsList />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CartCheckout />} />
           <Route path="/favorites" element={<FavoritesList />} />
+          <Route path="/categories/manage" element={<CategoryManagementPage />} />
+          {/* Layout מיוחד לזרימת הקניות */}
+          <Route element={<CartLayout />}>
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<CartCheckout />} />
+            <Route path="/order/success" element={<OrderSuccessPage />} />
+          </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/about" element={<About />} />

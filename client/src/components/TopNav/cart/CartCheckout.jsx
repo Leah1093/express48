@@ -3,24 +3,6 @@ import React from "react";
 export default function CartCheckout() {
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50">
-      {/* סרגל עליון + ניווט עוגיות */}
-      <header className="bg-[#0f2a44] text-white">
-        <div className="mx-auto max-w-7xl px-4 py-4">
-          <nav className="flex items-center gap-3 text-sm">
-            <a href="#" className="opacity-90 hover:opacity-100">
-              עגלת קניות
-            </a>
-            <span className="opacity-70">/</span>
-            <span className="font-semibold underline decoration-2 underline-offset-4">
-              קופה
-            </span>
-            <span className="opacity-70">/</span>
-            <a href="#" className="opacity-90 hover:opacity-100">
-              הזמנת תשלום
-            </a>
-          </nav>
-        </div>
-      </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
