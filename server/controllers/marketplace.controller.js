@@ -57,6 +57,7 @@ export default class MarketplaceController {
         page: Number(page) || 1,
         limit: Number(limit) || 20
       });
+      console.log('data', data)
       res.status(200).json({ success: true, ...data });
     } catch (err) { next(err); }
   };

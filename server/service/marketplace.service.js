@@ -101,6 +101,7 @@ export class MarketplaceService {
       Seller.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
       Seller.countDocuments(filter),
     ]);
+    console.log("items",items)
     return { items, total, page, limit };
   }
 
@@ -118,7 +119,7 @@ export class MarketplaceService {
         await sendSellerRequestStatusEmail(seller.userId, { status, reason: note, dashboardLink });
       } catch (e) { console.warn("sendSellerRequestStatusEmail failed:", e.message); }
     })();
-console.log("hi")
+    console.log("hi")
     if (status === "approved") {
       const user = await User.findById(seller.userId);
       if (user && user.role !== "seller") {

@@ -24,6 +24,12 @@ import './config/googleOAuth.config.js'
 import { marketplaceRouter } from "./router/marketplace.router.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+import './config/googleOAuthConfig.js';
+import { favoritesRouter } from "./router/favoritesRoutes.js";
+import path from "path";
+import categoryRoutes from "./router/categoryRoutes.js"
+
 const app = express();
 
 // Middlewares
@@ -61,6 +67,11 @@ app.use(errorHandler);
 
 app.use('/cart', cartRouter);
 app.use('/products', productRoutes);
+app.use("/favorites", favoritesRouter);
+app.use("/categories", categoryRoutes);
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
+app.use(errorHandler);
 
 app.listen(process.env.PORT, () => {
   console.log(`start server port: ${process.env.PORT}`);
