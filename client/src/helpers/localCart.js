@@ -9,7 +9,6 @@ export const getLocalCart = () => {
   }
 };
 
-
 export const saveLocalCart = (cart) => {
   localStorage.setItem('cart', JSON.stringify(cart));
 };

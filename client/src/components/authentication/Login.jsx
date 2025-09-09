@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../redux/slices/userSlice";
@@ -11,6 +11,10 @@ import { getLocalCart } from "../../helpers/localCart";
 import { favoritesApi } from "../../redux/api/favoritesApi";
 import { clearGuests } from "../../redux/slices/guestFavoritesSlice";
 import { mergeGuestFavoritesIfAny } from "../../helpers/mergeGuestFavorites";
+import useRedirectAfterLogin from "./RedirectAfterLogin";
+import useMergeCartAfterLogin from "./useMergeCartAfterLogin.js";
+
+
 
 import GoogleLoginButton from "./GoogleLoginButton";
 
@@ -21,7 +25,10 @@ const schema = z.object({
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
+  const redirectAfterLogin = useRedirectAfterLogin();
+   const mergeCartAfterLogin = useMergeCartAfterLogin();
 
   const {
     register,
@@ -40,46 +47,59 @@ const Login = () => {
       });
 
       dispatch(setUser(res.data.user));
+       await mergeCartAfterLogin(res.data.user._id);
 
       // מיזוג עגלת אורח אם קיימת
-      const localCart = getLocalCart();
-      console.log("📦 localCart:", localCart);
-      if (localCart.length > 0) {
-        const itemsToMerge = localCart.map((item) => ({
-          productId: item.product?._id || item.productId,
-          quantity: item.quantity,
-        }));
-        console.log("🚀 מנסה למזג עגלה...");
+      // const localCart = getLocalCart();
+      // console.log("📦 localCart:", localCart);
+      // if (localCart.length > 0) {
+      //   const itemsToMerge = localCart.map((item) => ({
+      //     productId: item.product?._id || item.productId,
+      //     quantity: item.quantity,
+      //     selected: item.selected,
+      //   }));
+      //   console.log("🚀 מנסה למזג עגלה...");
 
-        const result = await dispatch(mergeCartThunk({
-          userId: res.data.user._id,
-          guestCart: itemsToMerge,
-        }));
+      //   const result = await dispatch(mergeCartThunk({
+      //     userId: res.data.user._id,
+      //     guestCart: itemsToMerge,
+      //   }));
 
-        console.log("🛒 עגלה מוזגת מהשרת:", result.payload);
+      //   console.log("🛒 עגלה מוזגת מהשרת:", result.payload);
 
-        await dispatch(loadCart());
-      } else {
-        // אין עגלת אורח → פשוט טוענים את העגלה מהשרת
-        console.log("📭 אין עגלת אורח, טוען עגלה ממונגו...");
-        await dispatch(loadCart());
-      }
+      //   await dispatch(loadCart());
+      // } else {
+      //   // אין עגלת אורח → פשוט טוענים את העגלה מהשרת
+      //   console.log("📭 אין עגלת אורח, טוען עגלה ממונגו...");
+      //   await dispatch(loadCart());
+      // }
 
-      // 1) מיזוג מועדפים של אורח לשרת
-      await mergeGuestFavoritesIfAny();          // ← אם יצרת את הפונקציה helper
+      // // 1) מיזוג מועדפים של אורח לשרת
+      // await mergeGuestFavoritesIfAny();          // ← אם יצרת את הפונקציה helper
 
-      // 2) נקה סטייט של אורחים ב-Redux (שלא יישאר כפול)
-      dispatch(clearGuests());
+      // // 2) נקה סטייט של אורחים ב-Redux (שלא יישאר כפול)
+      // dispatch(clearGuests());
 
-      // 3) רענון רשימת המועדפים מהשרת (RTK Query)
-      dispatch(favoritesApi.util.invalidateTags?.(["Favorites"]));
-      // או:
-      // await dispatch(favoritesApi.endpoints.listFavorites.initiate(undefined, { forceRefetch: true }));
+      // // 3) רענון רשימת המועדפים מהשרת (RTK Query)
+      // dispatch(favoritesApi.util.invalidateTags?.(["Favorites"]));
+      // // או:
+      // // await dispatch(favoritesApi.endpoints.listFavorites.initiate(undefined, { forceRefetch: true }));
 
 
       toast.success("התחברת בהצלחה");
       reset();
-      navigate("/");
+
+      // אחרי login מוצלח
+      if (location.state?.from === "/checkout") {
+        // אם הגיע מהקופה → נבדוק כתובות
+        // await redirectAfterLogin();
+         navigate("/cart");
+      } else {
+        // אחרת → פשוט לדף הבית
+        navigate("/");
+      }
+
+
 
     } catch (err) {
       const message = err.response?.data?.message;

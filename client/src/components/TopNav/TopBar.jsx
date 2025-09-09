@@ -7,11 +7,23 @@ import React, { useState } from "react";
 import CartDrawer from "./cart/CartDrawer";
 import { Link } from "react-router-dom";
 import { Shuffle, ShoppingCart, Heart, User } from "lucide-react";
+import { useSelector } from "react-redux";
 
 
 
 function TopBar() {
   const [cartOpen, setCartOpen] = useState(false);
+  // ניגשים לפריטים בעגלה מתוך Redux
+  const cartItems = useSelector((state) => state.cart);
+  const cartItemsGuest = useSelector((state) => state.guestCart)
+  const user = useSelector((state) => state.user.user);
+  const itemsToUse = user ? cartItems : cartItemsGuest;
+  const guestFavorites = useSelector((state) =>state.guestFavorites)
+ 
+
+  // סופרים את כל הכמויות
+  const totalQuantity = itemsToUse.length;
+ 
   return (
     <>
       <header className=" fixed top-0 left-0 z-[9999] bg-[#122947] w-[calc(100%-64px)] mr-16">
@@ -20,8 +32,13 @@ function TopBar() {
           <div className="flex items-center gap-4">
             <Shuffle className="w-6 h-6 text-white" />
 
-            <div onClick={() => setCartOpen(true)}>
+            <div className="relative cursor-pointer" onClick={() => setCartOpen(true)}>
               <ShoppingCart className="w-6 h-6 text-white" />
+              {totalQuantity > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                  {totalQuantity}
+                </span>
+              )}
             </div>
 
             <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />

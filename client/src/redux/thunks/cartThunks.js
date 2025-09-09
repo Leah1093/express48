@@ -1,6 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import * as api from '../cartAPI';
 import { mergeCartService } from "../../services/cartService";
+import axios from 'axios';
 
 
 export const loadCart = createAsyncThunk('cart/', async () => {
@@ -65,3 +66,36 @@ export const mergeCartThunk = createAsyncThunk(
     }
   }
 );
+
+export const toggleItemSelectedThunk = createAsyncThunk(
+  "cart/toggleItemSelected",
+  async ({ itemId, selected }, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch(
+        `http://localhost:8080/cart/item/${itemId}/selected`,
+        { selected },
+        { withCredentials: true }
+      );
+        console.log("✅ Response מהשרת:", res.data);
+      return res.data.items;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+export const toggleSelectAllThunk = createAsyncThunk(
+  "cart/toggleSelectAll",
+  async (selected, { rejectWithValue }) => {
+    try {
+      const res = await axios.patch(
+        `http://localhost:8080/cart/select-all`,
+        { selected },
+        { withCredentials: true }
+      );
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+

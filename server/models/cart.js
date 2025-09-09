@@ -15,7 +15,10 @@ const cartItemSchema = new mongoose.Schema({
   unitPrice: { 
     type: Number, 
     required: true 
-  } // חדש
+  }, // חדש
+  selected: { 
+    type: Boolean, 
+    default: false } // חדש: נבחר לתשלום או לא
   
 });
 

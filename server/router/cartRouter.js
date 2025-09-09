@@ -6,7 +6,9 @@ import {
   clearCart,
   removeProductCompletely,
   mergeLocalCart,
-  updateItemQuantity
+  updateItemQuantity,
+  toggleSelected,
+  toggleSelecteAll
 } from '../controllers/cartController.js';
 import { authCookieMiddleware } from "../middlewares/authCookie.middleware.js";
 
@@ -19,6 +21,10 @@ router.delete('/clear', authCookieMiddleware, clearCart);
 router.delete('/remove-completely', authCookieMiddleware, removeProductCompletely);
 router.post('/merge',authCookieMiddleware, mergeLocalCart);
 router.put("/update-quantity", authCookieMiddleware, updateItemQuantity);
+// ✅ נתיב לסימון פריט כ־selected
+router.patch("/item/:itemId/selected",authCookieMiddleware, toggleSelected);
+router.patch("/select-all",authCookieMiddleware,toggleSelecteAll);
+
 
 
 export default router;

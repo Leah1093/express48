@@ -50,12 +50,13 @@ import StorePage from './components/store/StorePage';
 import { useDispatch, useSelector } from "react-redux";
 import { setUser, clearUser } from "./redux/slices/userSlice";
 import { loadCart } from "./redux/thunks/cartThunks.js";
-import CartPage from "./components/TopNav/cart/CartPage .jsx"
+import CartPage from "./components/TopNav/cart/CartPage.jsx"
 import CartCheckout from "./components/TopNav/cart/CartCheckout.jsx";
 import FavoritesList from "./components/TopNav/favorites/FavoritesList.jsx"
 import CategoryManagementPage from "./components/Categories/CategoryManagementPage.jsx"
 import CartLayout from "./components/TopNav/cart/CartLayout.jsx";
 import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
+import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx"
 
 function App() {
 
@@ -88,7 +89,11 @@ function App() {
   }, [user, dispatch]);
   return (
     <div className="min-h-screen flex flex-col">
-      <Toaster position="top-center" reverseOrder={false} />
+      <Toaster position="top-center" toastOptions={{
+        style: {
+          marginTop: "70px", // מרווח כדי לא להיתקע מתחת ל־NavBar
+        },
+      }} reverseOrder={false} />
 
       <CategorySidebarMenu></CategorySidebarMenu>
 
@@ -104,7 +109,8 @@ function App() {
           <Route element={<CartLayout />}>
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CartCheckout />} />
-            <Route path="/order/success" element={<OrderSuccessPage />} />
+            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/order/success/:id" element={<OrderSuccessPage />} />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

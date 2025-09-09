@@ -29,6 +29,18 @@ export default function CartNav() {
           </NavLink>
           <span className="opacity-70">←</span>
           <NavLink
+            to="/payment"
+            className={({ isActive }) =>
+              isActive
+                ? "font-bold underline decoration-white/60 underline-offset-4"
+                : "opacity-90 hover:opacity-100"
+            }
+          >
+            עמוד תשלום
+          </NavLink>
+          <span className="opacity-70">←</span>
+
+          <NavLink
             to="/order/success"
             className={({ isActive }) =>
               isActive

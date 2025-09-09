@@ -9,5 +9,11 @@ const userSchema = new mongoose.Schema({
   roles: [{ type: String, enum: ["user", "seller", "admin"] }],
 
 }, { timestamps: true });
+// ✨ שדה וירטואלי לכתובות
+userSchema.virtual("addresses", {
+  ref: "Address",
+  localField: "_id",
+  foreignField: "userId"
+});
 
 export const User = mongoose.model('User', userSchema);

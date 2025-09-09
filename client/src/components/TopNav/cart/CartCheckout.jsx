@@ -1,6 +1,19 @@
 import React from "react";
+import AddressForm from "./AddressForm"
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { fetchAddresses } from "../../../redux/thunks/addressThunks";
+
+const handleAddressSaved = (newAddress) => 
+  { console.log("הכתובת נשמרה:", newAddress); 
+    // אפשר לשמור ב־Redux, או לטעון מחדש את הכתובות };
+  }
 
 export default function CartCheckout() {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(fetchAddresses()); // מושך את הכתובות מהשרת ושומר ב־Redux
+  }, [dispatch]);
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50">
 
@@ -33,143 +46,7 @@ export default function CartCheckout() {
             </div>
 
             {/* כרטיס פרטי חיוב */}
-            <div className="rounded-xl bg-white p-6 shadow-sm">
-              <h2 className="mb-5 text-xl font-semibold">פרטי חיוב</h2>
-
-              <form className="space-y-4">
-                {/* שם פרטי + שם משפחה */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="flex flex-col">
-                    <label className="mb-1 text-sm font-medium">
-                      שם פרטי <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      autoComplete="given-name"
-                      className="h-11 rounded-lg border border-gray-300 bg-white px-3 text-right outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                      placeholder=""
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col">
-                    <label className="mb-1 text-sm font-medium">
-                      שם משפחה <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      autoComplete="family-name"
-                      className="h-11 rounded-lg border border-gray-300 bg-white px-3 text-right outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                      placeholder=""
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* מדינה / אזור */}
-                <div className="flex flex-col">
-                  <label className="mb-1 text-sm font-medium">
-                    מדינה / אזור <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    className="h-11 rounded-lg border border-gray-300 bg-white px-3 text-right outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    defaultValue="ישראל"
-                    required
-                  >
-                    <option>ישראל</option>
-                    <option>United States</option>
-                    <option>United Kingdom</option>
-                    <option>Other</option>
-                  </select>
-                </div>
-
-                {/* כתובת רחוב */}
-                <div className="flex flex-col">
-                  <label className="mb-1 text-sm font-medium">
-                    כתובת רחוב <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    autoComplete="address-line1"
-                    className="h-11 rounded-lg border border-gray-300 bg-white px-3 text-right outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    placeholder="מספר בית ושם רחוב"
-                    required
-                  />
-                  <input
-                    type="text"
-                    autoComplete="address-line2"
-                    className="mt-2 h-11 rounded-lg border border-gray-300 bg-white px-3 text-right outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    placeholder="דירה, סוויטה, יחידה (אופציונלי)"
-                  />
-                </div>
-
-                {/* עיר */}
-                <div className="flex flex-col">
-                  <label className="mb-1 text-sm font-medium">
-                    עיר <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    autoComplete="address-level2"
-                    className="h-11 rounded-lg border border-gray-300 bg-white px-3 text-right outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    required
-                  />
-                </div>
-
-                {/* מיקוד / תא דואר */}
-                <div className="flex flex-col">
-                  <label className="mb-1 text-sm font-medium">
-                    מיקוד / תא דואר <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="postal-code"
-                    className="h-11 rounded-lg border border-gray-300 bg-white px-3 text-right outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    required
-                  />
-                </div>
-
-                {/* טלפון (אופציונלי) */}
-                <div className="flex flex-col">
-                  <label className="mb-1 text-sm font-medium">
-                    טלפון (אופציונלי)
-                  </label>
-                  <input
-                    type="tel"
-                    inputMode="tel"
-                    autoComplete="tel"
-                    className="h-11 rounded-lg border border-gray-300 bg-white px-3 text-right outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    placeholder=""
-                  />
-                </div>
-
-                {/* כתובת אימייל */}
-                <div className="flex flex-col">
-                  <label className="mb-1 text-sm font-medium">
-                    כתובת אימייל <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    autoComplete="email"
-                    className="h-11 rounded-lg border border-gray-300 bg-white px-3 text-right outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    required
-                  />
-                </div>
-
-                {/* הערות להזמנה (אופציונלי) */}
-                <div className="flex flex-col">
-                  <label className="mb-1 text-sm font-medium">
-                    הערות להזמנה (אופציונלי)
-                  </label>
-                  <textarea
-                    rows={5}
-                    className="rounded-lg border border-gray-300 bg-white p-3 text-right outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    placeholder="הערות על ההזמנה, לדוגמה, הערות מיוחדות למסירה."
-                  />
-                </div>
-              </form>
-            </div>
+            <AddressForm onSuccess={handleAddressSaved}></AddressForm>
           </section>
 
           {/* עמודת שמאל – אפשר לשלב כאן “הזמנה שלך” (רשימת פריטים/סיכום) בעתיד */}

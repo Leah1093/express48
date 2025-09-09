@@ -8,7 +8,8 @@ export const mergeCartService = async (userId, guestCart) => {
       item.product?._id ||
       item.product?.id ||
       item.productId, // ברירת מחדל
-    quantity: item.quantity
+    quantity: item.quantity,
+    selected: item.selected || false,
   }));
 
 

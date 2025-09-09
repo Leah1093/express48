@@ -180,7 +180,7 @@ export class CartService {
 
   // נרמול קלט
   const normalized = (Array.isArray(localItems) ? localItems : [])
-    .map(it => ({ productId: toIdStr(it.productId), quantity: Number(it.quantity ?? 1) }))
+    .map(it => ({ productId: toIdStr(it.productId), quantity: Number(it.quantity ?? 1),  selected: Boolean(it.selected) }))
     .filter(it => it.productId && it.quantity > 0);
 
   // באצ' מחירים מראש (יעיל ומהיר)
@@ -193,7 +193,7 @@ export class CartService {
     const itemsWithPrice = normalized.map(it => {
       const price = priceMap[it.productId];
       if (price == null) throw new Error(`Product not found: ${it.productId}`);
-      return { productId: it.productId, quantity: it.quantity, unitPrice: price };
+      return { productId: it.productId, quantity: it.quantity, unitPrice: price,selected: it.selected ?? false };
     });
 
     cart = new Cart({ userId, items: itemsWithPrice });
@@ -211,10 +211,12 @@ export class CartService {
         existing.unitPrice = price;
       }
       existing.quantity += it.quantity;
+      // עדכון מצב בחירה (שומר TRUE אם אחד מהם נבחר)
+      if (it.selected) existing.selected = true;
     } else {
       const price = priceMap[it.productId];
       if (price == null) throw new Error(`Product not found: ${it.productId}`);
-      cart.items.push({ productId: it.productId, quantity: it.quantity, unitPrice: price });
+      cart.items.push({ productId: it.productId, quantity: it.quantity, unitPrice: price,selected: it.selected ?? false });
     }
   }
 
@@ -236,4 +238,34 @@ export class CartService {
 
     return cart;
   }
+
+  async toggleItemSelected(userId, itemId, selected) {
+    console.log("👉 מה התקבל:", itemId, selected);
+
+    const cart = await Cart.findOneAndUpdate(
+      { userId: userId, "items._id": itemId },
+      { $set: { "items.$.selected": selected } },
+      { new: true }
+    ).populate("items.productId");
+    if (!cart) {
+    throw new Error("Cart not found or item not found");
+  }else{
+    console.log("cart", cart);
+  }
+
+
+    return cart;
+  }
+
+
+async toggleSelectAll(userId, selected) {
+  const cart = await Cart.findOneAndUpdate(
+    { userId },
+    { $set: { "items.$[].selected": selected } }, // מעדכן את כולם בבת אחת
+    { new: true }
+  ).populate("items.productId");
+
+  return cart;
+}
+
 }

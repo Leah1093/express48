@@ -27,6 +27,8 @@ const __dirname = path.dirname(__filename);
 
 import { favoritesRouter } from "./router/favoritesRoutes.js";
 import categoryRoutes from "./router/categoryRoutes.js"
+import addressRoutes from "./router/addressRoutes.js"
+import orderRoutes from "./router/orderRoutes.js";
 
 const app = express();
 
@@ -68,6 +70,8 @@ app.use('/products', productRoutes);
 app.use("/favorites", favoritesRouter);
 app.use("/categories", categoryRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/addresses", addressRoutes);
+app.use("/orders", orderRoutes);
 
 app.use(errorHandler);
 

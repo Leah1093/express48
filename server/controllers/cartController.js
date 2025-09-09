@@ -76,3 +76,27 @@ export const updateItemQuantity = async (req, res) => {
   }
 };
 
+export const toggleSelected = async (req, res, next) => {
+    try {
+      const { itemId } = req.params;
+      const { selected } = req.body; // true/false
+      const cart = await cartService.toggleItemSelected(req.user.userId, itemId, selected);
+      res.json(cart);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  export const toggleSelecteAll = async (req, res, next) => {
+    try {
+      const { selected } = req.body; // true/false
+      const cart = await cartService.toggleSelectAll(req.user.userId, selected);
+      res.json(cart);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+
+
+
