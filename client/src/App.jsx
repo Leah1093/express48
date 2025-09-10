@@ -59,6 +59,7 @@ import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
 import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx";
 import CouponForm from "./components/seller/Coupons.jsx";
 
+
 function App() {
 
   const dispatch = useDispatch();
@@ -103,7 +104,8 @@ function App() {
 
       <main className="flex-grow">
         <Routes>
-          <Route path="/products" element={<ProductsList />} />
+          <Route path="products" element={<ProductsList />} />
+          <Route path="products/:storeSlug/:productSlug" element={<ProductPage/>} />
           <Route path="/favorites" element={<FavoritesList />} />
           <Route path="/categories/manage" element={<CategoryManagementPage />} />
           {/* Layout מיוחד לזרימת הקניות */}
