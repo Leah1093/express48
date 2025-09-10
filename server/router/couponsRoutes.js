@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { CouponController } from "../controllers/couponController.js";
-import { authCookieMiddleware } from "../middlewares/authCookieMiddleware.js";
+import { couponController } from "../controllers/couponController.js";
+import { authCookieMiddleware } from "../middlewares/authCookie.middleware.js";
 
 const router = Router();
 
-router.post("/", authCookieMiddleware, CouponController.create); // יצירת קופון
-router.post("/validate", authCookieMiddleware, CouponController.validate); // בדיקת קופון
-router.post("/apply", authCookieMiddleware, CouponController.apply); // סימון שימוש
+router.post("/", authCookieMiddleware, couponController.create); // יצירת קופון
+router.post("/validate", authCookieMiddleware, couponController.validate); // בדיקת קופון
+router.post("/apply", authCookieMiddleware, couponController.apply); // סימון שימוש
 
 export default router;

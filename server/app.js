@@ -29,6 +29,7 @@ import { favoritesRouter } from "./router/favoritesRoutes.js";
 import categoryRoutes from "./router/categoryRoutes.js"
 import addressRoutes from "./router/addressRoutes.js"
 import orderRoutes from "./router/orderRoutes.js";
+import couponsRoutes from "./router/couponsRoutes.js";
 
 const app = express();
 
@@ -72,6 +73,7 @@ app.use("/categories", categoryRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/addresses", addressRoutes);
 app.use("/orders", orderRoutes);
+app.use("/coupons",couponsRoutes);
 
 app.use(errorHandler);
 

@@ -11,6 +11,13 @@ const couponSchema = new mongoose.Schema(
     minOrderAmount: { type: Number, default: 0 }, // מינימום הזמנה
     allowedSellers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Seller" }], // הגבלה לפי מוכרים
     allowedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], // קופונים ללקוחות ספציפיים
+    restrictionType: {
+      type: String,
+      enum: ["none", "specificUsers", "birthday", "abandonedCart"],
+      default: "none",
+    },
+    allowedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+
     usedBy: [
       {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

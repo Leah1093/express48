@@ -56,7 +56,8 @@ import FavoritesList from "./components/TopNav/favorites/FavoritesList.jsx"
 import CategoryManagementPage from "./components/Categories/CategoryManagementPage.jsx"
 import CartLayout from "./components/TopNav/cart/CartLayout.jsx";
 import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
-import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx"
+import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx";
+import CouponForm from "./components/seller/Coupons.jsx";
 
 function App() {
 
@@ -158,6 +159,7 @@ function App() {
             <Route path="orders" element={<OrdersSeller />} />
             <Route path="reviews" element={<Reviews />} />
             <Route path="reports" element={<Reports />} />
+             <Route path="coupons" element={<CouponForm />} />
           </Route>
           <Route path="/store/:slug" element={<StorePage />}>
             {/* <Route index element={<StoreProducts />} /> */}
