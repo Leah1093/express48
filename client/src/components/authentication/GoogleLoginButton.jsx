@@ -6,8 +6,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { setUser } from "../../redux/slices/userSlice";
 import { useGoogleLoginMutation } from "../../redux/services/authApi";
 // עדכני את הנתיב לפי הפרויקט שלך
-import { useMergeCartAfterLogin } from "../../hooks/useMergeCartAfterLogin";
 
+import useMergeCartAfterLogin from "./useMergeCartAfterLogin";
 function GoogleLoginButton() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
