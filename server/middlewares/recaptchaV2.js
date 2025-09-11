@@ -2,7 +2,7 @@ import { verifyRecaptchaV2 } from '../utils/verifyRecaptchaV2.js';
 export const recaptchaV2Middleware = async (req, res, next) => {
   try {
     const token = req.body.recaptchaToken;
-    console.log("recaptchaV2Middleware")
+    console.log("recaptchaV2Middleware",token)
     if (!token) {
           console.log("חסר טוקן אימות reCAPTCHA")
 

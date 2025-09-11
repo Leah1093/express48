@@ -1,135 +1,137 @@
-// validation/productSchemas.js
+// validations/productSchema.js
 import { z } from "zod";
 
-/* ------------ Helpers ------------ */
-const objectId = z.string().regex(/^[a-f\d]{24}$/i, "Invalid id");
-const money = z.coerce.number().min(0, "Must be ≥ 0");     // תומך גם במחרוזות מספריות
-const intNonNeg = z.coerce.number().int().min(0);
+// עזר: מוודא מספר שלם ותמיד לא שלילי
+const nonNegativeInt = z.number()
+  .int("חייב להיות מספר שלם")
+  .nonnegative("לא יכול להיות שלילי");
 
-/* ------------ Sub-schemas ------------ */
-const imageSchema = z.object({
-  url: z.string().url(),
-  alt: z.string().optional().default(""),
-  isPrimary: z.boolean().optional().default(false),
+// עזר: כתובות URL לתמונות
+const urlStr = z.string().url("כתובת אינה תקינה");
+
+// וריאציה בודדת
+const variationSchema = z.object({
+  sku: z.string().trim().min(1, "SKU של וריאציה אינו יכול להיות ריק").optional(),
+  attributes: z.object({
+    color: z.string().trim().optional(),
+    size: z.string().trim().optional(),
+    storage: z.string().trim().optional(),
+  }).partial().default({}),
+  price: z.object({
+    currency: z.string().trim().default("ILS"),
+    amount: z.number({ required_error: "מחיר וריאציה חובה" })
+      .positive("מחיר וריאציה חייב להיות חיובי"),
+  }),
+  stock: z.number().int().min(0).default(0),
+  images: z.array(urlStr).default([]),
 });
 
-const variantSchema = z.object({
+// הנחה
+const discountSchema = z.object({
+  discountType: z.enum(["percent", "fixed"], { required_error: "סוג הנחה חובה" }),
+  discountValue: z.number({ required_error: "ערך הנחה חובה" })
+    .positive("ערך הנחה חייב להיות חיובי"),
+  expiresAt: z.coerce.date().optional(),
+}).partial().refine(
+  d => !d.discountType || d.discountValue !== undefined,
+  { message: "כשיש סוג הנחה חייבים לספק ערך", path: ["discountValue"] }
+);
+
+// סקירה
+const overviewSchema = z.object({
+  text: z.string().optional(),
+  images: z.array(urlStr).optional().default([]),
+  videos: z.array(urlStr).optional().default([]),
+}).partial().default({});
+
+// שילוח והובלה
+const shippingSchema = z.object({
+  dimensions: z.string().optional().default(""),
+  weight: z.string().optional().default(""),
+  from: z.string().optional().default("IL"),
+}).partial().default({});
+
+const deliverySchema = z.object({
+  requiresDelivery: z.boolean().optional().default(false),
+  cost: z.number().min(0, "עלות משלוח לא יכולה להיות שלילית").optional().default(0),
+  notes: z.string().optional().default(""),
+}).partial().default({});
+
+// סכימת יצירת מוצר
+export const createProductSchema = z.object({
+  // זיהוי לפי ספק/מוכר/חנות
+  supplier: z.string().trim().optional(),
+  sellerId: z.string().trim().optional(),
+  storeId: z.string().trim().optional(),
+
+  // מידע כללי
+  title: z.string({ required_error: "שם מוצר חובה" })
+    .trim().min(2, "שם מוצר קצר מדי"),
+  titleEn: z.string().trim().optional().default(""),
+  description: z.string().optional().default(""),
+  brand: z.string().trim().optional().default(""),
+  category: z.string().trim().optional().default("אחר"),
+  subCategory: z.string().trim().optional().default(""),
+  overview: overviewSchema,
+
+  gtin: z.string().trim().optional().default(""),
   sku: z.string().trim().optional(),
-  barcode: z.string().trim().optional(),
-  price: money,
-  stock: intNonNeg.default(0),
-  attributes: z.record(z.string()).optional(), // למשל {color:'red', size:'M'}
-});
+  model: z.string().trim().optional().default(""),
 
-/* ------------ Create / Update ------------ */
-export const createProductSchema = z
-  .object({
-    title: z.string().min(2).max(180),
-    description: z.string().optional().default(""),
-
-    sku: z.string().optional(),
-    barcode: z.string().optional(),
-
-    price: money,
-    compareAtPrice: money.optional(),
-    currency: z.string().length(3).optional().default("ILS"),
-
-    stock: intNonNeg.optional().default(0),
-
-    categoryId: z.string().optional(),
-    attributes: z.record(z.string()).optional(),
-    variants: z.array(variantSchema).optional().default([]),
-    images: z.array(imageSchema).optional().default([]),
-
-    dimensions: z
-      .object({
-        length: money.optional(),
-        width: money.optional(),
-        height: money.optional(),
-      })
-      .optional(),
-    weight: money.optional(),
-
-    seo: z
-      .object({
-        title: z.string().max(180).optional(),
-        description: z.string().max(300).optional(),
-      })
-      .optional(),
-  })
-  .superRefine((val, ctx) => {
-    if (val.compareAtPrice != null && val.compareAtPrice < val.price) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["compareAtPrice"],
-        message: "compareAtPrice must be ≥ price",
-      });
-    }
-  });
-
-export const updateProductSchema = createProductSchema
-  .partial()
-  .extend({
-    status: z.enum(["draft", "pending", "published", "hidden", "archived"]).optional(),
-  })
-  .superRefine((val, ctx) => {
-    if (val.price != null && val.compareAtPrice != null && val.compareAtPrice < val.price) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["compareAtPrice"],
-        message: "compareAtPrice must be ≥ price",
-      });
-    }
-  });
-
-/* ------------ List (Seller) ------------ */
-export const listQuerySchema = z.object({
-  q: z.string().optional(),
-  status: z.enum(["draft", "pending", "published", "hidden", "archived"]).optional(),
-  categoryId: z.string().optional(),
-  page: z.coerce.number().int().min(1).optional().default(1),
-  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
-  sort: z
-    .enum(["createdAt", "-createdAt", "price", "-price", "title", "-title"])
+  // מחיר בסיסי - חובה
+  price: z.object({
+    currency: z.string().trim().default("ILS"),
+    amount: z.number({ required_error: "מחיר מוצר חובה" })
+      .positive("מחיר חייב להיות חיובי"),
+  }),
+  originalPrice: z.number()
+    .positive("מחיר לפני הנחה חייב להיות חיובי")
     .optional()
-    .default("-createdAt"),
-});
+    .refine((v) => v === undefined || Number.isFinite(v), { message: "ערך לא תקין" }),
 
-/* ------------ Params / Minor actions ------------ */
-// :id
-export const idParamsSchema = z.object({ id: objectId });
+  // וריאציות - אופציונלי
+  variations: z.array(variationSchema).optional().default([]),
 
-// :id + :imageKey
-export const imageParamsSchema = z.object({
-  id: objectId,
-  imageKey: z.string().min(1),
-});
+  // מלאי בסיסי - אופציונלי, יחושב גם מהווריאציות בצד המודל
+  stock: z.number().int().min(0).optional().default(0),
 
-// Bulk: { ids:[], action:'hide|archive|delete' }
-export const bulkActionSchema = z.object({
-  ids: z.array(objectId).min(1),
-  action: z.enum(["hide", "archive", "delete"]),
-});
+  // מפרט טכני גמיש - מפת מחרוזות
+  specs: z.record(z.string()).optional().default({}),
 
-// Reorder images: { order:['key1','key2',...] }
-export const orderImagesSchema = z.object({
-  order: z.array(z.string().min(1)).min(1),
-});
+  // מדיה
+  images: z.array(urlStr).optional().default([]),
+  video: urlStr.optional().or(z.string().trim().length(0)).optional(),
 
-/* ------------ Admin ------------ */
-// body: { action, reason? }
-export const adminSetStatusSchema = z.object({
-  action: z.enum(["approve", "reject", "hide", "archive"]),
-  reason: z.string().max(300).optional(), // אפשר להקשיח ל-required כשaction='reject'
-});
+  // סטטוס ונראות
+  status: z.enum(["draft", "published", "suspended"]).optional().default("draft"),
+  visibility: z.enum(["public", "private", "restricted"]).optional().default("public"),
+  scheduledAt: z.coerce.date().optional(),
+  visibleUntil: z.coerce.date().optional(),
 
-// params: /admin/products/:id/status
-export const adminIdParamsSchema = z.object({ id: objectId });
+  // הנחה
+  discount: discountSchema.optional(),
 
-/* ------------ (אופציונלי) Storefront Public ------------ */
-// אם תרצה לאחד גם לחנות הציבורית במקום קובץ נפרד:
-export const listPublicSchema = z.object({
-  q: z.string().optional(),
-  page: z.coerce.number().int().min(1).optional().default(1),
-  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+  // אחריות
+  warranty: z.string().optional().default("12 חודשים אחריות יבואן רשמי"),
+
+  // שילוח
+  shipping: shippingSchema,
+  delivery: deliverySchema,
+
+  // שדות מורשת - אופציונלי
+  legacyPrice: z.number().positive().optional(),
+  image: urlStr.optional().or(z.string().trim().length(0)).optional(),
+})
+.strict() // חוסם שדות לא מוכרים ב־create
+.superRefine((data, ctx) => {
+  // אם יש originalPrice - נוודא שהוא לא קטן מהמחיר הנוכחי
+  if (typeof data.originalPrice === "number" && data.originalPrice < data.price.amount) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["originalPrice"],
+      message: "מחיר לפני הנחה לא יכול להיות נמוך מהמחיר הנוכחי",
+    });
+  }
+  // אם יש וריאציות - נוודא שמחירי הווריאציות חיוביים (כבר נבדק) וש־stock לא שלילי
+  // כבר מכוסה בסכימה של וריאציה.
 });

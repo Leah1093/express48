@@ -1,37 +1,47 @@
-
+// controllers/googleAuth.controller.js
 import { OAuth2Client } from "google-auth-library";
 import { EntranceService } from "../service/entrance.service.js";
+import { loginFlow } from "../service/auth.service.js";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export default class GoogleAuthController {
   async googleLogin(req, res, next) {
-    const entranceService = new EntranceService();
-
     try {
-      const { token } = req.body;
-      if (!token) return res.status(400).json({ message: "Missing token" });
+      const { token } = req.body; // שימי לב לשם השדה מהפרונט
+      if (!token) return res.status(400).json({ message: "Missing idToken" });
 
       const ticket = await client.verifyIdToken({
         idToken: token,
         audience: process.env.GOOGLE_CLIENT_ID,
       });
 
-      const { email, name } = ticket.getPayload();
+      const payload = ticket.getPayload();
+      const email = payload.email;
+      const name = payload.name || email?.split("@")[0];
 
-      const result = await entranceService.findOrCreateGoogleUser({ email, name });
-      res.cookie("token", result.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "Strict",
-        maxAge: 1000 * 60 * 60 * 24,
+      const entranceService = new EntranceService();
+      const { user, sellerId, storeId } = await entranceService.findOrCreateGoogleUser({ email, name, });
+
+      const ua = req.get("user-agent");
+      const ipHash = req.ip; // אם הטמעת hashIp – השתמשי בו כאן
+      await loginFlow({ res, user: { ...user.toObject(), sellerId, storeId }, userAgent: ua, ipHash });
+
+      return res.status(200).json({
+        success: true,
+        message: "Google login success",
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          phone: user.phone || "",
+          role: user.role,
+          roles: user.roles || [],
+          sellerId,
+        },
       });
-
-      res.status(200).json({
-        user: result.user
-      }); 
     } catch (err) {
-      next(err);
+      return next(err);
     }
   }
 }

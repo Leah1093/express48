@@ -20,6 +20,8 @@ import passport from "passport";
 import session from "express-session";
 import { apiLimiter } from "./middlewares/rateLimit.middleware.js";
 import './config/googleOAuth.config.js'
+import productRouter from "./router/product.router.js";
+import {sellerProductsRouter} from "./router/seller.products.router.js";
 // import { sellerProfileRouter } from "./router/sellerProfile.router.js";
 import { marketplaceRouter } from "./router/marketplace.router.js";
 const __filename = fileURLToPath(import.meta.url);
@@ -64,6 +66,9 @@ app.use("/auth", googleAuthRouter);
 app.use("/marketplace", marketplaceRouter)
 app.use("/seller-store", storeRouter)
 app.use("/public/stores", storePublicRouter)
+// app.use("/seller", productRouter)
+
+app.use("/seller/products", sellerProductsRouter)
 app.use(errorHandler);
 
 app.use('/cart', cartRouter);
