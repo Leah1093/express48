@@ -7,10 +7,12 @@ import { uploadStoreMedia, processStoreMedia } from "../middlewares/uploadMedia.
 import { idParamsSchema } from "../validations/seller.schema.js";
 import { updateStoreStatusSchema } from "../validations/store.schema.js";
 import { validate } from "../middlewares/validate.js";
+import { authMiddleware } from "../middlewares/auth.js";
+
 const storeRouter = express.Router();
 const storeController = new StoreController();
 
-storeRouter.get("/me", authCookieMiddleware, requireRoles("seller"), storeController.getMyStore);
+storeRouter.get("/me", authMiddleware, requireRoles("seller"), storeController.getMyStore);
 storeRouter.put("/me", authCookieMiddleware, requireRoles("seller"), storeController.saveMyStore);
 storeRouter.post("/me/media", authCookieMiddleware, requireRoles("seller"), uploadStoreMedia, processStoreMedia, storeController.uploadAllMedia);
 storeRouter.put("/me/slug", authCookieMiddleware, requireRoles("seller"), storeController.updateMySlug);
