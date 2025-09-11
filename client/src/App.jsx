@@ -9,7 +9,7 @@ import Careers from "./components/mainNav/Careers";
 import Coupons from "./components/mainNav/Coupons";
 import Guides from "./components/mainNav/Guides";
 import MainNav from "./components/mainNav/MainNav";
-import AccountDashboard from './components/account/Dashboard';
+import AccountDashboard from './components/account/AccountDashboard';
 import Support from './components/mainNav/Support';
 import Login from './components/authentication/Login';
 import Register from './components/authentication/Register';
@@ -33,7 +33,6 @@ import axios from "axios";
 import SellerDashboard from './components/seller/SellerDashboard';
 import MarketplaceInfo from './components/footer/support/MarketplaceInfo';
 import RoleGate from './components/auth/RoleGate';
-import MarketplaceApplications from './components/admin/MarketplaceApplications';
 import StorefrontList from './components/storefront/StorefrontList';
 import StorefrontProduct from './components/storefront/StorefrontProduct';
 import AdminApplicationsPage from './components/admin/AdminApplicationsPage';
@@ -44,9 +43,6 @@ import Reviews from './components/seller/Reviews';
 import Reports from './components/seller/Reports';
 import OrdersSeller from './components/seller/OrdersSeller';
 import StorePage from './components/store/StorePage';
-// import StoreProducts from './components/store/StoreProducts';
-// import StoreAbout from './components/store/StoreAbout';
-// import StoreReviews from './components/store/StoreReviews';
 import { useDispatch, useSelector } from "react-redux";
 import { setUser, clearUser } from "./redux/slices/userSlice";
 import { loadCart } from "./redux/thunks/cartThunks.js";
@@ -59,6 +55,17 @@ import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
 import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx";
 import CouponForm from "./components/seller/Coupons.jsx";
 
+
+// import ProductCreateForm from './components/seller/products/ProductCreateForm.jsx';
+import ProductCreateForm from './components/ProductCreateForm.jsx';
+import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
+import UnauthorizedPage from './UnauthorizedPage.jsx';
+import Layout from './components/Layout.jsx';
+import ProductForm from './components/seller/products/forms/ProductForm.jsx';
+import SellerProductsPage from './components/seller/SellerProductsPage.jsx';
+import ProductDetailPage from './components/seller/ProductDetailPage.jsx';
+import ProductCreate from './components/seller/products/ProductCreate.jsx';
+import ProductEdit from './components/seller/products/ProductEdit.jsx';
 
 function App() {
 
@@ -97,7 +104,7 @@ function App() {
         },
       }} reverseOrder={false} />
 
-      <CategorySidebarMenu></CategorySidebarMenu>
+      {/* <CategorySidebarMenu></CategorySidebarMenu> */}
 
       <TopBar />
       <MainNav />
@@ -115,6 +122,12 @@ function App() {
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/order/success/:id" element={<OrderSuccessPage />} />
           </Route>
+
+
+          <Route path="/" element={<StorefrontList />} />
+
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/about" element={<About />} />
@@ -124,16 +137,6 @@ function App() {
           <Route path="/coupons" element={<Coupons />} />
           <Route path="/guides" element={<Guides />} />
           <Route path="/support" element={<Support />} />
-          <Route path="/account" element={<AccountDashboard />} />
-          <Route path="/account/orders" element={<Orders />} />
-          <Route path="/account/downloads" element={<Downloads />} />
-          <Route path="/account/addresses" element={<Addresses />} />
-          <Route path="/account/favorites" element={<Favorites />} />
-          <Route path="/account/profile" element={<Profile />} />
-          <Route path="forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path='/seller-dashboard' element={<SellerDashboard />} />
-
 
           <Route path="/marketplace" element={<MarketplaceInfo />} />
           <Route path="/terms-of-use" element={<TermsOfUse />} />
@@ -142,32 +145,63 @@ function App() {
           <Route path="/warranty-policy" element={<WarrantyPolicy />} />
           <Route path="/shipping-policy" element={<ShippingPolicy />} />
           <Route path="/returns-policy" element={<ReturnsPolicy />} />
-          <Route path="/" element={<StorefrontList />} />
-          <Route path="/p/:idOrSlug" element={<StorefrontProduct />} />
-          <Route
-            path="/admin/marketplace/applications"
-            element={
-              <RoleGate allow={["admin"]} mode="route" redirectTo="/">
-                <MarketplaceApplications />
-              </RoleGate>
-            }
-          />
-          <Route path="/admin/applications" element={<AdminApplicationsPage />} />
 
-          <Route path="/seller" element={<SellerLayout />}>
+          <Route path="forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+          <Route path="/account" element={<ProtectedRoute allow={["user", "seller", "admin"]}>< Layout /> </ProtectedRoute>}>
+            <Route index element={<AccountDashboard />} />
+
+            <Route path="profile" element={<Profile />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="addresses" element={<Addresses />} />
+            <Route path="favorites" element={<Favorites />} />
+            <Route path="downloads" element={<Downloads />} />
+          </Route>
+
+          <Route path="/seller" element={<ProtectedRoute allow={["seller", "admin"]}><SellerLayout /></ProtectedRoute>}>
             <Route index element={<SellerDashboard />} />
             <Route path="settings" element={<StoreSettings />} />
-            <Route path="products" element={<Products />} />
+
+            {/* <Route path="products">
+              <Route index element={<SellerProductsPage />} />                 
+              <Route path="new" element={<ProductForm />} />         
+              <Route path=":id" element={<ProductDetailPage />} />           
+            </Route> */}
+
+            <Route path="products">
+              <Route index element={<SellerProductsPage />} />            {/* רשימה */}
+              <Route path="new" element={<ProductCreate />} />  {/* הוספה */}
+              <Route path=":id/edit" element={<ProductEdit />} /> {/* עריכה */}
+              <Route path=":id" element={<ProductDetailPage />} />    {/* פרטים – אופציונלי */}
+            </Route>
+
             <Route path="orders" element={<OrdersSeller />} />
             <Route path="reviews" element={<Reviews />} />
             <Route path="reports" element={<Reports />} />
              <Route path="coupons" element={<CouponForm />} />
           </Route>
+
+          <Route path='/admin' element={<ProtectedRoute allow={["seller", "admin"]}><Layout /> </ProtectedRoute>} >
+            <Route index element={<SellerDashboard />} />
+            <Route path='applications' element={<AdminApplicationsPage />} />
+          </Route>
+
+          <Route path="/p/:idOrSlug" element={<StorefrontProduct />} />
+          <Route path="/pp" element={<ProductCreateForm />} />
+
+
+
           <Route path="/store/:slug" element={<StorePage />}>
             {/* <Route index element={<StoreProducts />} /> */}
             {/* <Route path="about" element={<StoreAbout />} />
             <Route path="reviews" element={<StoreReviews />} /> */}
           </Route>
+
+
+          <Route path="/p" element={<ProductCreateForm />} />
+          <Route path="/pr" element={<ProductForm />} />
+
 
         </Routes>
 

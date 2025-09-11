@@ -8,6 +8,7 @@ const UserMenu = () => {
   const navigate = useNavigate();
 
   const displayName = user?.name || user?.email || "התחברות";
+  const canManageSeller = user && ["seller", "admin"].includes(user.role);
 
   return (
     <div className="relative group text-right inline-block">
@@ -28,6 +29,9 @@ const UserMenu = () => {
             <HoverLink to="/account/favorites" label="מועדפים" />
             <HoverLink to="/account/addresses" label="כתובות" />
             <HoverLink to="/account/downloads" label="הורדות" />
+
+            {canManageSeller && (<HoverLink to="/seller" label="ניהול מוכר" className="font-semibold text-blue-600" />)}
+
             <button
               onClick={() => handleLogout(dispatch, navigate)} // ✅ שימוש חדש
               className="block w-full text-right px-4 py-2 text-red-600 hover:bg-gray-100" >
