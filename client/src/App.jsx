@@ -1,5 +1,5 @@
 import TopBar from './components/TopNav/TopBar'
-import ProductsList from './components/Main Content/ProductsList'
+import ProductsList from './components/Main Content/product/ProductsList'
 import React, { createContext, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import About from "./components/mainNav/About";
@@ -54,7 +54,18 @@ import CartLayout from "./components/TopNav/cart/CartLayout.jsx";
 import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
 import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx";
 import CouponForm from "./components/seller/Coupons.jsx";
+import ProductPage from "./components/Main Content/product/ProductPage.jsx"
 
+// import ProductCreateForm from './components/seller/products/ProductCreateForm.jsx';
+import ProductCreateForm from './components/ProductCreateForm.jsx';
+import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
+import UnauthorizedPage from './UnauthorizedPage.jsx';
+import Layout from './components/Layout.jsx';
+import ProductForm from './components/seller/products/forms/ProductForm.jsx';
+import SellerProductsPage from './components/seller/SellerProductsPage.jsx';
+import ProductDetailPage from './components/seller/ProductDetailPage.jsx';
+import ProductCreate from './components/seller/products/ProductCreate.jsx';
+import ProductEdit from './components/seller/products/ProductEdit.jsx';
 
 // import ProductCreateForm from './components/seller/products/ProductCreateForm.jsx';
 import ProductCreateForm from './components/ProductCreateForm.jsx';
@@ -104,7 +115,7 @@ function App() {
         },
       }} reverseOrder={false} />
 
-      {/* <CategorySidebarMenu></CategorySidebarMenu> */}
+      <CategorySidebarMenu></CategorySidebarMenu>
 
       <TopBar />
       <MainNav />
@@ -112,7 +123,7 @@ function App() {
       <main className="flex-grow">
         <Routes>
           <Route path="products" element={<ProductsList />} />
-          <Route path="products/:storeSlug/:productSlug" element={<ProductPage/>} />
+          <Route path="products/:storeSlug/:productSlug" element={<ProductPage />} />
           <Route path="/favorites" element={<FavoritesList />} />
           <Route path="/categories/manage" element={<CategoryManagementPage />} />
           {/* Layout מיוחד לזרימת הקניות */}
@@ -179,7 +190,7 @@ function App() {
             <Route path="orders" element={<OrdersSeller />} />
             <Route path="reviews" element={<Reviews />} />
             <Route path="reports" element={<Reports />} />
-             <Route path="coupons" element={<CouponForm />} />
+            <Route path="coupons" element={<CouponForm />} />
           </Route>
 
           <Route path='/admin' element={<ProtectedRoute allow={["seller", "admin"]}><Layout /> </ProtectedRoute>} >
