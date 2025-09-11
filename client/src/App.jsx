@@ -67,17 +67,6 @@ import ProductDetailPage from './components/seller/ProductDetailPage.jsx';
 import ProductCreate from './components/seller/products/ProductCreate.jsx';
 import ProductEdit from './components/seller/products/ProductEdit.jsx';
 
-// import ProductCreateForm from './components/seller/products/ProductCreateForm.jsx';
-import ProductCreateForm from './components/ProductCreateForm.jsx';
-import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
-import UnauthorizedPage from './UnauthorizedPage.jsx';
-import Layout from './components/Layout.jsx';
-import ProductForm from './components/seller/products/forms/ProductForm.jsx';
-import SellerProductsPage from './components/seller/SellerProductsPage.jsx';
-import ProductDetailPage from './components/seller/ProductDetailPage.jsx';
-import ProductCreate from './components/seller/products/ProductCreate.jsx';
-import ProductEdit from './components/seller/products/ProductEdit.jsx';
-
 function App() {
 
   const dispatch = useDispatch();
