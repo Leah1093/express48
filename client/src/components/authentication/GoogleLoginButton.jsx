@@ -6,8 +6,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { setUser } from "../../redux/slices/userSlice";
 import { useGoogleLoginMutation } from "../../redux/services/authApi";
 // עדכני את הנתיב לפי הפרויקט שלך
+import useMergeCartAfterLogin from "./useMergeCartAfterLogin.js";
 
-import useMergeCartAfterLogin from "./useMergeCartAfterLogin";
 function GoogleLoginButton() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -22,9 +22,9 @@ function GoogleLoginButton() {
       }).unwrap();
 
       dispatch(setUser(res.user));
-
+      console.log("11111", res.user.id)
       // מיזוג עגלת אורח → משתמש
-      await mergeCartAfterLogin(res.user._id);
+      await mergeCartAfterLogin(res.user.id);
 
       toast.success("התחברת בהצלחה דרך Google");
 
@@ -46,3 +46,7 @@ function GoogleLoginButton() {
 }
 
 export default GoogleLoginButton;
+
+
+
+

@@ -1,5 +1,6 @@
 import { Cart } from '../models/cart.js';
-import { Product } from "../models/product.js"; // ודאי את הנתיב הנכון
+import { Product } from "../models/Product.js"; // ודאי את הנתיב הנכון
+
 import { cartQueries } from '../mongoQueries/cartQueries.js';
 const toIdStr = (x) => (typeof x === 'object' && x?._id ? String(x._id) : String(x));
 
@@ -11,6 +12,7 @@ export class CartService {
 
   async addToCart(userId, productId, quantity = 1) {
     let cart = await Cart.findOne(cartQueries.findByUserId(userId));
+    console.log("111")
     if (!cart) {
         const prod = await Product.findById(productId).select('price').lean();
     if (!prod) throw new Error('Product not found');
@@ -25,7 +27,11 @@ export class CartService {
         cart.items.push({ productId, quantity, unitPrice: prod.price });
       }
     }
+    console.log("111")
+
     await cart.save();
+    console.log("111")
+
     // console.log('Saved cart:', JSON.stringify(cart, null, 2));
     return cart;
   }

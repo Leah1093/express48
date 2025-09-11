@@ -50,5 +50,9 @@ export class EntranceService {
     const { sellerId, storeId } = await this.getSellerAndStore(user._id);
     return { user, sellerId, storeId };
   }
+  async getUserById(userId) {
+    const user = await User.findById(userId).select('username email phone role roles');
+    return user;
+  }
 
 }
