@@ -39,6 +39,7 @@ ratingsRouter.post("/seller/ratings/:id/reply/restore", ...sellerOnly, sellerRep
 ratingsRouter.get("/admin/ratings", ...adminOnly, ratingAdminController.list);//רשימת ביקורות
 ratingsRouter.patch("/admin/ratings/:id/status", ...adminOnly, ratingAdminController.changeStatus);//שינוי סטטוס
 ratingsRouter.patch("/admin/ratings/:id/seller-reply/status", ...adminOnly, ratingAdminController.changeSellerReplyStatus);//שינוי סטטוס תגובת מוכר
+
 // ratingsRouter.delete("/admin/ratings/:id", ...adminOnly, ratingAdminController.deleteRating);//מחיקת תגובה
 // ratingsRouter.post("/admin/ratings/:id/restore", ...adminOnly, ratingAdminController.restoreRating);//שחזור תגובה
 // ratingsRouter.delete("/admin/ratings/:id/seller-reply", ...adminOnly, ratingAdminController.deleteSellerReply);//מחיקה רכה תגובת מוכר
@@ -46,6 +47,8 @@ ratingsRouter.patch("/admin/ratings/:id/seller-reply/status", ...adminOnly, rati
 
 //---------------פומבי למוצר---------------
 //לעשות במוצר לא בדירוגים
+
+
 //צריך גם שיוכלו לעדכן דירוג פוגעני
 
 export default ratingsRouter;
