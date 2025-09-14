@@ -5,6 +5,7 @@ import axios from 'axios';
 import LogoutButton from "../../authentication/LogoutButton";
 import { useListFavoritesQuery } from "../../../redux/api/favoritesApi";
 import { useSelector } from "react-redux";
+import CategoryRow from "../../Categories/CategoryRow";
 
 
 function ProductsList() {
@@ -31,7 +32,8 @@ function ProductsList() {
       .catch((err) => console.error("שגיאה בטעינה:", err));
   }, []);
 
-  return (
+  return (<>
+    <CategoryRow />
     <div style={listStyles.wrapper}>
 
       {products.map((product) => {
@@ -40,9 +42,8 @@ function ProductsList() {
           <ProductCard key={product._id} product={product} favorites={items} />
         );
       })}
-
-
     </div>
+  </>
   );
 }
 
