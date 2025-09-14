@@ -1,6 +1,6 @@
 // routes/admin.products.routes.js
 import express from "express";
-import { authCookieMiddleware } from "../middlewares/authCookie.middleware.js";
+import { authMiddleware } from "../middlewares/auth.js";
 import { requireAdmin } from "../middlewares/requireAdmin.js";
 import { validate } from "../middlewares/validate.js";
 import { adminIdParamsSchema, adminSetStatusSchema } from "../validations/productSchemas.js";
@@ -8,7 +8,7 @@ import AdminProductsController from "../controllers/admin.products.controller.js
 const adminProductsRouter = express.Router();
 const adminProductsController = new AdminProductsController();
 
-adminProductsRouter.use("/admin", authCookieMiddleware, requireAdmin);
+adminProductsRouter.use("/admin", authMiddleware, requireAdmin);
 
 // תור לאישור
 adminProductsRouter.get("/admin/products", adminProductsController.listPending);

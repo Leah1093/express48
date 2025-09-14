@@ -1,4 +1,4 @@
-import { Coupon } from "./models/Coupon.js";
+import { Coupon } from "../models/coupon.js";
 
 class CouponService {
   async create(data) {
@@ -42,14 +42,35 @@ class CouponService {
     }
 
     // בדיקת מוכרים
-    if (coupon.allowedSellers.length > 0) {
-      const sellerIds = sellers.map((s) => s.toString());
-      const intersection = coupon.allowedSellers.filter((s) =>
-        sellerIds.includes(s.toString())
-      );
-      if (intersection.length === 0)
-        throw new Error("הקופון לא תקף למוצרים שבחרת");
+    // if (coupon.allowedSellers.length > 0) {
+    //   const sellerIds = sellers.map((s) => s.toString());
+    //   const intersection = coupon.allowedSellers.filter((s) =>
+    //     sellerIds.includes(s.toString())
+    //   );
+    //   if (intersection.length === 0)
+    //     throw new Error("הקופון לא תקף למוצרים שבחרת");
+    // }
+
+    if (coupon.restrictionType === "specificUsers") {
+      if (!coupon.allowedUsers.includes(userId)) {
+        throw new Error("הקופון לא תקף עבורך");
+      }
     }
+
+    if (coupon.restrictionType === "birthday") {
+      const today = new Date().toISOString().slice(5, 10); // "MM-DD"
+      if (user.birthday.slice(5, 10) !== today) {
+        throw new Error("הקופון תקף רק ליום הולדת");
+      }
+    }
+
+    if (coupon.restrictionType === "abandonedCart") {
+      const cart = await Cart.findOne({ userId });
+      if (!cart || cart.items.length === 0) {
+        throw new Error("אין לך עגלה נטושה ולכן הקופון לא תקף");
+      }
+    }
+
 
     // בדיקת סכום מינימום
     if (cart.total < coupon.minOrderAmount) {

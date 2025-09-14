@@ -66,6 +66,7 @@ const storeSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 storeSchema.index({ sellerId: 1, userId: 1 });
+storeSchema.index({ userId: 1 });
 
 // יצירת slug אוטומטית לפי השם (עם transliteration)
 storeSchema.pre("validate", function (next) {

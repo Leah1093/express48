@@ -1,7 +1,7 @@
 // routes/addressRoutes.js
 import express from "express";
 import { AddressController } from "../controllers/addressController.js";
-import { authCookieMiddleware } from "../middlewares/authCookie.middleware.js";
+import { authMiddleware } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
 import { createAddressSchema, updateAddressSchema } from "../validations/addressValidation.js";
 
@@ -9,7 +9,7 @@ const router = express.Router();
 const controller = new AddressController();
 
 // כל הכתובות דורשות התחברות
-router.use(authCookieMiddleware);
+router.use(authMiddleware);
 
 router.post("/", validate(createAddressSchema), controller.create);
 router.get("/", controller.list);

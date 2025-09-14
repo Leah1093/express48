@@ -20,6 +20,8 @@ import passport from "passport";
 import session from "express-session";
 import { apiLimiter } from "./middlewares/rateLimit.middleware.js";
 import './config/googleOAuth.config.js'
+import productRouter from "./router/product.router.js";
+import {sellerProductsRouter} from "./router/seller.products.router.js";
 // import { sellerProfileRouter } from "./router/sellerProfile.router.js";
 import { marketplaceRouter } from "./router/marketplace.router.js";
 const __filename = fileURLToPath(import.meta.url);
@@ -29,6 +31,7 @@ import { favoritesRouter } from "./router/favoritesRoutes.js";
 import categoryRoutes from "./router/categoryRoutes.js"
 import addressRoutes from "./router/addressRoutes.js"
 import orderRoutes from "./router/orderRoutes.js";
+import couponsRoutes from "./router/couponsRoutes.js";
 
 const app = express();
 
@@ -63,6 +66,9 @@ app.use("/auth", googleAuthRouter);
 app.use("/marketplace", marketplaceRouter)
 app.use("/seller-store", storeRouter)
 app.use("/public/stores", storePublicRouter)
+// app.use("/seller", productRouter)
+
+app.use("/seller/products", sellerProductsRouter)
 app.use(errorHandler);
 
 app.use('/cart', cartRouter);
@@ -72,6 +78,7 @@ app.use("/categories", categoryRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/addresses", addressRoutes);
 app.use("/orders", orderRoutes);
+app.use("/coupons",couponsRoutes);
 
 app.use(errorHandler);
 

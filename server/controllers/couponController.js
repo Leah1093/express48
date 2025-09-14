@@ -1,9 +1,13 @@
-import { couponService } from "../services/CouponService.js";
+import { couponService } from "../service/couponService.js";
 
 class CouponController {
   async create(req, res, next) {
     try {
-      const coupon = await couponService.create(req.body);
+      const sellerId = req.user.sellerId
+      const coupon = await couponService.create({
+        ...req.body,
+       allowedSellers: [sellerId], 
+    });
       res.status(201).json(coupon);
     } catch (e) {
       next(e);
@@ -12,14 +16,25 @@ class CouponController {
 
   async validate(req, res, next) {
     try {
-      const { code, cart, sellers } = req.body;
+        console.log("BODY:", req.body);
+    console.log("USER:", req.user.userId);
+      const { code, cart } = req.body;
       const coupon = await couponService.validateCoupon(
         code,
-        req.user._id,
+        req.user.userId,
         cart,
-        sellers
+        // sellers
       );
-      res.json({ valid: true, coupon });
+       // חישוב הנחה
+    let discount = 0;
+    if (coupon.discountType === "percent") {
+      discount = (cart.total * coupon.discountValue) / 100;
+    } else if (coupon.discountType === "fixed") {
+      discount = coupon.discountValue;
+    }
+
+    const finalTotal = Math.max(cart.total - discount, 0);
+      res.json({ valid: true, coupon,discount, finalTotal });
     } catch (e) {
       res.status(400).json({ valid: false, error: e.message });
     }

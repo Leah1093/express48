@@ -1,123 +1,121 @@
-import { EntranceService } from '../service/entrance.service.js';
-import { registerSchema } from '../validations/registerSchema.js';
+// controllers/entrance.controller.js
+import { EntranceService } from "../service/entrance.service.js";
+import { registerSchema } from "../validations/registerSchema.js";
 import { loginSchema } from "../validations/loginSchema.js";
-
-import 'dotenv/config'
+import { loginFlow, refreshFlow, logoutFlow } from "../service/auth.service.js";
+import { User } from "../models/user.js";
+import { cookieNames } from "../utils/cookies.js";
 
 export default class EntranceController {
-
   async login(req, res, next) {
     try {
+      const { email, password } = loginSchema.parse(req.body);
       const entranceService = new EntranceService();
+      const { user, sellerId,storeId } = await entranceService.verifyCredentials(email, password);//בודק אם משתמש קיים ואם פרטים נכונים
 
-      // ✨ ולידציה עם zod
-      const validatedData = loginSchema.parse(req.body);
-      const { email, password } = validatedData;
-      console.log("pswP", password)
-
-      const result = await entranceService.login(email, password);
-
-      res.cookie("token", result.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "Lax",
-        maxAge: 1000 * 60 * 60,
-      });
+      const ua = req.get("user-agent");//זיהוי דפדפן
+      const ipHash = req.ip; // אם תוסיפי hash אמיתי, החליפי כאן ל-hashIp(req.ip)
+      await loginFlow({ res, user: { ...user.toObject(), sellerId ,storeId}, userAgent: ua, ipHash });//יצירת טוקן וקוקיס
 
       res.status(200).json({
         success: true,
         message: "התחברת בהצלחה",
-        user: result.user, // או data: result.user אם את רוצה לשמור אחידות
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          roles: user.roles || [],
+          sellerId,
+        },
       });
     } catch (err) {
       if (err.name === "ZodError") {
-        return res.status(400).json({
-          success: false,
-          message: "ולידציה נכשלה",
-          errors: err.errors,
-        });
+        return res.status(400).json({ success: false, message: "ולידציה נכשלה", errors: err.errors });
       }
-
       next(err);
     }
   }
 
   async register(req, res, next) {
-    console.log("EntranceController 📝 register");
-
     try {
-      // 1. ולידציה עם zod
-      const validatedData = registerSchema.parse(req.body);
-
-      // 2. destructure (כדי לעבוד עם אותו קוד שהיה לך)
-      const { username, email, phone, password } = validatedData;
-
-      // 3. המשך רגיל
+      const { username, email, phone, password } = registerSchema.parse(req.body);
       const entranceService = new EntranceService();
-      const result = await entranceService.registerUser({ username, email, phone, password });
+      const { user } = await entranceService.registerUser({ username, email, phone, password });
 
-      res.cookie("token", result.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "Strict",
-        maxAge: 1000 * 60 * 60 * 24,
-      });
+      const ua = req.get("user-agent");
+      const ipHash = req.ip;
+      await loginFlow({ res, user:  {
+        ...user.toObject(),
+        role: user.role,
+        roles: user.roles || [],
+        sellerId: null,
+        storeId: null,
+      }, userAgent: ua, ipHash });
 
-      res.status(201).json({
-        success: true,
-        message: "נרשמת בהצלחה",
-        data: result.user,
-      });
-    } catch (err) {
-      // 4. טיפול בשגיאה של Zod (במידה ויש)
-      if (err.name === "ZodError") {
-        return res.status(400).json({
-          success: false,
-          message: "ולידציה נכשלה",
-          errors: err.errors,
-        });
-      }
-
-      next(err); // שגיאות אחרות
+    res.status(201).json({
+      success: true,
+      message: "נרשמת בהצלחה",
+      data: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        phone: user.phone,
+        role: "user",
+        roles: [],
+      },
+    });
+  } catch(err) {
+    if (err.name === "ZodError") {
+      return res.status(400).json({ success: false, message: "ולידציה נכשלה", errors: err.errors });
     }
+    next(err);
   }
-
-
+}
+//לבדוק לגבי זה אם צריך בדיוק ואיך לעשות
   async getCurrentUser(req, res, next) {
-    console.log("getCurrentUser me")
-    try {
-      const userId = req.user.userId;
-      const entranceService = new EntranceService();
-      const user = await entranceService.getUserById(userId);
+  try {
+    const userId = req.auth?.sub;
+    //לבדוק אם צריך פה ולא מספיק במידלוואר
+    if (!userId) return res.status(401).json({ error: "לא מחובר" });
 
-      if (!user) {
-        return res.status(404).json({ error: "משתמש לא נמצא" });
-      }
-      console.log("getCurrentUser", user)
+    const entranceService = new EntranceService();
+    const user = await entranceService.getUserById(userId);
+    if (!user) return res.status(404).json({ error: "משתמש לא נמצא" });
 
-      res.status(200).json({
-        success: true,
-        user,
-      });
-    } catch (err) {
-      next(err);
-    }
+    res.status(200).json({ success: true, user });
+  } catch (err) {
+    next(err);
   }
+}
 
-
-
+  async refresh(req, res) {
+  try {
+    const { session } = await refreshFlow({ req, res });
+    //להעביר לסרבר
+    const user = await User.findById(session.userId).select("roles role sellerId storeId");
+    if (!user) return res.status(401).json({ error: "User not found" });
+    return res.json({ ok: true });
+  } catch {
+    return res.status(401).json({ error: "Refresh failed" });
+  }
+}
+//בדיקה
   async logout(req, res) {
-    try {
-      res.clearCookie("token", {
-        httpOnly: true,
-        sameSite: "None",
-        secure: true,
-      });
-
-      res.status(200).json({ message: "התנתקת בהצלחה" });
-    } catch (err) {
-      console.error("Logout error:", err);
-      res.status(500).json({ message: "שגיאה בהתנתקות" });
+  try {
+    let sid = req.auth?.sid;
+    if (!sid) {
+      const token = req.cookies?.[cookieNames.refresh];
+      if (token) {
+        const [sessionId] = token.split(".");
+        sid = sessionId || undefined;
+      }
     }
-  };
+    await logoutFlow({ res, sessionId: sid });
+    res.status(200).json({ message: "התנתקת בהצלחה" });
+  } catch {
+    res.status(500).json({ message: "שגיאה בהתנתקות" });
+  }
+}
 }

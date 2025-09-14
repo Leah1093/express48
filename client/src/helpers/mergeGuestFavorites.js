@@ -19,4 +19,3 @@ export async function mergeGuestFavoritesIfAny() {
 
   clearGuestFavorites(); // כדי שלא יהיה כפול אחרי המיזוג
 }
- 

@@ -127,20 +127,7 @@ export default function Profile() {
           <button type="button" className="btn-yellow" onClick={() => setShowModal(true)}>שינוי סיסמה</button>
         </div>
       )}
-      {/* <div className="flex gap-4 mt-4">
-        {isEditing ? (
-          <>
-            <button type="submit" className="btn-blue">שמור</button>
-            <button type="button" className="btn-gray" onClick={handleCancel}>ביטול</button>
-          </>
-        ) : (
-          <>
-            <button type="button" className="btn-green" onClick={handleEditToggle}>ערוך פרטים</button>
-            <button type="button" className="btn-yellow" onClick={() => setShowModal(true)}>שינוי סיסמה</button>
-          </>
-        )}
-      </div> */}
-      {/* שינוי סיסמה */}
+
       {showModal && (
         <PasswordModal
           register={registerPass}

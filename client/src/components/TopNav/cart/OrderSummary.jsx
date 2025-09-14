@@ -3,10 +3,13 @@ import React, { useMemo, useState } from "react";
 import CheckoutButton from "./CheckoutButton";
 import { useSelector } from "react-redux";
 import { selectCartItems } from "../../../redux/slices/cartSelectors";
+import axios from "axios";
 
 export default function OrderSummary({ selectedItems }) {
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(null);
+  const [message, setMessage] = useState("");
+  const [discount, setDiscount] = useState(0);
 
   const getUnitPrice = (it) =>
     Number(it?.unitPrice ?? it?.productId?.price ?? it?.product?.price ?? it?.price ?? 0);
@@ -16,21 +19,45 @@ export default function OrderSummary({ selectedItems }) {
   const subtotal = useMemo(() => {
     return Array.isArray(selectedItems)
       ? selectedItems
-          // .filter((it) => selectedItems.includes(getKey(it)))
-          .reduce((sum, it) => sum + getUnitPrice(it) * getQty(it), 0)
+        // .filter((it) => selectedItems.includes(getKey(it)))
+        .reduce((sum, it) => sum + getUnitPrice(it) * getQty(it), 0)
       : 0;
   }, [selectedItems]);
 
-  const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
+  // const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
+    // חישוב משלוח
   const shipping =
     subtotal - discount <= 0 || subtotal - discount >= 300 ? 0 : 25;
+     // סכום סופי
   const grandTotal = Math.max(subtotal - discount + shipping, 0);
 
-  const handleApplyCoupon = () => {
-    if (!coupon.trim()) return;
-    setCouponApplied({ code: coupon.trim().toUpperCase(), discount: "10%" });
-    setCoupon("");
+  // const handleApplyCoupon = () => {
+  //   if (!coupon.trim()) return;
+  //   setCouponApplied({ code: coupon.trim().toUpperCase(), discount: "10%" });
+  //   setCoupon("");
+  // };
+
+  
+
+  const handleApplyCoupon = async () => {
+    try {
+      // const sellers = selectedItems.map(it => it.sellerId);
+      const res = await axios.post(
+        "http://localhost:8080/coupons/validate",
+        { code: coupon, cart:{ total: subtotal },  },
+        { withCredentials: true }
+      );
+
+      if (res.data.valid) {
+        setDiscount(res.data.discount);
+        setCouponApplied(res.data.finalTotal);
+        setMessage(`קופון הוחל בהצלחה! הנחה: ₪${res.data.discount}`);
+      }
+    } catch (err) {
+      setMessage(err.response?.data?.error || "שגיאה בהחלת הקופון");
+    }
   };
+
 
   return (
     <aside className="ml-auto max-w-sm w-full">
@@ -38,7 +65,7 @@ export default function OrderSummary({ selectedItems }) {
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-xl font-bold">סיכום הזמנה</h2>
 
-           {/* שדה קופון */}
+          {/* שדה קופון */}
           <div className="mt-4 flex gap-2 max-w-sm">
             <input
               type="text"
@@ -77,7 +104,7 @@ export default function OrderSummary({ selectedItems }) {
                 קופון ({couponApplied.code})
               </span>
               <span className="font-medium text-green-600">
-                − {discount.toLocaleString("he-IL")} ₪
+               ₪  {discount.toLocaleString("he-IL")} −  
               </span>
             </div>
           )}
@@ -91,9 +118,9 @@ export default function OrderSummary({ selectedItems }) {
             </span>
           </div>
 
-        
 
-         
+
+
         </div>
       </div>
     </aside>
