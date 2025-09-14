@@ -685,7 +685,6 @@ export const Product = mongoose.models.Product || mongoose.model("Product", prod
 //       3: { type: Number, default: 0 },
 //       4: { type: Number, default: 0 },
 //       5: { type: Number, default: 0 },
-<<<<<<< HEAD
 //     },
 //   },
 
@@ -793,70 +792,12 @@ export const Product = mongoose.models.Product || mongoose.model("Product", prod
 //     const seqPart = String(nextSeq).padStart(6, "0"); // מרחב גדול יותר
 
 //     this.sku = `${storePart}-${supplierPart}-${categoryPart}-${brandPart}-${seqPart}`;
-=======
-//     }
-//   },
-
-//   // סטטוס מוצר
-//   status: { type: String, enum: ["טיוטא", "מפורסם", "מושהה"], default: "טיוטא" },
-
-//   // הנחה
-//   discount: {
-//     discountType: { type: String, enum: ["percent", "fixed"], required: true }, // אחוז/סכום קבוע
-//     discountValue: { type: Number, required: true }, // כמה אחוז או כמה ₪
-//     expiresAt: { type: Date }              // מתי ההנחה מסתיימת
-//   },
-
-
-//   // שילוח
-//   shipping: {                                   // מידע למשלוח
-//     dimensions: { type: String, default: "" },  // מידות האריזה (למשל "30x20x10cm")
-//     weight: { type: String, default: "" },  // משקל האריזה (למשל "2kg")
-//     from: { type: String, default: "IL" }, // מדינת מקור (ברירת מחדל – ישראל)
-//   },
-
-//   // שדות מורשת לתקופת מעבר (אופציונלי)
-//   legacyPrice: { type: Number },  // אם יש לך קוד שמצפה ל-number
-//   image: { type: String },  // תמונה בודדת למערכות ישנות
-// }, { timestamps: true });         // מוסיף createdAt ו־updatedAt אוטומטית
-
-
-// // יוניק רק אם שני השדות קיימים (sparse)
-// productSchema.index({ supplier: 1, sku: 1 }, { unique: true, sparse: true });
-
-// // ✨ Middleware שמחשב את stock הכללי לפי סך כל הווריאציות
-// productSchema.pre("save", function (next) {
-//   if (this.variations && this.variations.length > 0) {
-//     this.stock = this.variations.reduce((sum, v) => sum + (v.stock || 0), 0);
-//   }
-//   next();
-// });
-
-// // ✨ Middleware ליצירת SKU אוטומטי
-// productSchema.pre("save", async function (next) {
-//   if (this.sku) return next(); // אם כבר יש SKU – לא יוצרים
-
-//   try {
-//     const counter = await Counter.findOneAndUpdate(
-//       { category: this.category },
-//       { $inc: { seq: 1 } }, // מעלה מונה ב-1
-//       { new: true, upsert: true } // יוצר אם לא קיים
-//     );
-
-//     const brandPart = this.brand ? this.brand.slice(0, 3).toUpperCase() : "GEN";
-//     const categoryPart = this.category ? this.category.slice(0, 3).toUpperCase() : "CAT";
-
-//     const numberPart = String(counter.seq).padStart(4, "0"); // 0001, 0002...
-//     this.sku = `${brandPart}-${categoryPart}-${numberPart}`;
-
->>>>>>> 63dedbb18080ac63cf6938a13f41b17d18ba34e9
 //     next();
 //   } catch (err) {
 //     next(err);
 //   }
 // });
 
-<<<<<<< HEAD
 // // ולידציה של טווחי נראות
 // productSchema.pre("validate", function (next) {
 //   if (this.scheduledAt && this.visibleUntil && this.visibleUntil < this.scheduledAt) {
@@ -1024,7 +965,5 @@ export const Product = mongoose.models.Product || mongoose.model("Product", prod
 //     discountSource,
 //   };
 // };
-=======
->>>>>>> 63dedbb18080ac63cf6938a13f41b17d18ba34e9
 
 // export const Product = mongoose.models.Product || mongoose.model("Product", productSchema);
