@@ -52,8 +52,13 @@ import FavoritesList from "./components/TopNav/favorites/FavoritesList.jsx"
 import CategoryManagementPage from "./components/Categories/CategoryManagementPage.jsx"
 import CartLayout from "./components/TopNav/cart/CartLayout.jsx";
 import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
-import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx"
-import ProductPage from './components/Main Content/product/ProductPage.jsx';
+
+import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx";
+import CouponForm from "./components/seller/Coupons.jsx"; 
+import ProductPage from "./components/Main Content/product/ProductPage.jsx"
+
+// import ProductCreateForm from './components/seller/products/ProductCreateForm.jsx';
+
 import ProductCreateForm from './components/ProductCreateForm.jsx';
 import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
 import UnauthorizedPage from './UnauthorizedPage.jsx';
