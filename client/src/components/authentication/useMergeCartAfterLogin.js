@@ -1,4 +1,3 @@
-// src/hooks/useMergeCartAfterLogin.js
 import { useDispatch } from "react-redux";
 import { getLocalCart, clearLocalCart } from "../../helpers/localCart";
 import { mergeCartThunk, loadCart } from "../../redux/thunks/cartThunks";
@@ -16,7 +15,7 @@ export default function useMergeCartAfterLogin() {
 
     if (localCart.length > 0) {
       const itemsToMerge = localCart.map((item) => ({
-        productId: item.product?._id || item.productId,
+        productId: item.productId?._id || item.productId,
         quantity: item.quantity,
         selected: item.selected,
       }));
@@ -37,17 +36,22 @@ export default function useMergeCartAfterLogin() {
         dispatch(clearGuestCart());
     } else {
       console.log("📭 אין עגלת אורח, טוען עגלה ממונגו...");
+    console.log("🛒");
+
       await dispatch(loadCart());
     }
     // 1) מיזוג מועדפים של אורח לשרת
           await mergeGuestFavoritesIfAny();          // ← אם יצרת את הפונקציה helper
-    
+    console.log("🛒");
           // 2) נקה סטייט של אורחים ב-Redux (שלא יישאר כפול)
           dispatch(clearGuests());
+    console.log("🛒");
     
           // 3) רענון רשימת המועדפים מהשרת (RTK Query)
           dispatch(favoritesApi.util.invalidateTags?.(["Favorites"]));
           // או:
+    console.log("🛒");
+
           // await dispatch(favoritesApi.endpoints.listFavorites.initiate(undefined, { forceRefetch: true }));
   };
 

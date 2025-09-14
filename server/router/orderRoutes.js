@@ -1,13 +1,13 @@
 import { Router } from "express";
 import { OrderController } from "../controllers/orderController.js";
-import { authCookieMiddleware } from "../middlewares/authCookie.middleware.js";
+import { authMiddleware } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
 import {updateStatusSchema,createOrderSchema} from "../validations/orderValidation.js"
 
 const router = Router();
 const controller = new OrderController();
 
-router.use(authCookieMiddleware);
+router.use(authMiddleware);
 
 router.post("/", validate(createOrderSchema), controller.create);
 router.get("/", controller.list);

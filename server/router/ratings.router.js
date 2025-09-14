@@ -1,6 +1,6 @@
 // routes/ratings.routes.js
 import express from "express";
-import { authCookieMiddleware } from "../middlewares/authCookie.middleware.js";
+import { authMiddleware } from "../middlewares/auth.js";
 import { RatingCustomerController } from "../controllers/rating/customer.controller.js";
 import { RatingAdminController } from "../controllers/rating/admin.controller.js";
 import { RatingHelpfulController } from "../controllers/rating/helpful.controller.js";
@@ -11,8 +11,8 @@ import { requireRoles } from "../middlewares/requireRoles.js"
 import { createRatingLimiter, editRatingLimiter, helpfulLimiter, sellerReplyLimiter } from "../middlewares/rateLimit.middleware.js";
 import { createRatingSchema, updateRatingSchema, updateSellerReplySchema, listMyRatingsQuerySchema, getMyRatingParamsSchema, setHelpfulVoteSchema, listSellerRatingsQuerySchema, sellerRatingsStatsQuerySchema, createSellerReplySchema, sellerReplyVisibilitySchema } from "../validations/ratingSchemas.js";
 export const ratingsRouter = express.Router();
-const adminOnly = [authCookieMiddleware, requireRoles("admin")];
-const sellerOnly = [authCookieMiddleware, isSellerMiddleware];
+const adminOnly = [authMiddleware, requireRoles("admin")];
+const sellerOnly = [authMiddleware, isSellerMiddleware];
 const ratingCustomerController = new RatingCustomerController()
 const ratingAdminController = new RatingAdminController()
 const ratingHelpfulController = new RatingHelpfulController()
@@ -20,11 +20,11 @@ const ratingReplyController = new RatingReplyController()
 const ratingSellerController = new RatingSellerController()
 
 //---------------לקוח---------------
-ratingsRouter.post("/ratings", authCookieMiddleware, createRatingLimiter, validate(createRatingSchema, "body"), ratingCustomerController.createRating);//יצירת ביקורת
-ratingsRouter.patch("/ratings/:id", authCookieMiddleware, editRatingLimiter, validate(updateRatingSchema, "body"), ratingCustomerController.updateRatingByOwner);//עריכה עד 6 שעות
-ratingsRouter.get("/me/ratings", authCookieMiddleware, validate(listMyRatingsQuerySchema, "query"), ratingCustomerController.listMyRatings);//הדרוגים שלי
-ratingsRouter.get("/me/ratings/:id", authCookieMiddleware, validate(getMyRatingParamsSchema, "params"), ratingCustomerController.getMyRatingById);//קבלת דירוג ספציפי
-ratingsRouter.post("/ratings/:id/helpful", authCookieMiddleware, helpfulLimiter, validate(setHelpfulVoteSchema, "body"), ratingHelpfulController.toggleVote);//הצבעה
+ratingsRouter.post("/ratings", authMiddleware, createRatingLimiter, validate(createRatingSchema, "body"), ratingCustomerController.createRating);//יצירת ביקורת
+ratingsRouter.patch("/ratings/:id", authMiddleware, editRatingLimiter, validate(updateRatingSchema, "body"), ratingCustomerController.updateRatingByOwner);//עריכה עד 6 שעות
+ratingsRouter.get("/me/ratings", authMiddleware, validate(listMyRatingsQuerySchema, "query"), ratingCustomerController.listMyRatings);//הדרוגים שלי
+ratingsRouter.get("/me/ratings/:id", authMiddleware, validate(getMyRatingParamsSchema, "params"), ratingCustomerController.getMyRatingById);//קבלת דירוג ספציפי
+ratingsRouter.post("/ratings/:id/helpful", authMiddleware, helpfulLimiter, validate(setHelpfulVoteSchema, "body"), ratingHelpfulController.toggleVote);//הצבעה
 
 //---------------מוכר---------------
 ratingsRouter.get("/seller/ratings", ...sellerOnly, validate(listSellerRatingsQuerySchema, "query"), ratingSellerController.listSellerRatings);//רשימת דירוגים
@@ -39,6 +39,7 @@ ratingsRouter.post("/seller/ratings/:id/reply/restore", ...sellerOnly, sellerRep
 ratingsRouter.get("/admin/ratings", ...adminOnly, ratingAdminController.list);//רשימת ביקורות
 ratingsRouter.patch("/admin/ratings/:id/status", ...adminOnly, ratingAdminController.changeStatus);//שינוי סטטוס
 ratingsRouter.patch("/admin/ratings/:id/seller-reply/status", ...adminOnly, ratingAdminController.changeSellerReplyStatus);//שינוי סטטוס תגובת מוכר
+
 // ratingsRouter.delete("/admin/ratings/:id", ...adminOnly, ratingAdminController.deleteRating);//מחיקת תגובה
 // ratingsRouter.post("/admin/ratings/:id/restore", ...adminOnly, ratingAdminController.restoreRating);//שחזור תגובה
 // ratingsRouter.delete("/admin/ratings/:id/seller-reply", ...adminOnly, ratingAdminController.deleteSellerReply);//מחיקה רכה תגובת מוכר
@@ -46,6 +47,8 @@ ratingsRouter.patch("/admin/ratings/:id/seller-reply/status", ...adminOnly, rati
 
 //---------------פומבי למוצר---------------
 //לעשות במוצר לא בדירוגים
+
+
 //צריך גם שיוכלו לעדכן דירוג פוגעני
 
 export default ratingsRouter;

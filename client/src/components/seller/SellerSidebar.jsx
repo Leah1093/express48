@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import {
-  Home, Package, ShoppingCart, Settings, BarChart3, MessageSquare, ChevronLeft
+  Home, Package, ShoppingCart, Settings, BarChart3, MessageSquare, ChevronLeft, TicketPercent,
 } from "lucide-react";
 
 const items = [
@@ -10,6 +10,7 @@ const items = [
   { to: "/seller/reviews", icon: MessageSquare, label: "Reviews" },
   { to: "/seller/reports", icon: BarChart3, label: "דוחות" },
   { to: "/seller/settings", icon: Settings, label: "הגדרות" },
+  { to: "/seller/coupons", icon: TicketPercent, label: "קופונים" },
 ];
 
 export default function SellerSidebar({ open, onClose }) {

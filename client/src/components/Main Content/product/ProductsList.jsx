@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
 import axios from 'axios';
@@ -15,7 +16,7 @@ function ProductsList() {
   });
 
 
-  // אם יש user → לוקחים מהשרת, אחרת → מה־slice
+  // אם יש user → לוקחים מהשרת, אחרת → מה־ slice
   const items = user ? favorites?.items || [] : guestFavorites;
   console.log("favoritesApi data:", items);
 
