@@ -55,9 +55,11 @@ import FavoritesList from "./components/TopNav/favorites/FavoritesList.jsx"
 import CategoryManagementPage from "./components/Categories/CategoryManagementPage.jsx"
 import CartLayout from "./components/TopNav/cart/CartLayout.jsx";
 import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
-import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx"
+import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx";
+import ProductPage from "./components/Main Content/product/ProductPage.jsx"
+
+// import ProductCreateForm from './components/seller/products/ProductCreateForm.jsx';
 import ProductsList from './components/Main Content/product/ProductsList.jsx';
-import ProductPage from './components/Main Content/product/ProductPage.jsx';
 
 function App() {
 
