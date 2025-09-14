@@ -1,5 +1,4 @@
 import TopBar from './components/TopNav/TopBar'
-import ProductsList from './components/Main Content/ProductsList'
 import React, { createContext, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import About from "./components/mainNav/About";
@@ -49,6 +48,7 @@ import StorePage from './components/store/StorePage';
 // import StoreReviews from './components/store/StoreReviews';
 import { useDispatch, useSelector } from "react-redux";
 import { setUser, clearUser } from "./redux/slices/userSlice";
+import { setIsMobile } from "./redux/slices/uiSlice";
 import { loadCart } from "./redux/thunks/cartThunks.js";
 import CartPage from "./components/TopNav/cart/CartPage.jsx"
 import CartCheckout from "./components/TopNav/cart/CartCheckout.jsx";
@@ -57,11 +57,24 @@ import CategoryManagementPage from "./components/Categories/CategoryManagementPa
 import CartLayout from "./components/TopNav/cart/CartLayout.jsx";
 import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
 import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx"
-import ProductPage from './components/productPage/ProductPage.jsx';
+import ProductsList from './components/Main Content/product/ProductsList.jsx';
+import ProductPage from './components/Main Content/product/ProductPage.jsx';
 
 function App() {
 
   const dispatch = useDispatch();
+  const isMobile = useSelector((state) => state.ui.isMobile);
+
+
+  useEffect(() => {
+    // עדכון מצב מובייל ב-redux
+    const handleResize = () => {
+      dispatch(setIsMobile(window.innerWidth <= 768));
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [dispatch]);
 
   useEffect(() => {
     console.log("🤣")
@@ -89,7 +102,7 @@ function App() {
     }
   }, [user, dispatch]);
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col font-[Rubik]">
       <Toaster position="top-center" toastOptions={{
         style: {
           marginTop: "70px", // מרווח כדי לא להיתקע מתחת ל־NavBar
@@ -99,12 +112,12 @@ function App() {
       <CategorySidebarMenu></CategorySidebarMenu>
 
       <TopBar />
-      <MainNav />
+      {!isMobile && <MainNav />}
 
       <main className="flex-grow">
         <Routes>
           <Route path="products" element={<ProductsList />} />
-          <Route path="products/:storeSlug/:productSlug" element={<ProductPage/>} />
+          <Route path="products/:storeSlug/:productSlug" element={<ProductPage />} />
           <Route path="/favorites" element={<FavoritesList />} />
           <Route path="/categories/manage" element={<CategoryManagementPage />} />
           {/* Layout מיוחד לזרימת הקניות */}
