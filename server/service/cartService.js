@@ -1,5 +1,5 @@
 import { Cart } from '../models/cart.js';
-import { Product } from "../models/product.js"; // ודאי את הנתיב הנכון
+import { Product } from "../models/Product.js"; // ודאי את הנתיב הנכון
 import { cartQueries } from '../mongoQueries/cartQueries.js';
 const toIdStr = (x) => (typeof x === 'object' && x?._id ? String(x._id) : String(x));
 
@@ -26,6 +26,7 @@ export class CartService {
       }
     }
     await cart.save();
+    console.log("1111111111")
     // console.log('Saved cart:', JSON.stringify(cart, null, 2));
     return await  Cart.findOne({ userId }).populate("items.productId", "title price images");
   }

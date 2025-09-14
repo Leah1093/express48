@@ -1,41 +1,39 @@
-import { GoogleLogin } from '@react-oauth/google';
-import axios from 'axios';
-import toast from 'react-hot-toast';
-import { useDispatch } from 'react-redux';
-import { useNavigate, useLocation } from 'react-router-dom';
+// client/src/components/authentication/GoogleLoginButton.jsx
+import { GoogleLogin } from "@react-oauth/google";
+import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
 import { setUser } from "../../redux/slices/userSlice";
-import useRedirectAfterLogin from "./RedirectAfterLogin";
+import { useGoogleLoginMutation } from "../../redux/services/authApi";
+// עדכני את הנתיב לפי הפרויקט שלך
 import useMergeCartAfterLogin from "./useMergeCartAfterLogin.js";
-
 
 function GoogleLoginButton() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-   const redirectAfterLogin = useRedirectAfterLogin();
-      const mergeCartAfterLogin = useMergeCartAfterLogin();
+  const [googleLogin] = useGoogleLoginMutation();
+  const mergeCartAfterLogin = useMergeCartAfterLogin();
 
   const handleSuccess = async (credentialResponse) => {
     try {
-      const res = await axios.post(
-        'http://localhost:8080/auth/google',
-        { token: credentialResponse.credential },
-        { withCredentials: true }
-      );
-      dispatch(setUser(res.data.user));
-         await mergeCartAfterLogin(res.data.user._id);
-      toast.success("התחברת בהצלחה דרך Google");
-      // אחרי login מוצלח
-     
-      if (location.state?.from === "/checkout") {
-        navigate("/cart");
-      } else {
-        navigate("/");
-      }
+      const res = await googleLogin({
+        token: credentialResponse.credential,
+      }).unwrap();
 
+      dispatch(setUser(res.user));
+      console.log("11111", res.user.id)
+      // מיזוג עגלת אורח → משתמש
+      await mergeCartAfterLogin(res.user.id);
+
+      toast.success("התחברת בהצלחה דרך Google");
+
+      // אם הגיעה מה־checkout — חזרה לעגלה, אחרת לדף הבית
+      const from = location.state?.from;
+      navigate(from === "/checkout" ? "/cart" : "/");
     } catch (err) {
+      console.error("שגיאה בהתחברות עם Google:", err);
       toast.error("שגיאה בהתחברות עם Google");
-      console.error(err);
     }
   };
 
@@ -48,3 +46,7 @@ function GoogleLoginButton() {
 }
 
 export default GoogleLoginButton;
+
+
+
+

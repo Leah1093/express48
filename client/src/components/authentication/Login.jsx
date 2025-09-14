@@ -1,7 +1,9 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import toast from "react-hot-toast";
+// import toast from "react-hot-toast";
+import { toast } from "react-toastify";
+
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useDispatch } from "react-redux";
@@ -14,8 +16,7 @@ import { mergeGuestFavoritesIfAny } from "../../helpers/mergeGuestFavorites";
 import useRedirectAfterLogin from "./RedirectAfterLogin";
 import useMergeCartAfterLogin from "./useMergeCartAfterLogin.js";
 
-
-
+import { useLoginMutation } from "../../redux/services/authApi";
 import GoogleLoginButton from "./GoogleLoginButton";
 
 const schema = z.object({
@@ -24,11 +25,13 @@ const schema = z.object({
 });
 
 const Login = () => {
+  const [login] = useLoginMutation();
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const redirectAfterLogin = useRedirectAfterLogin();
-   const mergeCartAfterLogin = useMergeCartAfterLogin();
+  const mergeCartAfterLogin = useMergeCartAfterLogin();
+
+  const from = location.state?.from?.pathname || "/";
 
   const {
     register,
@@ -41,80 +44,70 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     try {
-      console.log("log in")
-      const res = await axios.post("http://localhost:8080/entrance/login", data, {
-        withCredentials: true,
-      });
-
-      dispatch(setUser(res.data.user));
-       await mergeCartAfterLogin(res.data.user._id);
-
-      // מיזוג עגלת אורח אם קיימת
-      // const localCart = getLocalCart();
-      // console.log("📦 localCart:", localCart);
-      // if (localCart.length > 0) {
-      //   const itemsToMerge = localCart.map((item) => ({
-      //     productId: item.product?._id || item.productId,
-      //     quantity: item.quantity,
-      //     selected: item.selected,
-      //   }));
-      //   console.log("🚀 מנסה למזג עגלה...");
-
-      //   const result = await dispatch(mergeCartThunk({
-      //     userId: res.data.user._id,
-      //     guestCart: itemsToMerge,
-      //   }));
-
-      //   console.log("🛒 עגלה מוזגת מהשרת:", result.payload);
-
-      //   await dispatch(loadCart());
-      // } else {
-      //   // אין עגלת אורח → פשוט טוענים את העגלה מהשרת
-      //   console.log("📭 אין עגלת אורח, טוען עגלה ממונגו...");
-      //   await dispatch(loadCart());
-      // }
-
-      // // 1) מיזוג מועדפים של אורח לשרת
-      // await mergeGuestFavoritesIfAny();          // ← אם יצרת את הפונקציה helper
-
-      // // 2) נקה סטייט של אורחים ב-Redux (שלא יישאר כפול)
-      // dispatch(clearGuests());
-
-      // // 3) רענון רשימת המועדפים מהשרת (RTK Query)
-      // dispatch(favoritesApi.util.invalidateTags?.(["Favorites"]));
-      // // או:
-      // // await dispatch(favoritesApi.endpoints.listFavorites.initiate(undefined, { forceRefetch: true }));
+      const res = await login(data).unwrap(); // unwrap מחלץ את ה-data או זורק שגיאה
+      dispatch(setUser(res.user));
+      await mergeCartAfterLogin(res.user._id);
+      console.log("res.user", res.user)
+      console.log("from", from)
+      navigate(from, { replace: true });
 
 
       toast.success("התחברת בהצלחה");
       reset();
-
-      // אחרי login מוצלח
-      if (location.state?.from === "/checkout") {
-        // אם הגיע מהקופה → נבדוק כתובות
-        // await redirectAfterLogin();
-         navigate("/cart");
-      } else {
-        // אחרת → פשוט לדף הבית
-        navigate("/");
-      }
-
-
+      const from = location.state?.from;
+      navigate(from === "/checkout" ? "/cart" : "/");
 
     } catch (err) {
-      const message = err.response?.data?.message;
+      // RTK Query error shape: { status, data, error } או status מחרוזת כמו "FETCH_ERROR"
+      const statusRaw = err?.status ?? err?.originalStatus;
+      const statusNum = typeof statusRaw === "number" ? statusRaw : NaN;
+      const statusStr = typeof statusRaw === "string" ? statusRaw : "";
 
-      if (err.response?.status === 404 || message === "משתמש לא קיים") {
-        toast.error("המשתמש לא קיים, אנא הירשם");
-        navigate("/");
-      } else if (message) {
-        toast.error(message);
-      } else {
-        toast.error("שגיאה בשרת");
+      const data = err?.data ?? {};
+      const msg =
+        (typeof data?.message === "string" && data.message) ||
+        (typeof data?.error === "string" && data.error) ||
+        (typeof err?.error === "string" && err.error) ||
+        (typeof err?.message === "string" && err.message) ||
+        "";
+
+      console.log("status:", statusRaw);
+      console.log("message:", msg);
+      console.error("Login error:", err);
+
+      // שגיאת רשת מה־fetchBaseQuery
+      if (statusStr === "FETCH_ERROR") {
+        toast.error("שגיאת רשת. נסי שוב בעוד רגע.");
+        return;
       }
 
-      console.error("Login error:", err);
+      // שגיאת פענוח תשובת השרת
+      if (statusStr === "PARSING_ERROR") {
+        toast.error("שגיאה בפענוח תשובת השרת.");
+        return;
+      }
+
+      // 429 - Rate limit
+      if (statusNum === 429) {
+        toast.error(msg || "יותר מדי ניסיונות. נסי שוב מאוחר יותר.", {
+          toastId: "rate-limit",
+        });
+        return;
+      }
+
+      // 404 או הודעת "משתמש לא קיים"
+      if (statusNum === 404 || msg.includes("משתמש לא קיים")) {
+        toast.error("המשתמש לא קיים, אנא הירשם", {
+          toastId: "no-user",
+          onClose: () => navigate("/"),
+        });
+        return;
+      }
+
+      // ברירת מחדל
+      toast.error(msg || "שגיאה בשרת");
     }
+
   };
 
   return (

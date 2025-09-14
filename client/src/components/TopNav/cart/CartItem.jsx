@@ -300,6 +300,7 @@ export default function CartItem({ item }) {
         <p className="text-blue-700 font-semibold mt-3 text-md">
           {/* ₪{item.productId.price.amount} × {item.quantity} */}
           ₪{item.productId?.price?.amount ?? 0} × {item.quantity}
+
         </p>
       </div>
     </div>

@@ -23,10 +23,12 @@ export function useCartItemLogic(item) {
   const user = useSelector((s) => s.user.user);
 
   const productId = getId(item);
+
  const id =
   typeof item.productId === "object"
     ? item.productId._id
     : item.productId;
+
 
   const idUser = typeof item.productId === "object" ? item.productId._id : item.productId;
 
