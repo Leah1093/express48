@@ -1,8 +1,4 @@
 import TopBar from './components/TopNav/TopBar'
-<<<<<<< HEAD
-=======
-import ProductsList from './components/Main Content/product/ProductsList'
->>>>>>> 639ce4ae9959682ded5c9457e32eec88009a5a6e
 import React, { createContext, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import About from "./components/mainNav/About";
@@ -57,7 +53,6 @@ import CategoryManagementPage from "./components/Categories/CategoryManagementPa
 import CartLayout from "./components/TopNav/cart/CartLayout.jsx";
 import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
 import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx"
-import ProductsList from './components/Main Content/product/ProductsList.jsx';
 import ProductPage from './components/Main Content/product/ProductPage.jsx';
 import ProductCreateForm from './components/ProductCreateForm.jsx';
 import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
@@ -68,6 +63,8 @@ import SellerProductsPage from './components/seller/SellerProductsPage.jsx';
 import ProductDetailPage from './components/seller/ProductDetailPage.jsx';
 import ProductCreate from './components/seller/products/ProductCreate.jsx';
 import ProductEdit from './components/seller/products/ProductEdit.jsx';
+import ProductsList from './components/Main Content/product/ProductsList.jsx';
+import CouponForm from "./components/seller/Coupons.jsx";
 
 
 function App() {
@@ -195,6 +192,7 @@ function App() {
             <Route path="reviews" element={<Reviews />} />
             <Route path="reports" element={<Reports />} />
             <Route path="coupons" element={<CouponForm />} />
+            
           </Route>
 
           <Route path='/admin' element={<ProtectedRoute allow={["seller", "admin"]}><Layout /> </ProtectedRoute>} >
