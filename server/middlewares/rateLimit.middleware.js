@@ -101,3 +101,23 @@ export const editRatingLimiter = rateLimit({
     keyGenerator: (req, res) =>
         req.user?.userId ? `user:${req.user.userId}` : `ip:${ipKeyGenerator(req, res)}`,
 });
+
+//כניסה 
+export const loginLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 דקות
+  max: 5,                   // עד 5 ניסיונות login
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: json429,
+  keyGenerator: keyByEmailOrIp, // נועל לפי email+IP
+});
+
+
+export const refreshLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 דקות
+  max: 10,                 // עד 10 refresh לכל IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: json429,
+  keyGenerator: keyByAuthOrIp, // אם מחובר → לפי userId, אחרת לפי IP
+});

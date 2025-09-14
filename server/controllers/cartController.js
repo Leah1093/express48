@@ -12,8 +12,12 @@ export const getCart = async (req, res) => {
 };
 
 export const addToCart = async (req, res) => {
+     console.log("📥 קיבלנו בקשה למיזוג עגלה:");
+
   try {
     const userId = req.user.userId;
+     console.log("📥 קיבלנו בקשה למיזוג עגלה:",userId);
+
     const { productId, quantity } = req.body;
     const cart = await cartService.addToCart(userId, productId, quantity);
     res.json({ items: cart.items });
@@ -55,6 +59,8 @@ export const clearCart = async (req, res) => {
   }
 };
 export const mergeLocalCart = async (req, res, next) => {
+     console.log("📥 קיבלנו בקשה למיזוג עגלה:");
+
   try {
     const userId = req.user.userId;
     const localItems = req.body.items; // [{ productId, quantity }]

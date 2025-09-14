@@ -6,7 +6,7 @@ import { Store } from "../models/store.js";
 import { sendNewSellerRequestToAdmin } from "../utils/email/sendNewSellerRequestToAdmin.js";
 import { sendSellerRequestStatusEmail } from "../utils/email/sendSellerRequestStatusEmail.js";
 import { sendSellerRequestReceivedEmail } from "../utils/email/sendSellerRequestReceivedEmail.js";
-
+import { syncUserSessions } from "./sessionSync.service.js";
 
 async function ensureStoreForSeller(seller, adminUserId) {
   // לא ליצור כפילות
@@ -101,7 +101,7 @@ export class MarketplaceService {
       Seller.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
       Seller.countDocuments(filter),
     ]);
-    console.log("items",items)
+    console.log("items", items)
     return { items, total, page, limit };
   }
 
@@ -129,6 +129,7 @@ export class MarketplaceService {
       console.log("hi hi")
 
       await ensureStoreForSeller(seller, adminUserId);
+      await syncUserSessions(seller.userId);
     }
 
     return seller;
