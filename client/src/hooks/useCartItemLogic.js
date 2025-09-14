@@ -23,7 +23,11 @@ export function useCartItemLogic(item) {
   const user = useSelector((s) => s.user.user);
 
   const productId = getId(item);
-  const id = item._id || (item.product && item.product._id);
+ const id =
+  typeof item.productId === "object"
+    ? item.productId._id
+    : item.productId;
+
   const idUser = typeof item.productId === "object" ? item.productId._id : item.productId;
 
   // 1) כמות מקור אמת מ-Redux
@@ -94,7 +98,7 @@ export function useCartItemLogic(item) {
         return updated;
       });
     } else {
-      dispatch(addGuestItem(item.product || item));
+      dispatch(addGuestItem(item.productId || item));
     }
   };
 

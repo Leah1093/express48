@@ -14,7 +14,7 @@ export class CartService {
     if (!cart) {
         const prod = await Product.findById(productId).select('price').lean();
     if (!prod) throw new Error('Product not found');
-      cart = new Cart({ userId, items: [{ productId, quantity,unitPrice: prod.price }] });
+      cart = new Cart({ userId, items: [{ productId, quantity,unitPrice: prod.price.amount }] });
     } else {
       const existingItem = cart.items.find(item => item.productId.toString() === productId.toString());
       if (existingItem) {
@@ -22,12 +22,12 @@ export class CartService {
       } else {
          const prod = await Product.findById(productId).select('price').lean();
       if (!prod) throw new Error('Product not found');
-        cart.items.push({ productId, quantity, unitPrice: prod.price });
+        cart.items.push({ productId, quantity, unitPrice: prod.price.amount });
       }
     }
     await cart.save();
     // console.log('Saved cart:', JSON.stringify(cart, null, 2));
-    return cart;
+    return await  Cart.findOne({ userId }).populate("items.productId", "title price images");
   }
 //   async addToCart(userId, productId, quantity = 1) {
 //   const cart = await Cart.findOneAndUpdate(
@@ -87,7 +87,10 @@ export class CartService {
 
     // שמירה של השינויים בעגלה
     await cart.save();
-    return cart;
+    return await Cart.findOne({ userId }).populate(
+    "items.productId",
+    "title price images"
+  );
   }
 
 
@@ -186,7 +189,7 @@ export class CartService {
   // באצ' מחירים מראש (יעיל ומהיר)
   const ids = [...new Set(normalized.map(it => it.productId))];
   const prods = await Product.find({ _id: { $in: ids } }).select('price').lean();
-  const priceMap = Object.fromEntries(prods.map(p => [String(p._id), Number(p.price)]));
+  const priceMap = Object.fromEntries(prods.map(p => [String(p._id), Number(p.price.amount)]));
 
   if (!cart) {
     // ✅ עגלה חדשה: לבנות items עם unitPrice, לשמור ולהחזיר
@@ -236,7 +239,10 @@ export class CartService {
     item.quantity = quantity; // ⬅️ עדכון הכמות
     await cart.save();
 
-    return cart;
+   return await Cart.findOne({ userId }).populate(
+    "items.productId",
+    "title price images"
+  );
   }
 
   async toggleItemSelected(userId, itemId, selected) {

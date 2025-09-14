@@ -16,7 +16,7 @@ export default function useMergeCartAfterLogin() {
 
     if (localCart.length > 0) {
       const itemsToMerge = localCart.map((item) => ({
-        productId: item.product?._id || item.productId,
+        productId: item.productId?._id || item.productId,
         quantity: item.quantity,
         selected: item.selected,
       }));

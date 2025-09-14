@@ -3,38 +3,44 @@ import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addItemAsync } from "../../../redux/thunks/cartThunks";
 import { addGuestItem } from "../../../redux/slices/guestCartSlice";
+import QuantityInput from "../../TopNav/cart/QuantityInput";
+import { useNavigate } from "react-router-dom";
+import { selectCartSubtotal, selectCartItems } from "../../../redux/slices/cartSelectors";
 
 export default function ProductPage() {
     const { productSlug } = useParams();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [quantity, setQuantity] = useState(1);
+    // const [quantity, setQuantity] = useState(1);
     const [selectedVariation, setSelectedVariation] = useState(null);
     const [selectedShipping, setSelectedShipping] = useState(0);
     const [shippingOptions, setShippingOptions] = useState();
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const user = useSelector((state) => state.user.user);
-
+    const cartItems = useSelector(selectCartItems);
 
     useEffect(() => {
         const fetchProduct = async () => {
             try {
                 const productResponse = await fetch(`http://localhost:8080/products/${productSlug}`);
+
                 if (!productResponse.ok) throw new Error('Network response was not ok');
                 const product = await productResponse.json();
+                console.log("product", product)
                 setProduct(product);
-                setShippingOptions([
-                    {
-                        title: "משלוח עד הבית",
-                        price: "30₪ או משלוח חינם בקניה מעל 200₪",
-                        address: user?.address || "לא הוגדר כתובת",
-                    },
-                    {
-                        title: "נקודת איסוף",
-                        price: "חינם",
-                        address: "דואר ישראל, זול סטוק ,יפו 217, ירושלים",
-                    }
-                ]);
+                // setShippingOptions([
+                //     {
+                //         title: "משלוח עד הבית",
+                //         price: "30₪ או משלוח חינם בקניה מעל 200₪",
+                //         address: user?.address || "לא הוגדר כתובת",
+                //     },
+                //     {
+                //         title: "נקודת איסוף",
+                //         price: "חינם",
+                //         address: "דואר ישראל, זול סטוק ,יפו 217, ירושלים",
+                //     }
+                // ]);
 
             } catch (error) {
                 console.error("Error fetching product:", error);
@@ -51,9 +57,14 @@ export default function ProductPage() {
         console.log(shippingOptions);
     }, [product]);
 
+    const existing = cartItems.find(
+    (it) => (it.productId?._id ?? it.productId) === product?._id
+  );
+
+
     // Quantity handlers
-    const handleDecrease = () => setQuantity(q => Math.max(1, q - 1));
-    const handleIncrease = () => setQuantity(q => q + 1);
+    // const handleDecrease = () => setQuantity(q => Math.max(1, q - 1));
+    // const handleIncrease = () => setQuantity(q => q + 1);
 
     // Variation handler
     const handleVariationSelect = (variation) => setSelectedVariation(variation);
@@ -68,8 +79,8 @@ export default function ProductPage() {
     };
 
     // Buy now handler
-    const handleBuyNow = () => {
-
+    const handleClick = () => {
+        navigate("/cart");
     };
 
     // Calculate delivery date: today + 7 days
@@ -176,9 +187,15 @@ export default function ProductPage() {
                         {/* Quantity selector */}
                         <div className="mb-4 flex items-center gap-2">
                             <span className="font-semibold">כמות:</span>
-                            <button className="px-2 py-1 border rounded" onClick={handleDecrease}>-</button>
-                            <span>{quantity}</span>
-                            <button className="px-2 py-1 border rounded" onClick={handleIncrease}>+</button>
+                            <QuantityInput item={{
+                                productId: product,
+                                quantity:  existing ? existing.quantity : 1,                 // ברירת מחדל להתחלה
+                                unitPrice: product.price.amount, // המחיר מהמודל החדש
+                                selected: false
+                            }}
+                            productMode={true}
+                             />
+
                         </div>
                         {/* Add to Cart / Buy Now */}
                         <div className="flex gap-4 mb-6">
@@ -190,7 +207,7 @@ export default function ProductPage() {
                             </button>
                             <button
                                 className="flex-1 py-3 border border-orange-600 text-orange-600 rounded-lg text-base font-bold hover:bg-orange-50 transition"
-                                onClick={handleBuyNow}
+                                onClick={handleClick}
                             >
                                 קנה עכשיו
                             </button>
@@ -224,14 +241,14 @@ export default function ProductPage() {
             <div className="mb-6">
                 <div className="text-2xl font-bold mb-4">משלוחים</div>
                 <div className="flex flex-col gap-4">
-                    {shippingOptions.map((option, idx) => (
+                    {/* {shippingOptions.map((option, idx) => (
                         <div
                             key={idx}
                             className={`p-4 rounded-xl border transition cursor-pointer relative ${selectedShipping === idx ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'}`}
                             onClick={() => setSelectedShipping(idx)}
-                        >
+                        > */}
                             {/* Orange dot for selected */}
-                            {selectedShipping === idx && (
+                            {/* {selectedShipping === idx && (
                                 <span className="absolute right-2 top-2 w-3 h-3 bg-orange-500 rounded-full"></span>
                             )}
                             <div className="flex items-center gap-2 mb-1">
@@ -242,7 +259,7 @@ export default function ProductPage() {
                             <div className="text-sm text-gray-700 mb-1">מסירה: {getDeliveryDate()}</div>
                             <div className="text-sm text-gray-700">{option.address}</div>
                         </div>
-                    ))}
+                    ))} */}
                 </div>
             </div>
 

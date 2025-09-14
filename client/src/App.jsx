@@ -1,5 +1,4 @@
 import TopBar from './components/TopNav/TopBar'
-import ProductsList from './components/Main Content/ProductsList'
 import React, { createContext, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import About from "./components/mainNav/About";
@@ -56,9 +55,9 @@ import FavoritesList from "./components/TopNav/favorites/FavoritesList.jsx"
 import CategoryManagementPage from "./components/Categories/CategoryManagementPage.jsx"
 import CartLayout from "./components/TopNav/cart/CartLayout.jsx";
 import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
-import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx";
-import CouponForm from "./components/seller/Coupons.jsx";
-
+import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx"
+import ProductsList from './components/Main Content/product/ProductsList.jsx';
+import ProductPage from './components/Main Content/product/ProductPage.jsx';
 
 function App() {
 
@@ -161,7 +160,6 @@ function App() {
             <Route path="orders" element={<OrdersSeller />} />
             <Route path="reviews" element={<Reviews />} />
             <Route path="reports" element={<Reports />} />
-             <Route path="coupons" element={<CouponForm />} />
           </Route>
           <Route path="/store/:slug" element={<StorePage />}>
             {/* <Route index element={<StoreProducts />} /> */}
