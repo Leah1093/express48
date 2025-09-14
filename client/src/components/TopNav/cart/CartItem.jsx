@@ -297,7 +297,7 @@ export default function CartItem({ item }) {
         </div>
 
         <p className="text-blue-700 font-semibold mt-3 text-md">
-          ₪{item.productId?.price || item.price} × {item.quantity}
+          ₪{item.productId?.price?.amount || item.price?.amount} × {item.quantity}
         </p>
       </div>
     </div>

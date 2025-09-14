@@ -1,13 +1,13 @@
 
 import express from "express";
 import { FavoritesController } from "../controllers/favoritesController.js";
-import { authCookieMiddleware } from "../middlewares/authCookie.middleware.js";
+import { authMiddleware } from "../middlewares/auth.js";
 
 export const favoritesRouter = express.Router();
 const  favoritesController = new FavoritesController();
 
 
-favoritesRouter.use(authCookieMiddleware); // כל הנתיבים דורשים יוזר מחובר
+favoritesRouter.use(authMiddleware); // כל הנתיבים דורשים יוזר מחובר
 
 favoritesRouter.post("/", favoritesController.add);
 favoritesRouter.delete("/:productId", favoritesController.remove);
