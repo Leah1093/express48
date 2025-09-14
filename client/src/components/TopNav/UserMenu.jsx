@@ -14,7 +14,7 @@ const UserMenu = () => {
     <div className="relative group text-right inline-block">
       <div
         key={displayName}
-        className="flex items-center gap-2 font-semibold hover:text-orange-500 cursor-pointer">
+        className="flex items-center gap-2 font-semibold text-gray-700 hover:text-orange-500 cursor-pointer">
         <FaUserCircle className="text-xl" />
         <span>{displayName}</span>
         <span className="text-xs">▾</span>
