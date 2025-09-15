@@ -1,8 +1,9 @@
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addItemAsync } from "../../../redux/thunks/cartThunks";
 import { addGuestItem } from "../../../redux/slices/guestCartSlice";
+
 
 export default function ProductPage() {
     const { productSlug } = useParams();
@@ -14,6 +15,7 @@ export default function ProductPage() {
     const [shippingOptions, setShippingOptions] = useState();
     const dispatch = useDispatch();
     const user = useSelector((state) => state.user.user);
+    const isMobile = useSelector((state) => state.ui.isMobile);
 
 
     useEffect(() => {
@@ -90,106 +92,99 @@ export default function ProductPage() {
     if (!product) return <div className="text-center py-20">Product not found</div>;
 
     return (
-        <div className="font-heebo bg-white text-gray-900 max-w-6xl mx-auto p-8" dir="rtl">
-            {/* Header: Icons, Title, Ratings */}
-            <div className="flex items-start justify-between mb-4">
-                {/* Icons */}
-                <div className="flex gap-4">
-                    <button className="p-2 rounded-full hover:bg-orange-100 transition" title="שיתוף">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-orange-600">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 8.25V6a3 3 0 10-6 0v2.25M12 15v-6" />
-                            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-                        </svg>
-                    </button>
-                    <button className="p-2 rounded-full hover:bg-orange-100 transition" title="הוספה למועדפים">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-6 h-6 text-orange-600">
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            {/* Title */}
-            <h1 className="text-3xl font-bold mb-2 text-right">{product.title}</h1>
-            <div className="text-lg text-gray-500 mb-2 text-right">{product.brand}</div>
-            <div className="flex flex-col items">
-                <div className="flex items-center gap-2 mb-1">
-                    <span className="text-orange-600 text-xl font-bold">{product.ratings?.avg}</span>
-                    <span className="flex gap-1">
-                        {[...Array(5)].map((_, i) => (
-                            <span key={i} className={i < Math.round(product.ratings?.avg) ? "text-orange-500" : "text-gray-300"}>★</span>
-                        ))}
-                    </span>
-                </div>
-                <div className="text-sm text-gray-600 flex gap-2">
-                    <span>{product.ratings?.count} ביקורות</span>
-                    <span>{product.purchases} נמכר</span>
-                    <span>{product.views} צפיות</span>
-                </div>
-            </div>
-            <div className="flex flex-col md:flex-row gap-8 text-right">
-                {/* Left: Product Images */}
-                <div className="md:w-1/2 flex flex-col items-center">
-                    <img src={product.image || product.images?.[0]} alt={product.title} className="w-96 h-96 object-contain rounded-2xl mb-4" />
-                    <div className="flex gap-2">
-                        {product.images?.map((img, i) => (
-                            <img key={i} src={img} alt={`thumb-${i}`} className="w-16 h-16 object-cover rounded-lg border" />
-                        ))}
+        <div
+            className={`font-rubik bg-[${isMobile ? '#FFF7F2' : '#EDFFEA'}] text-gray-900 mx-auto ${isMobile ? 'max-w-[430px] px-2' : 'max-w-[1320px] px-8'} py-4`}
+            style={{ minHeight: isMobile ? '4417px' : 'auto' }}
+        >
+            {/* Main flex container */}
+            <div className={`flex flex-col ${isMobile ? 'items-start' : 'items-end'} gap-12 w-full`}>
+                {/* Top Section: Title, Breadcrumbs, Gallery */}
+                <div className={`flex ${isMobile ? 'flex-col items-center gap-8' : 'flex-row items-end gap-32'} w-full`} dir="rtl">
+                    {/* Gallery */}
+                    <div className={`${isMobile ? 'w-full flex flex-col items-center' : 'w-[584px] flex flex-col items-start gap-6'}`}>
+                        <div className={`flex flex-col justify-center items-center border border-[#ECECEC] rounded-xl ${isMobile ? 'w-[364px] h-[413px]' : 'h-[663px] w-full'} mb-4`}>
+                            <img src={product.image || product.images?.[0]} alt={product.title} className="object-contain max-h-full max-w-full" />
+                        </div>
+                        {/* Thumbnails */}
+                        <div className={`flex ${isMobile ? 'gap-2' : 'gap-6'} overflow-hidden w-full justify-end`}>
+                            {product.images?.map((img, i) => (
+                                <div key={i} className="border border-[#ECECEC] rounded-xl flex justify-center items-center w-[117px] h-[133px]">
+                                    <img src={img} alt={`thumb-${i}`} className="object-contain max-h-full max-w-full" />
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-                {/* Right: Product Details */}
-                <div className="md:w-1/2 flex flex-col justify-between text-right">
-                    <div>
-
+                    {/* Details */}
+                    <div className={`${isMobile ? 'w-full' : 'w-[608px] flex flex-col items-end gap-6'} py-4`} dir="rtl" >
+                        {/* Title & Brand */}
+                        <div className="flex flex-col items-end gap-2">
+                            <h1 className="font-semibold text-[24px] leading-[120%] text-right mb-1" >{product.title}</h1>
+                            <div className="text-[16px] text-gray-500 text-right mb-1" >{product.brand}</div>
+                            {/* <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-orange-600 text-xl font-bold">{product.ratings?.avg}</span>
+                                    <span className="flex gap-1">
+                                        {[...Array(5)].map((_, i) => (
+                                            <span key={i} className={i < Math.round(product.ratings?.avg) ? "text-orange-500" : "text-gray-300"}>★</span>
+                                        ))}
+                                    </span>
+                                </div>
+                                <div className="text-sm text-gray-600 flex gap-2">
+                                    <span>{product.ratings?.count} ביקורות</span>
+                                    <span>{product.purchases} נמכר</span>
+                                    <span>{product.views} צפיות</span>
+                                </div> */}
+                        </div>
                         {/* Description */}
-                        <div className="mb-6">
+                        <div className="text-[16px] leading-[120%] text-right mb-4">
                             {stripTags(product.description)}
                         </div>
-                        <div className="flex items-center gap-2 mb-4">
-                            <span className="font-semibold">מחיר:</span>
-                            <span className="text-2xl text-orange-600 font-bold">₪{product.price?.amount || product.price}</span>
-                            {product.discount && (
-                                <span className="text-sm text-green-600 bg-green-100 px-2 py-1 rounded">
-                                    {product.discount.discountType === "percent"
-                                        ? `-${product.discount.discountValue}%`
-                                        : `-${product.discount.discountValue}₪`}
-                                </span>
+                        {/* Price & Selectors */}
+                        <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row gap-12'} items-end w-full`}>
+                            {/* Price */}
+                            <div className="flex flex-col items-end gap-2 w-[165px]">
+                                <span className="text-[16px] font-semibold">מחיר</span>
+                                <span className="text-[24px] font-semibold">₪{product.price?.amount || product.price}</span>
+                            </div>
+                            {/* Color Selector */}
+                            {product.variations && product.variations.length > 0 && (
+                                <div className="flex flex-col items-end gap-2 w-[202px]">
+                                    <div className="flex gap-2 items-center justify-end">
+                                        <span className="text-[16px] font-semibold">צבע:</span>
+                                        <span className="text-[16px]">{product.variations[0]?.attributes.color}</span>
+                                    </div>
+                                    <div className="flex gap-2 flex-wrap justify-end">
+                                        {product.variations.map((v, i) => (
+                                            <button
+                                                key={i}
+                                                className={`px-3 py-1 border rounded-[16px] text-[14px] ${selectedVariation === v ? 'border-orange-600 bg-orange-50' : 'border-gray-300 bg-white'} font-normal`}
+                                                onClick={() => handleVariationSelect(v)}
+                                            >
+                                                {v.attributes.color}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             )}
-                        </div>
-
-                        {/* Color/Size/Storage selectors */}
-                        {product.variations && product.variations.length > 0 && (
-                            <div className="mb-4">
-                                <div className="mb-2 font-semibold">בחר וריאציה:</div>
-                                <div className="flex gap-2 flex-wrap">
-                                    {product.variations.map((v, i) => (
-                                        <button
-                                            key={i}
-                                            className={`px-3 py-1 border rounded-lg bg-gray-100 hover:bg-orange-100 ${selectedVariation === v ? 'border-orange-600 bg-orange-50' : ''}`}
-                                            onClick={() => handleVariationSelect(v)}
-                                        >
-                                            {v.attributes.color} {v.attributes.size} {v.attributes.storage}
-                                        </button>
-                                    ))}
+                            {/* Quantity Selector */}
+                            <div className="flex flex-col items-end gap-2 w-[76px]">
+                                <span className="text-[16px] font-semibold">כמות</span>
+                                <div className="flex gap-2 items-center justify-end">
+                                    <button className="px-2 py-1 border rounded" onClick={handleDecrease}>-</button>
+                                    <span>{quantity}</span>
+                                    <button className="px-2 py-1 border rounded" onClick={handleIncrease}>+</button>
                                 </div>
                             </div>
-                        )}
-                        {/* Quantity selector */}
-                        <div className="mb-4 flex items-center gap-2">
-                            <span className="font-semibold">כמות:</span>
-                            <button className="px-2 py-1 border rounded" onClick={handleDecrease}>-</button>
-                            <span>{quantity}</span>
-                            <button className="px-2 py-1 border rounded" onClick={handleIncrease}>+</button>
                         </div>
                         {/* Add to Cart / Buy Now */}
-                        <div className="flex gap-4 mb-6">
+                        <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row gap-4'} w-full mt-4`}>
                             <button
-                                className="flex-1 py-3 bg-orange-600 text-white rounded-lg text-base font-bold hover:bg-orange-700 transition"
+                                className="bg-orange-600 text-white rounded-[16px] text-[16px] font-bold py-3 px-8 flex-1 hover:bg-orange-700 transition"
                                 onClick={handleAddToCart}
                             >
                                 הוסף לעגלת קניות
                             </button>
                             <button
-                                className="flex-1 py-3 border border-orange-600 text-orange-600 rounded-lg text-base font-bold hover:bg-orange-50 transition"
+                                className="border-2 border-orange-600 text-orange-600 rounded-[16px] text-[16px] font-bold py-3 px-8 flex-1 hover:bg-orange-50 transition"
                                 onClick={handleBuyNow}
                             >
                                 קנה עכשיו
@@ -197,80 +192,99 @@ export default function ProductPage() {
                         </div>
                     </div>
                 </div>
-            </div>
-
-
-            {/* Specs */}
-            {product.specs && (
-                <div className="mb-6">
-                    <div className="text-2xl font-bold mb-4">מפרט טכני</div>
-                    <ul className="list-disc pl-5 text-gray-700">
-                        {Object.entries(product.specs).map(([key, value], i) => (
-                            <li key={i}><span className="font-bold">{key}:</span> {value}</li>
-                        ))}
-                    </ul>
+                {/* Store Info */}
+                <div className={`flex flex-col items-end gap-2 w-full border-b border-[#ECECEC] py-4`}>
+                    <div className="flex items-center gap-2 justify-between w-full">
+                        <span className="text-[16px] font-semibold">שם החנות</span>
+                        <span className="text-[16px] font-semibold">נמכר ע"י</span>
+                    </div>
                 </div>
-            )}
-
-            {/* Specs */}
-            {product.specs && (
-                <div className="mb-6">
-                    <div className="text-2xl font-bold mb-4">נמכר ע"י</div>
-                    {/* Here i want to add div that display the name of the store with link to the store*/}
-                </div>
-            )}
-
-            {/* Shipping Selector */}
-            <div className="mb-6">
-                <div className="text-2xl font-bold mb-4">משלוחים</div>
-                <div className="flex flex-col gap-4">
-                    {shippingOptions.map((option, idx) => (
-                        <div
-                            key={idx}
-                            className={`p-4 rounded-xl border transition cursor-pointer relative ${selectedShipping === idx ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'}`}
-                            onClick={() => setSelectedShipping(idx)}
-                        >
-                            {/* Orange dot for selected */}
-                            {selectedShipping === idx && (
-                                <span className="absolute right-2 top-2 w-3 h-3 bg-orange-500 rounded-full"></span>
-                            )}
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="text-xl">{option.icon}</span>
-                                <span className="font-bold">{option.title}</span>
+                {/* Shipping */}
+                <div className="flex flex-col items-end gap-6 w-full">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[16px] font-semibold">משלוחים</span>
+                    </div>
+                    <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row gap-6'} w-full`}>
+                        {shippingOptions?.map((option, idx) => (
+                            <div
+                                key={idx}
+                                className={`rounded-xl border transition cursor-pointer relative p-6 ${selectedShipping === idx ? 'border-orange-500 bg-orange-50' : 'border-[#ECECEC] bg-white'}`}
+                                onClick={() => setSelectedShipping(idx)}
+                                style={{ minWidth: isMobile ? '365px' : '632px' }}
+                            >
+                                {/* Orange dot for selected */}
+                                {selectedShipping === idx && (
+                                    <span className="absolute right-2 top-2 w-3 h-3 bg-orange-500 rounded-full"></span>
+                                )}
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-bold text-[16px]">{option.title}</span>
+                                </div>
+                                <div className="text-[16px] text-gray-700 mb-1">משלוח: <span className="font-bold">{option.price}</span></div>
+                                <div className="text-[16px] text-gray-700 mb-1">מסירה - 7 ימים</div>
+                                <div className="text-[16px] text-gray-700">{option.address}</div>
                             </div>
-                            <div className="text-sm text-gray-700 mb-1">משלוח: <span className="font-bold">{option.price}</span></div>
-                            <div className="text-sm text-gray-700 mb-1">מסירה: {getDeliveryDate()}</div>
-                            <div className="text-sm text-gray-700">{option.address}</div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
-            </div>
-
-            {/* Reviews */}
-            <div className="mt-12 text-right">
-                <h2 className="text-2xl font-bold mb-4">ביקורות</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {product.reviews?.map((r, i) => (
-                        <div key={i} className="bg-gray-100 rounded-lg p-4">
-                            <div className="font-semibold">{r.user}</div>
-                            <div className="text-orange-600">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</div>
-                            <div className="text-sm text-gray-800">{r.text}</div>
+                {/* Product Specs */}
+                {product.specs && (
+                    <div className="flex flex-col items-end gap-2 w-full border-b border-[#ECECEC] py-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[16px] font-semibold">מפרט טכני</span>
                         </div>
-                    ))}
+                        <ul className="list-disc pr-5 text-gray-700">
+                            {Object.entries(product.specs).map(([key, value], i) => (
+                                <li key={i}><span className="font-bold">{key}:</span> {value}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+                {/* Product Details (long text) */}
+                <div className="flex flex-col items-end gap-2 w-full border-b border-[#ECECEC] py-4">
+                    <span className="text-[16px] leading-[120%] text-right">
+                        {/* Example: full product details, can be replaced with product.longDescription or similar */}
+                        ה־Redmi Buds 6 Pro משלבות טכנולוגיות מתקדמות לחוויית שמע עשירה ונקייה. עם תמיכה ב־Hi-Res Audio Wireless והסמכת LDAC, ביטול רעשים חכם ועוצמתי, ושלושה מיקרופונים עם עיבוד AI לשיחות ברורות – האוזניות מספקות איכות פרימיום גם במוזיקה וגם בשיחות. העיצוב הקל והנוח יחד עם התאמה אישית דרך האפליקציה הופכים אותן לבחירה מצוינת לשימוש יומיומי.
+                    </span>
                 </div>
-            </div>
-
-            {/* Related Products */}
-            <div className="mt-12 text-right">
-                <h2 className="text-2xl font-bold mb-4">אולי תאהבו גם</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    {product.related?.map((p, i) => (
-                        <div key={i} className="bg-gray-100 rounded-lg p-4 text-center">
-                            <img src={p.image} alt={p.name} className="w-24 h-24 object-contain mx-auto mb-2" />
-                            <div className="text-sm font-semibold">{p.name}</div>
-                            <div className="text-orange-600 font-bold">₪{p.price}</div>
-                        </div>
-                    ))}
+                {/* Return Policy */}
+                <div className="flex flex-col items-end gap-2 w-full border-b border-[#ECECEC] py-4">
+                    <span className="text-[16px] font-semibold">מדיניות החזרה והחזר כספי</span>
+                    <span className="text-[16px] leading-[120%] text-right">
+                        לקוחות המעוניינים להחזיר מוצר יכולים לעשות זאת תוך 14 ימים ממועד קבלתו, באמצעות שליח לנקודת דואר. עלות ההחזרה זהה לעלות המשלוח שנגבתה בעת הרכישה. במידה והלקוח היה זכאי למשלוח חינם בעת ההזמנה – גם ההחזרה תתבצע ללא עלות. ההחזר הכספי יינתן לאחר קבלת המוצר ובדיקתו, בהתאם לתנאים המפורטים באתר.
+                    </span>
+                </div>
+                {/* Security Policy */}
+                <div className="flex flex-col items-end gap-2 w-full border-b border-[#ECECEC] py-4">
+                    <span className="text-[16px] font-semibold">אבטחה</span>
+                    <span className="text-[16px] leading-[120%] text-right">
+                        לנסח פסקה על אבטחה לנסח פסקה על אבטחה לנסח פסקה על אבטחה לנסח פסקה על אבטחה לנסח פסקה על אבטחה לנסח פסקה על אבטחה לנסח פסקה על אבטחה לנסח פסקה על אבטחה לנסח פסקה על אבטחה לנסח פסקה על אבטחה
+                    </span>
+                </div>
+                {/* Reviews */}
+                <div className="flex flex-col items-end gap-2 w-full mt-12">
+                    <span className="text-[16px] font-semibold">ביקורות</span>
+                    <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-6 w-full`}>
+                        {product.reviews?.map((r, i) => (
+                            <div key={i} className="bg-gray-100 rounded-lg p-4">
+                                <div className="font-semibold">{r.user}</div>
+                                <div className="text-orange-600">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</div>
+                                <div className="text-sm text-gray-800">{r.text}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                {/* Related Products */}
+                <div className="flex flex-col items-end gap-2 w-full mt-12">
+                    <span className="text-[16px] font-semibold">אולי תאהבו גם</span>
+                    <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} gap-6 w-full`}>
+                        {product.related?.map((p, i) => (
+                            <div key={i} className="bg-gray-100 rounded-lg p-4 text-center">
+                                <img src={p.image} alt={p.name} className="w-24 h-24 object-contain mx-auto mb-2" />
+                                <div className="text-sm font-semibold">{p.name}</div>
+                                <div className="text-orange-600 font-bold">₪{p.price}</div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
