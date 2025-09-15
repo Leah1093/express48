@@ -46,7 +46,7 @@ const ProductCard = React.memo(({ product, favorites }) => {
       <div className="mt-3 font-bold text-sm">{product.title}</div>
        {/* מחיר */}
       <div className="text-[#0d2d52] font-bold text-lg my-2">
-        {product.price.amount} {product.price.currency} {/* עדכן בהתאם למבנה של product.price */}
+        {product.price.amount} {product.currency} {/* עדכן בהתאם למבנה של product.price */}
       </div>
         {/* צבעים מדומים */}
       {/* <div className="flex justify-center gap-2 mb-3">
