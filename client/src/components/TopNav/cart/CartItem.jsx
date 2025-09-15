@@ -233,6 +233,7 @@
 import { useCartItemLogic } from "../../../hooks/useCartItemLogic";
 
 export default function CartItem({ item }) {
+  console.log("item",item);
   const {
     user, displayQty, unitPrice, title, image,localQty,
     handleAdd, handleRemove, handleRemoveCompletely,
@@ -252,8 +253,8 @@ export default function CartItem({ item }) {
 
       {/* תמונה */}
       <img
-        src={item.productId?.image || item.image}
-        alt={item.productId?.title || item.title}
+        src={item.productId.images}
+        alt={item.productId.title}
         className="w-20 h-20 object-contain"
       />
 
@@ -261,7 +262,7 @@ export default function CartItem({ item }) {
       <div className="flex flex-col flex-1 text-black">
         <div>
           <h4 className="text-md font-semibold leading-snug">
-            {item.productId?.title || item.title}
+            {item.productId.title}
           </h4>
         </div>
 
@@ -297,7 +298,9 @@ export default function CartItem({ item }) {
         </div>
 
         <p className="text-blue-700 font-semibold mt-3 text-md">
-          ₪{item.productId?.price?.amount || item.price?.amount} × {item.quantity}
+          {/* ₪{item.productId.price.amount} × {item.quantity} */}
+          ₪{item.productId?.price?.amount ?? 0} × {item.quantity}
+
         </p>
       </div>
     </div>

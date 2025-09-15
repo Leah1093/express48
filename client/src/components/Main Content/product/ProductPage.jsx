@@ -3,40 +3,45 @@ import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addItemAsync } from "../../../redux/thunks/cartThunks";
 import { addGuestItem } from "../../../redux/slices/guestCartSlice";
-
+import QuantityInput from "../../TopNav/cart/QuantityInput";
+import { useNavigate } from "react-router-dom";
+import { selectCartSubtotal, selectCartItems } from "../../../redux/slices/cartSelectors";
 
 export default function ProductPage() {
     const { productSlug } = useParams();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [quantity, setQuantity] = useState(1);
+    // const [quantity, setQuantity] = useState(1);
     const [selectedVariation, setSelectedVariation] = useState(null);
     const [selectedShipping, setSelectedShipping] = useState(0);
     const [shippingOptions, setShippingOptions] = useState();
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const user = useSelector((state) => state.user.user);
-    const isMobile = useSelector((state) => state.ui.isMobile);
+    const cartItems = useSelector(selectCartItems);    const isMobile = useSelector((state) => state.ui.isMobile);
 
 
     useEffect(() => {
         const fetchProduct = async () => {
             try {
                 const productResponse = await fetch(`http://localhost:8080/products/${productSlug}`);
+
                 if (!productResponse.ok) throw new Error('Network response was not ok');
                 const product = await productResponse.json();
+                console.log("product", product)
                 setProduct(product);
-                setShippingOptions([
-                    {
-                        title: "משלוח עד הבית",
-                        price: "30₪ או משלוח חינם בקניה מעל 200₪",
-                        address: user?.address || "לא הוגדר כתובת",
-                    },
-                    {
-                        title: "נקודת איסוף",
-                        price: "חינם",
-                        address: "דואר ישראל, זול סטוק ,יפו 217, ירושלים",
-                    }
-                ]);
+                // setShippingOptions([
+                //     {
+                //         title: "משלוח עד הבית",
+                //         price: "30₪ או משלוח חינם בקניה מעל 200₪",
+                //         address: user?.address || "לא הוגדר כתובת",
+                //     },
+                //     {
+                //         title: "נקודת איסוף",
+                //         price: "חינם",
+                //         address: "דואר ישראל, זול סטוק ,יפו 217, ירושלים",
+                //     }
+                // ]);
 
             } catch (error) {
                 console.error("Error fetching product:", error);
@@ -53,9 +58,14 @@ export default function ProductPage() {
         console.log(shippingOptions);
     }, [product]);
 
+    const existing = cartItems.find(
+    (it) => (it.productId?._id ?? it.productId) === product?._id
+  );
+
+
     // Quantity handlers
-    const handleDecrease = () => setQuantity(q => Math.max(1, q - 1));
-    const handleIncrease = () => setQuantity(q => q + 1);
+    // const handleDecrease = () => setQuantity(q => Math.max(1, q - 1));
+    // const handleIncrease = () => setQuantity(q => q + 1);
 
     // Variation handler
     const handleVariationSelect = (variation) => setSelectedVariation(variation);
@@ -70,8 +80,8 @@ export default function ProductPage() {
     };
 
     // Buy now handler
-    const handleBuyNow = () => {
-
+    const handleClick = () => {
+        navigate("/cart");
     };
 
     // Calculate delivery date: today + 7 days
@@ -185,7 +195,7 @@ export default function ProductPage() {
                             </button>
                             <button
                                 className="border-2 border-orange-600 text-orange-600 rounded-[16px] text-[16px] font-bold py-3 px-8 flex-1 hover:bg-orange-50 transition"
-                                onClick={handleBuyNow}
+                                onClick={handleClick}
                             >
                                 קנה עכשיו
                             </button>
@@ -232,26 +242,8 @@ export default function ProductPage() {
                         <div className="flex items-center gap-2 mb-2">
                             <span className="text-[16px] font-semibold">מפרט טכני</span>
                         </div>
-                        <ul className="list-disc pr-5 text-gray-700">
-                            {Object.entries(product.specs).map(([key, value], i) => (
-                                <li key={i}><span className="font-bold">{key}:</span> {value}</li>
-                            ))}
-                        </ul>
                     </div>
-                )}
-                {/* Product Details (long text) */}
-                <div className="flex flex-col items-end gap-2 w-full border-b border-[#ECECEC] py-4">
-                    <span className="text-[16px] leading-[120%] text-right">
-                        {/* Example: full product details, can be replaced with product.longDescription or similar */}
-                        ה־Redmi Buds 6 Pro משלבות טכנולוגיות מתקדמות לחוויית שמע עשירה ונקייה. עם תמיכה ב־Hi-Res Audio Wireless והסמכת LDAC, ביטול רעשים חכם ועוצמתי, ושלושה מיקרופונים עם עיבוד AI לשיחות ברורות – האוזניות מספקות איכות פרימיום גם במוזיקה וגם בשיחות. העיצוב הקל והנוח יחד עם התאמה אישית דרך האפליקציה הופכים אותן לבחירה מצוינת לשימוש יומיומי.
-                    </span>
-                </div>
-                {/* Return Policy */}
-                <div className="flex flex-col items-end gap-2 w-full border-b border-[#ECECEC] py-4">
-                    <span className="text-[16px] font-semibold">מדיניות החזרה והחזר כספי</span>
-                    <span className="text-[16px] leading-[120%] text-right">
-                        לקוחות המעוניינים להחזיר מוצר יכולים לעשות זאת תוך 14 ימים ממועד קבלתו, באמצעות שליח לנקודת דואר. עלות ההחזרה זהה לעלות המשלוח שנגבתה בעת הרכישה. במידה והלקוח היה זכאי למשלוח חינם בעת ההזמנה – גם ההחזרה תתבצע ללא עלות. ההחזר הכספי יינתן לאחר קבלת המוצר ובדיקתו, בהתאם לתנאים המפורטים באתר.
-                    </span>
+                    )}
                 </div>
                 {/* Security Policy */}
                 <div className="flex flex-col items-end gap-2 w-full border-b border-[#ECECEC] py-4">
@@ -287,6 +279,5 @@ export default function ProductPage() {
                     </div>
                 </div>
             </div>
-        </div>
     );
 }
