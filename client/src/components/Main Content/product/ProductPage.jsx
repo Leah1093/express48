@@ -11,7 +11,7 @@ export default function ProductPage() {
     const { productSlug } = useParams();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
-    // const [quantity, setQuantity] = useState(1);
+    const [quantity, setQuantity] = useState(1);
     const [selectedVariation, setSelectedVariation] = useState(null);
     const [selectedShipping, setSelectedShipping] = useState(0);
     const [shippingOptions, setShippingOptions] = useState();
@@ -64,8 +64,8 @@ export default function ProductPage() {
 
 
     // Quantity handlers
-    // const handleDecrease = () => setQuantity(q => Math.max(1, q - 1));
-    // const handleIncrease = () => setQuantity(q => q + 1);
+    const handleDecrease = () => setQuantity(q => Math.max(1, q - 1));
+    const handleIncrease = () => setQuantity(q => q + 1);
 
     // Variation handler
     const handleVariationSelect = (variation) => setSelectedVariation(variation);
