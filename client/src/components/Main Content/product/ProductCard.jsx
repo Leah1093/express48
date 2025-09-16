@@ -27,7 +27,7 @@ const ProductCard = React.memo(({ product, favorites }) => {
         NEW
       </div>
        {/* אייקונים שמופיעים ב-hover */}
-      <div className="absolute top-4 left-2 flex flex-col gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <div className="absolute top-4 left-2 flex flex-col gap-3 group-hover:opacity-100 transition-opacity duration-300">
         <button className="p-2 bg-white rounded-lg shadow hover:bg-gray-100">
           <Shuffle size={18} />
         </button>
