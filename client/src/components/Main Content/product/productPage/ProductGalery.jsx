@@ -20,7 +20,7 @@ export default function ProductGallery({ product }) {
         {product.images?.map((img, i) => (
           <div
             key={i}
-            className="flex-shrink-0 w-full h-[400px] snap-center rounded-[12px] border border-[#EDEDED] overflow-hidden"
+            className="flex-shrink-0 w-[85%] h-[320px] snap-center rounded-[12px] border border-[#EDEDED] overflow-hidden"
           >
             <img
               src={img}
@@ -30,6 +30,7 @@ export default function ProductGallery({ product }) {
           </div>
         ))}
       </div>
+
 
       {/* === דסקטופ: תמונה גדולה + שורת תמונות קטנות === */}
       <div className="hidden md:flex flex-col gap-6">
@@ -51,7 +52,7 @@ export default function ProductGallery({ product }) {
             <div
               key={i}
               onClick={() => handleChangeImage(img)}
-              className={`w-[100px] aspect-square flex-shrink-0 cursor-pointer rounded-[12px] border overflow-hidden transition
+              className={`w-[95px] aspect-square flex-shrink-0 cursor-pointer rounded-[12px] border overflow-hidden transition
         ${selectedImage === img
                   ? "border-[#ff6500] bg-[#fff7f2]"
                   : "border-[#EDEDED] hover:border-gray-400"

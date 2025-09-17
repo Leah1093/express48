@@ -34,7 +34,7 @@ export default function ProductDetails({
     <div className="flex flex-col items-end w-full gap-6 font-rubik text-right h-full">
 
       {/* כותרת */}
-      <div className="flex flex-col items-end gap-2 w-full">
+      <div className="flex flex-col items-end gap-2 w-[70%]">
         <h1 className="w-full font-semibold text-[#141414] text-2xl leading-[120%] tracking-[-0.011em]">
           {product.title}
         </h1>
@@ -44,8 +44,7 @@ export default function ProductDetails({
       {/* תיאור עם "קרא עוד" */}
       <div className="w-full">
         <p
-          className={`text-[16px] text-[#141414] leading-[160%] whitespace-pre-line transition-all duration-300 ${showFullDescription ? "max-h-none" : "max-h-[120px] overflow-hidden"
-            }`}
+          className={`text-[16px] text-[#141414] leading-[160%] whitespace-pre-line transition-all duration-300 ${showFullDescription ? "max-h-none" : "max-h-[120px] overflow-hidden"}`}
         >
           {cleanDescription}
         </p>
@@ -54,14 +53,14 @@ export default function ProductDetails({
             onClick={() => setShowFullDescription(!showFullDescription)}
             className="mt-2 text-sm hover:underline"
           >
-            {showFullDescription ? "הצג פחות" : "הצג עוד"}
+            {showFullDescription ? "הצג פחות" : "לתיאור המלא"}
           </button>
         )}
       </div>
 
       {/* מחיר */}
       <div className="flex flex-col gap-2 items-end w-full">
-        <span className="text-[16px] text-gray-700">מחיר</span>
+        <span className="text-[16px]"><b>מחיר</b></span>
         <div className="flex items-center gap-2">
 
           {product.discount && (
@@ -81,8 +80,8 @@ export default function ProductDetails({
       {/* צבע */}
       {product.variations?.length > 0 && (
         <div className="flex flex-col gap-4 items-end w-full">
-          <span className="text-sm text-gray-700">
-            צבע:{" "}
+          <span className="text-sm">
+            <b> צבע:</b>{" "}
             {selectedVariation?.attributes?.color ||
               product.variations[0]?.attributes?.color}
           </span>
@@ -91,8 +90,8 @@ export default function ProductDetails({
               <button
                 key={i}
                 onClick={() => setSelectedVariation(v)}
-                className={`px-3 py-2 rounded-2xl border text-[14px] transition-colors
-                  ${selectedVariation === v
+                className={`px-[12px] py-[4px] rounded-2xl border text-[14px] transition-colors
+                ${selectedVariation === v
                     ? "bg-[#fff7f2] border-[#ff6500] text-orange-600"
                     : "border-[#141414]/20 text-[#141414] hover:bg-gray-50"
                   }`}
@@ -136,7 +135,7 @@ export default function ProductDetails({
           >
             +
           </button>
-        </div>        <span className="text-sm text-gray-700">כמות</span>
+        </div>        <span className="text-sm"><b>כמות</b></span>
       </div>
 
       {/* כפתורים */}
