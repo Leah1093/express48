@@ -60,24 +60,32 @@ export default function ProductPage() {
   return (
     <div className="font-heebo bg-white text-gray-900 max-w-[1440px] mx-auto px-4 md:px-8 lg:px-12 py-6 md:py-10">
       {/* בלוק עליון - גלריה + פרטים */}
-      <div className="flex flex-col md:flex-row-reverse gap-8 items-start">
+      <div className="flex flex-col md:flex-row-reverse justify-end items-start gap-8 lg:gap-[100px] self-stretch">
         {/* גלריה */}
-        <div className="w-full md:w-[55%]">
-          <ProductGallery product={product} />
+        <div className="md:flex md:justify-end w-full md:w-[55%]">
+          <div className="w-[100%] md:max-w-[600px]">
+            <ProductGallery product={product} />
+          </div>
         </div>
 
         {/* פרטים */}
-        <div className="w-full md:w-[45%] flex flex-col gap-6">
-          <ProductDetails
-            product={product}
-            existing={existing}
-            selectedVariation={selectedVariation}
-            setSelectedVariation={setSelectedVariation}
-            handleAddToCart={handleAddToCart}
-            handleClick={handleClick}
-          />
+        <div className="md:flex md:justify-end w-full md:w-[45%]">
+          <div className="w-auto md:max-w-[400px]">
+            <ProductDetails
+              product={product}
+              existing={existing}
+              selectedVariation={selectedVariation}
+              setSelectedVariation={setSelectedVariation}
+              handleAddToCart={handleAddToCart}
+              handleClick={handleClick}
+            />
+          </div>
         </div>
       </div>
+
+
+
+
 
       {/* מוכר */}
       <div className="mt-12 rounded-2xl border-b border-[#EDEDED] p-3">
@@ -85,26 +93,26 @@ export default function ProductPage() {
       </div>
 
       {/* משלוחים */}
-        <ProductShipping
-          shippingOptions={[
-            {
-              id: "pickup",
-              title: "נקודת איסוף",
-              price: "חינם",
-              delivery: "מסירה - 7 ימים",
-              address: "דואר ישראל, זול סטוק ,יפו 217, ירושלים",
-              isSelected: true,
-            },
-            {
-              id: "home",
-              title: "משלוח עד הבית",
-              price: "30₪ או חינם מעל 200₪",
-              delivery: "מסירה - 7 ימים",
-              address: "הלל 18, ירושלים",
-              isSelected: false,
-            },
-          ]}
-        />
+      <ProductShipping
+        shippingOptions={[
+          {
+            id: "pickup",
+            title: "נקודת איסוף",
+            price: "חינם",
+            delivery: "מסירה - 7 ימים",
+            address: "דואר ישראל, זול סטוק ,יפו 217, ירושלים",
+            isSelected: true,
+          },
+          {
+            id: "home",
+            title: "משלוח עד הבית",
+            price: "30₪ או חינם מעל 200₪",
+            delivery: "מסירה - 7 ימים",
+            address: "הלל 18, ירושלים",
+            isSelected: false,
+          },
+        ]}
+      />
 
 
       {/* סקירה כללית */}
