@@ -52,7 +52,7 @@ export default function TopActions({ product }) {
                 onClick={handleShare}
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-[#fff7f2] hover:bg-[#ffe8d9] transition"
             >
-                <IoShareSocialOutline className="w-5 h-5 text-[#ff6500]" />
+                <IoShareSocialOutline className="w-6 h-6 text-[#ff6500]" />
             </button>
 
             {/* כפתור מועדפים */}
@@ -63,7 +63,7 @@ export default function TopActions({ product }) {
                 {isFavorite ? (
                     <IoHeart className="w-5 h-5 text-[#ff6500]" />
                 ) : (
-                    <IoHeartOutline className="w-5 h-5 text-[#ff6500]" />
+                    <IoHeartOutline className="w-6 h-6 text-[#ff6500]" />
                 )}
             </button>
         </div>
