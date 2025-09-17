@@ -5,8 +5,4 @@ name = "javascript"
 
   [analyzers.meta]
   plugins = ["react"]
-  environment = [
-    "nodejs",
-    "jest",
-    "mongo"
-  ]
+  environment = ["nodejs", "jest", "mongo"]
