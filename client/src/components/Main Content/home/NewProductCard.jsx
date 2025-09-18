@@ -513,7 +513,7 @@ export default function NewProductCard({ product, onAddToCart }) {
   dir="rtl"
   className="
     relative flex flex-col items-center
-    w-full min-w-[200px] flex-grow
+    w-full min-w-[160px] flex-grow
     rounded-[12px] border border-[#EDEDED] overflow-hidden
     pt-[1px] gap-[16px]
   "
