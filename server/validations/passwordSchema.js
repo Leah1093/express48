@@ -7,3 +7,10 @@ export const passwordSchema = z.object({
     // .regex(/[A-Z]/, "חובה לפחות אות גדולה אחת")
     // .regex(/[0-9]/, "חובה לפחות ספרה אחת")
 });
+
+export const emailSchema = z.object({
+  email: z
+    .string()
+    .nonempty("נא להזין כתובת מייל")
+    .email("כתובת מייל לא תקינה"),
+});

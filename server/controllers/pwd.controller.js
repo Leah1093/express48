@@ -23,24 +23,22 @@ export default class PasswordController {
             next(err);
         }
     }
-
+    
     async forgotPassword(req, res, next) {
         try {
             const { email } = req.body;
-            if (!email) {
-                const error = new Error("נא להזין כתובת מייל");
-                error.statusCode = 400;
-                throw error;
-            }
 
             const passwordService = new PasswordService();
             await passwordService.requestPasswordReset(email);
 
-            res.json({ message: "אם המשתמש קיים, נשלח אליו מייל לאיפוס סיסמה" });
+            res.json({
+                message: "אם המשתמש קיים, נשלח אליו מייל לאיפוס סיסמה"
+            });
         } catch (err) {
             next(err);
         }
     }
+
 
     async resetPassword(req, res, next) {
         try {
