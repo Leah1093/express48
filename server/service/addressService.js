@@ -15,8 +15,7 @@ export class AddressService {
   }
 
 //   async updateAddress(id, data) {
-//     return Address.findByIdAndUpdate(id, data, { new: true,runValidators: true,});
-//   }
+//     return Address.findByIdAndUpdate(id, data, { new: true,runValidators: true,});}
 async updateAddress(id, userId, data) {
   return Address.findOneAndUpdate(
     { _id: id, userId },   // לוודא שהכתובת שייכת למשתמש
