@@ -9,31 +9,35 @@ function HomeNewProducts() {
     if (error) return <div>שגיאה בטעינת מוצרים</div>;
 
     return (
-        <section
-            className="
+      <section
+  className="
     flex flex-col
     gap-[48px] 
-    w-full max-w-[1400px] mx-auto
-    md:gap-[128px]
-  "
-        >
-            {/* כותרת */}
-            <h2 className="text-xl font-semibold text-right w-full">
-                חדשים באתר
-            </h2>
-            {/* רשימת מוצרים */}
- <div
-  className="
-    grid gap-6
-    grid-cols-[repeat(auto-fit,minmax(220px,1fr))]
-    max-w-[1400px] w-full mx-auto px-4
+    w-full max-w-[2000px] mx-auto
+    md:gap-[64px]
+    px-4 sm:px-6 lg:px-16
   "
 >
-                {data?.items?.map((p) => (
-                    <NewProductCard key={p._id} product={p} />
-                ))}
-            </div>
-        </section>
+  {/* כותרת */}
+  <h2 className="text-xl font-semibold text-right w-full">
+    חדשים באתר
+  </h2>
+
+  {/* רשימת מוצרים */}
+<div
+ className="
+    grid gap-5
+    grid-cols-[repeat(auto-fit,minmax(170px,1fr))]   /* מובייל */
+    md:grid-cols-[repeat(auto-fit,minmax(230px,1fr))] /* מחשב */
+    w-full
+  "
+  >
+    {data?.items?.map((p) => (
+      <NewProductCard key={p._id} product={p} />
+    ))}
+  </div>
+</section>
+
     );
 }
 
