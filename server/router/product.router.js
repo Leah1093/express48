@@ -8,6 +8,5 @@ const productController = new ProductController();
 const productRouter = express.Router();
 productRouter.get('/', productController.getAllProducts);
 productRouter.get('/:slug', productController.getProductsBySlug);
-
 productRouter.get("/new", productController.getNewProducts);
 export default productRouter;
