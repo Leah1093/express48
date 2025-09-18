@@ -23,19 +23,21 @@ export default function CategoryRow() {
             <span className="mb-2 text-right text-[#141414] text-[14px] font-semibold leading-[120%] tracking-[-0.154px]">
                 קטגוריות מובילות
             </span>
-            <div className="flex gap-6 overflow-x-auto touch-pan-x scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent w-full justify-end">
+            <div className="flex flex-nowrap gap-6 overflow-x-auto scrollbar-hide w-full " dir="rtl">
                 {categories
                     .filter((cat) => !cat.parentId)
                     .map((cat) => (
-                        <div key={cat._id} className="flex flex-col items-center min-w-[70px]">
+                        <div
+                            key={cat._id}
+                            className="flex flex-col items-center min-w-[80px] flex-shrink-0"
+                        >
                             <div
                                 onClick={() => {
-                                    // הוסף כאן את הלוגיקה לניווט או פעולה אחרת בעת לחיצה על קטגוריה
                                     console.log("to do");
                                 }}
-                                className="w-[46px] h-[46px] rounded-full border border-[#EDEDED] flex items-center justify-center mb-1 bg-gray-100"
+                                className="rounded-full border border-[#EDEDED] flex items-center justify-center mb-1 bg-gray-100"
                                 style={{
-                                    background: `url(http://localhost:8080${cat.icon}) lightgray -6.264px -4.431px / 159.231% 114.597% no-repeat`,
+                                    background: `url(http://localhost:8080${cat.icon}) center/cover no-repeat`,
                                     height: "59px",
                                     width: "59px",
                                 }}
@@ -45,10 +47,8 @@ export default function CategoryRow() {
                             </span>
                         </div>
                     ))}
-
-                {/* הסתרת פס גלילה ב-webkit */}
-                <style>{`.flex::-webkit-scrollbar { display: none; } `}</style>
             </div>
+
         </div >
     );
 }
