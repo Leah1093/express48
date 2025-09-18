@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for controllers/product.controller.js</title>
+    <title>Code coverage report for utils/jwt.js</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../index.html">All files</a> / <a href="index.html">controllers</a> product.controller.js</h1>
+        <h1><a href="../index.html">All files</a> / <a href="index.html">utils</a> jwt.js</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">57.14% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>20/20</span>
+                <span class='fraction'>4/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>6/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">57.14% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>20/20</span>
+                <span class='fraction'>4/7</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -99,92 +99,77 @@
 <a name='L34'></a><a href='#L34'>34</a>
 <a name='L35'></a><a href='#L35'>35</a>
 <a name='L36'></a><a href='#L36'>36</a>
-<a name='L37'></a><a href='#L37'>37</a>
-<a name='L38'></a><a href='#L38'>38</a>
-<a name='L39'></a><a href='#L39'>39</a>
-<a name='L40'></a><a href='#L40'>40</a>
-<a name='L41'></a><a href='#L41'>41</a>
-<a name='L42'></a><a href='#L42'>42</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L37'></a><a href='#L37'>37</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { productService } from "../service/product.service.js";
-import { CustomError } from "../utils/CustomError.js";
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// utils/jwt.js
+import jwt from "jsonwebtoken";
 &nbsp;
-export class ProductController {
-  async getNewProducts(req, res, next) {
-    try {
-      const limit = parseInt(req.query.limit, 10) || 12;
-      const products = await productService.listNewProducts(limit);
-      res.json({ items: products });
-    } catch (err) {
-      next(new CustomError("שגיאה בשליפת מוצרים חדשים", 500));
-    }
-  }
+const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
+const ISS = process.env.JWT_ISSUER || "https://express48.co.il";
+const AUD = process.env.JWT_AUDIENCE || "https://express48.co.il";
+const ACCESS_TTL = process.env.ACCESS_TOKEN_TTL || "60m";
 &nbsp;
-  getAllProducts = async (req, res, next) =&gt; {
-    try {
-      const products = await productService.getAllProductsService();
-      res.json(products);
-    } catch (err) {
-      next(new CustomError("שגיאה בשליפת מוצרים", 500));
-    }
+//יצירת טוקן
+export function <span class="fstat-no" title="function not covered" >signAccessToken(</span>{ user, sessionId }) {
+  const payload = <span class="cstat-no" title="statement not covered" >{</span>
+    sub: String(user._id),
+    sid: sessionId,
+    role:user.role,
+    roles: user.roles || [],
+    ...(user.sellerId ? { sellerId: user.sellerId } : {}),
+    ...(user.storeId ? { storeId: user.storeId } : {}),
   };
 &nbsp;
-  getProductsBySlug = async (req, res, next) =&gt; {
-    const { slug } = req.params;
-    try {
-      const product = await productService.getProductBySlugService(slug);
-      if (!product) {
-        throw new CustomError("מוצר לא נמצא", 404);
-      }
-      res.json(product);
-    } catch (err) {
-        
-      if (err instanceof CustomError) {
-        next(err);
-      } else {
-        next(new CustomError("שגיאה בשליפת מוצר", 500));
-      }
-    }
-  };
+<span class="cstat-no" title="statement not covered" >  return jwt.sign(payload, ACCESS_SECRET, {</span>
+    expiresIn: ACCESS_TTL,
+    issuer: ISS,
+    audience: AUD,
+    algorithm: "HS256",
+  });
+}
+&nbsp;
+//מבטיח שהטוקן שמתקבל בבקשות הוא אמיתי ולא שונה.
+export function <span class="fstat-no" title="function not covered" >verifyAccessToken(</span>token) {
+<span class="cstat-no" title="statement not covered" >  return jwt.verify(token, ACCESS_SECRET, {</span>
+    issuer: ISS,
+    audience: AUD,
+    algorithms: ["HS256"],
+    clockTolerance: 5, 
+  });
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -193,7 +178,7 @@ export class ProductController {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-18T14:00:47.024Z
+                at 2025-09-18T13:37:43.785Z
             </div>
         <script src="../prettify.js"></script>
         <script>
