@@ -1,13 +1,13 @@
 import TopBar from './components/TopNav/TopBar'
-import React, { createContext, useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import About from "./components/mainNav/About";
 import Faq from "./components/mainNav/Faq";
 import BestSellers from "./components/mainNav/BestSellers";
 import Careers from "./components/mainNav/Careers";
 import Coupons from "./components/mainNav/Coupons";
 import Guides from "./components/mainNav/Guides";
-import MainNav from "./components/mainNav/MainNav";
+// import MainNav from "./components/mainNav/MainNav";
 import AccountDashboard from './components/account/Dashboard';
 import Support from './components/mainNav/Support';
 import Login from './components/authentication/Login';
@@ -56,7 +56,7 @@ import CategoryManagementPage from "./components/Categories/CategoryManagementPa
 import CartLayout from "./components/TopNav/cart/CartLayout.jsx";
 import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
 import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx";
-import ProductPage from "./components/Main Content/product/ProductPage.jsx"
+import ProductPage from "./components/Main Content/product/productPage/ProductPage.jsx"
 // import ProductCreateForm from './components/seller/products/ProductCreateForm.jsx';
 import ProductsList from './components/Main Content/product/ProductsList.jsx';
 
@@ -64,7 +64,6 @@ import ProductsList from './components/Main Content/product/ProductsList.jsx';
 function App() {
 
   const dispatch = useDispatch();
-  const isMobile = useSelector((state) => state.ui.isMobile);
 
 
   useEffect(() => {
@@ -117,6 +116,7 @@ function App() {
 
       <main className="flex-grow">
         <Routes>
+          <Route index element={<ProductsList />} />
           <Route path="products" element={<ProductsList />} />
           <Route path="products/:storeSlug/:productSlug" element={<ProductPage />} />
           <Route path="/favorites" element={<FavoritesList />} />
