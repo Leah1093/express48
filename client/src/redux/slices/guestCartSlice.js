@@ -9,12 +9,12 @@ const guestCartSlice = createSlice({
   reducers: {
     addGuestItem: (state, action) => {
       const product = action.payload;
-      const index = state.findIndex(item => item.product._id === product._id);
+      const index = state.findIndex(item => item.productId._id === product._id);
 
       if (index >= 0) {
         state[index].quantity += 1;
       } else {
-        state.push({ product, quantity: 1, unitPrice: product.price, selected: false });// ⬅️ כאן את מוסיפה 
+        state.push({ productId: product, quantity: 1, unitPrice: product.price.amount, selected: false });// ⬅️ כאן את מוסיפה 
       }
 
       saveLocalCart(state); // עדכון localStorage
@@ -22,7 +22,7 @@ const guestCartSlice = createSlice({
 
     removeGuestItem: (state, action) => {
       const productId = action.payload;
-      const index = state.findIndex(item => item.product._id === productId);
+      const index = state.findIndex(item => item.productId._id === productId);
 
       if (index >= 0) {
         if (state[index].quantity > 1) {
@@ -38,9 +38,14 @@ const guestCartSlice = createSlice({
     removeGuestProductCompletely: (state, action) => {
       const productId = action.payload;
 
-      const updatedCart = state.filter(
-        item => item.product._id !== productId && item.productId !== productId
-      );
+  //    const updatedCart = state.filter(item => {
+  //   const id = item?.productId?._id;
+  //   return id ? id.toString() !== productId.toString() : true;
+  // });
+  const updatedCart = state.filter(item => {
+    const id = item?.productId?._id?.toString?.(); // אם אין id, נשאיר את המוצר
+    return id !== productId;
+  });
 
       saveLocalCart(updatedCart);
       return updatedCart;
@@ -57,7 +62,7 @@ const guestCartSlice = createSlice({
       // חפש מוצר גם לפי product._id וגם productId (למקרה של פורמטים שונים)
       const index = state.findIndex(
         item =>
-          (item.product && item.product._id === productId) ||
+          (item.productId && item.productId._id === productId) ||
           item.productId === productId
       );
 

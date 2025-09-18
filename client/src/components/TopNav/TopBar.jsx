@@ -3,14 +3,16 @@ import IconWithCounter from "./IconWithCounter";
 import Logo from "./Logo";
 import SearchBar from "./SearchBar";
 import UserMenu from "./UserMenu";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import CartDrawer from "./cart/CartDrawer";
 import { Link } from "react-router-dom";
-import { Shuffle, ShoppingCart, Heart, User, Menu } from "lucide-react";
 import { useSelector } from "react-redux";
 import MobileDrawerContent from "./MobileDrawerContent";
 import { useDispatch } from "react-redux";
 import { fetchCategories } from "../../redux/slices/categoriesSlice";
+import { IoSearchOutline, IoHeartOutline, IoMenuOutline } from "react-icons/io5";
+import { HiOutlineUser ,HiOutlineShoppingCart} from "react-icons/hi2";
+
 
 
 function TopBar() {
@@ -35,71 +37,108 @@ function TopBar() {
 
   return (
     <>
-      <header className={isMobile ? "fixed top-0 left-0 z-[9999] w-full bg-white shadow-[0_2px_6px_0_rgba(108,108,108,0.15)]" : "fixed top-0 left-0 z-[9999] bg-[#122947] w-full"}>
-        <div className={isMobile ? "flex items-center justify-between w-full px-[24px] h-[68px]" : "flex items-center justify-between max-w-[1200px] mx-auto px-5 py-2 text-white"}>
-          {isMobile ? (
-            /* מובייל:  */
-            <>
-              <div className="flex items-center w-full justify-between mx-auto" style={{ maxWidth: 430, width: '100%' }}>
-                {/* אייקון חיפוש */}
-                <div className="flex items-center">
-                  <button className="p-0 w-[24px] h-[24px] flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-[24px] h-[24px] text-gray-700">
-                      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" />
-                    </svg>
-                  </button>
-                </div>
-                {/* לוגו */}
-                <div className="flex-1 flex justify-center">
-                  <Link to="/products">
-                    <Logo />
+      <header className="fixed top-0 left-0 z-[9999] w-full bg-white shadow-[0_2px_6px_0_rgba(108,108,108,0.15)] font-[Rubik]">
+        <div
+          className={
+            isMobile
+              ? "flex items-center justify-between mx-auto px-[24px] h-[68px] w-[430px] max-w-full flex-shrink-0"
+              : "flex items-center justify-between w-full px-[64px] py-[9px]"
+          }
+          style={isMobile ? { width: "430px" } : {}}
+        >
+          {/* אייקונים */}
+          <div
+            className={
+              isMobile
+                ? "flex items-center gap-0"
+                : "flex items-center gap-[24px]"
+            }
+          >
+            {isMobile ? (
+              <div className="flex items-center">
+                {/* אייקון חיפוש מובייל */}
+                <IoSearchOutline className="w-5 h-5 text-[#141414]" />
+
+              </div>
+            ) : (
+              <>
+                {/* אייקונים דסקטופ */}
+                <div className="flex items-center gap-[24px]">
+                  {/* <Shuffle className="w-[19.392px] h-[18px] text-[#141414]" strokeWidth={1.5} /> */}
+                  <div className="relative cursor-pointer" onClick={() => setCartOpen(prev => !prev)}>
+                      <HiOutlineShoppingCart  className="w-6 h-6 text-[#141414]" />
+                    {totalQuantity > 0 && (
+                      <span className="absolute right-0 top-0 flex flex-col justify-center items-center w-[12px] h-[12px] px-[1px] rounded-[16px] bg-[#FF6500]" style={{ minWidth: '12px', minHeight: '12px' }}>
+                        <span className="flex-shrink-0" style={{ width: '5.17px', height: '7.1px', color: '#FFF', fontSize: '8px', lineHeight: '7px', textAlign: 'center' }}>{totalQuantity}</span>
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative cursor-pointer">
+                    <HiOutlineUser   className="w-6 h-6 text-[#141414]" />
+                  </div>
+                  <Link to="/favorites">
+                   <IoHeartOutline className="w-6 h-6 text-[#141414]" />
                   </Link>
+                  <UserMenu />
+
                 </div>
-                {/* אייקון המבורגר  */}
-                <div className="flex items-center">
-                  <button className="p-0 w-[24px] h-[24px] flex items-center justify-center" onClick={() => setDrawerOpen(true)}>
-                    <Menu className="w-[24px] h-[24px] text-gray-700" />
-                  </button>
-                </div>
-              </div>
-            </>
-          ) : (
-            /* מחשב:  */
-            <>
-              <div className="flex items-center gap-4">
-                <Shuffle className="w-6 h-6 text-white" />
-                <div className="relative cursor-pointer" onClick={() => setCartOpen(true)}>
-                  <ShoppingCart className="w-6 h-6 text-white" />
-                  {totalQuantity > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                      {totalQuantity}
-                    </span>
-                  )}
-                </div>
-                <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
-                <Link to="/favorites">
-                  <Heart className="w-6 h-6 text-white" />
-                </Link>
-                <UserMenu />
-              </div>
-              <div className="flex-1 mx-10 max-w-[600px]">
-                <SearchBar />
-              </div>
+              </>
+            )}
+          </div>
+
+          {/* חיפוש ולוגו */}
+          {isMobile ? (
+            <div className="flex items-center justify-center flex-1">
+              {/* לוגו מובייל */}
               <Link to="/products">
-                <div className="shrink-0">
+                <div
+                  className="flex items-center justify-center"
+                  style={{ width: "111px", height: "50px", aspectRatio: "111/50" }}
+                >
+                  <Logo />
+                </div>
+              </Link>
+            </div>
+          ) : (
+            <>
+              {/* חיפוש דסקטופ */}
+              <div className="flex items-center gap-4 flex-1 mx-10 max-w-[1018px] h-[48px] px-[2px_16px_0_16px] rounded-[16px] border border-[#EDEDED] bg-white">
+
+                <div className="flex-1">
+                  <SearchBar />
+                </div>
+              </div>
+              {/* לוגו דסקטופ */}
+              <Link to="/products">
+                <div
+                  className="flex items-center justify-center ml-8"
+                  style={{ width: "111px", height: "50px", aspectRatio: "111/50" }}
+                >
                   <Logo />
                 </div>
               </Link>
             </>
           )}
+
+          {/* אייקון המבורגר מובייל */}
+          {isMobile && (
+            <div className="flex items-center">
+              <button
+                className="flex items-center justify-center w-[47px] h-[44px] p-0"
+                onClick={() => setDrawerOpen(true)}
+              >
+                  <IoMenuOutline className="w-6 h-6 text-[#141414]" />
+              </button>
+            </div>
+          )}
         </div>
-      </header >
+      </header>
 
       {/* Drawer */}
       {isMobile && drawerOpen && (
         <MobileDrawerContent categories={categories} onClose={() => setDrawerOpen(false)} />
       )}
+      <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
 
       <div className="h-[12vh]"></div>
     </>
