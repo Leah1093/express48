@@ -59,7 +59,6 @@ class ProductService {
       throw new Error('Error fetching product by slug');
     }
   }
-
 }
 
 export const productService = new ProductService();
