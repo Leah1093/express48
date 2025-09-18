@@ -14,7 +14,6 @@ import { contactRouter } from "./router/contactRouter.js";
 import { userRouter } from "./router/user.routes.js";
 import { storeRouter } from "./router/store.router.js";
 import cartRouter from './router/cartRouter.js';
-import productRoutes from "./router/productRoutes.js";
 import { storePublicRouter } from "./router/storePublic.router.js";
 import passport from "passport";
 import session from "express-session";
@@ -66,11 +65,8 @@ app.use("/auth", googleAuthRouter);
 app.use("/marketplace", marketplaceRouter)
 app.use("/seller-store", storeRouter)
 app.use("/public/stores", storePublicRouter)
-// app.use("/seller", productRouter)
-
 app.use("/seller/products", sellerProductsRouter)
 app.use(errorHandler);
-//לפני העלה לבדוק מה לעלות איזה דך
 app.use('/cart', cartRouter);
 // app.use('/products', productRoutes);
 app.use('/products', productRouter);
