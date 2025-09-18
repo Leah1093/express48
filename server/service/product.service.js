@@ -42,6 +42,7 @@ class ProductService {
       };
     });
   }
+  
   getAllProductsService = async () => {
     try {
       const products = await Product.find({}).populate('storeId');
