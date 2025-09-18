@@ -1,43 +1,51 @@
 import React from "react";
-import { useAddFavoriteMutation, useRemoveFavoriteMutation, useListFavoritesQuery } from "../../redux/api/favoritesApi";
-import { Heart } from "lucide-react";
+import { useAddFavoriteMutation, useRemoveFavoriteMutation } from "../../redux/api/favoritesApi";
+import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { useSelector, useDispatch } from "react-redux";
 import { addGuest, removeGuest } from "../../redux/slices/guestFavoritesSlice";
 
-function FavoriteButton({ productId,product, favorites }) {
-    const user = useSelector((state) => state.user.user);
-    const dispatch = useDispatch();
+function FavoriteButton({ productId, product, favorites }) {
+  const user = useSelector((state) => state.user.user);
+  const dispatch = useDispatch();
 
-    const [addFavorite] = useAddFavoriteMutation();
-    const [removeFavorite] = useRemoveFavoriteMutation();
+  const [addFavorite] = useAddFavoriteMutation();
+  const [removeFavorite] = useRemoveFavoriteMutation();
 
+  const items = favorites;
+  const isFavorite = items.some((f) => {
+    const favId =
+      f?.productId && typeof f.productId === "object"
+        ? f.productId._id
+        : f?.productId ?? null;
 
-    const items = favorites; // מוציאים את המערך
-    const isFavorite = items.some(f => {
-        const favId = typeof f.productId === "object" ? f.productId._id : f.productId;
-        return favId === productId;
-    });
+    return favId === productId;
+  });
 
+  const toggleFavorite = (e) => {
+    e.stopPropagation();
+    if (user) {
+      if (isFavorite) removeFavorite(productId);
+      else addFavorite(productId);
+    } else {
+      if (isFavorite) dispatch(removeGuest(productId));
+      else dispatch(addGuest(product));
+    }
+  };
 
-    const toggleFavorite = () => {
-        if (user) {
-            if (isFavorite) removeFavorite(productId);
-            else addFavorite(productId);
-
-        } else {
-            if (isFavorite) dispatch(removeGuest(productId));
-            else dispatch(addGuest(product));
-        }
-    };
-
-    return (
-        <button
-            onClick={toggleFavorite}
-            className="p-2 bg-white rounded-lg shadow hover:bg-gray-100"
-        >
-            <Heart size={18} className={isFavorite ? "text-red-500 fill-red-500" : ""} />
-        </button>
-    );
+  return (
+    <button
+      onClick={toggleFavorite}
+      className="flex flex-row items-center justify-center bg-[#FFF7F2] text-[#FF6500] rounded-[12px] h-[40px] w-[40px] transition hover:bg-[#ffe3d1] border-none p-0"
+      tabIndex={-1}
+      aria-label="הוסף למועדפים"
+    >
+      {isFavorite ? (
+        <AiFillHeart className="w-6 h-6 text-[#FF6500]" />
+      ) : (
+        <AiOutlineHeart className="w-6 h-6 text-[#FF6500]" />
+      )}
+    </button>
+  );
 }
 
 export default FavoriteButton;

@@ -66,13 +66,14 @@ export const mergeCartThunk = createAsyncThunk(
     }
   }
 );
+const API_URL = import.meta.env.REACT_APP_API_URL;
 
 export const toggleItemSelectedThunk = createAsyncThunk(
   "cart/toggleItemSelected",
   async ({ itemId, selected }, { rejectWithValue }) => {
     try {
       const res = await axios.patch(
-        `http://localhost:8080/cart/item/${itemId}/selected`,
+        `${API_URL}/cart/item/${itemId}/selected`,
         { selected },
         { withCredentials: true }
       );

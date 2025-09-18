@@ -13,8 +13,8 @@ export default function AuthHeader() {
                 <div className="absolute left-1/2 transform -translate-x-1/2">
                     <Link to="/">
                         <img
-                            src="/MobileLogo.png"
-                            alt="MobileLogo"
+                            src="/logo.png"
+                            alt="logo"
                             className="h-14 hover:cursor-pointer"
                         />
                     </Link>
@@ -35,8 +35,8 @@ export default function AuthHeader() {
             <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Link to="/">
                     <img
-                        src="/MobileLogo.png"
-                        alt="MobileLogo"
+                        src="/logo.png"
+                        alt="logo"
                         className="h-14 hover:cursor-pointer"
                     />
                 </Link>

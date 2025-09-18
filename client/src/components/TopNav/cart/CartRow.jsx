@@ -1,7 +1,9 @@
 import React from "react";
 import { useCartItemLogic } from "../../../hooks/useCartItemLogic";
+import QuantityInput from "./QuantityInput";
 
 export default function CartRow({ item }) {
+  console.log("item",item)
   const {
     title, image, unitPrice, localQty,user,displayQty,id,
     handleAdd, handleRemove, handleRemoveCompletely,
@@ -23,12 +25,12 @@ export default function CartRow({ item }) {
           ×
         </button>
         <img
-          src={image}
-          alt={name}
+          src={item.productId.images}
+          alt={item.productId.title}
           className="h-16 w-16 rounded-lg border object-cover"
         />
         <div className="min-w-0">
-          <div className="truncate font-medium text-gray-900">{name}</div>
+          <div className="truncate font-medium text-gray-900">{item.productId.title}</div>
         </div>
       </div>
 
@@ -38,14 +40,14 @@ export default function CartRow({ item }) {
       </div>
 
       {/* כמות: כפתורי +/- וקלט ידני */}
-      <div className="col-span-2 flex items-center justify-center gap-2">
+      {/* <div className="col-span-2 flex items-center justify-center gap-2">
         <button
           onClick={handleRemove}
           className="h-9 w-9 rounded-md border bg-white text-lg leading-none hover:bg-gray-50"
           title="הפחת"
         >
           −
-        </button>
+        </button> */}
 
         {/* <input
           type="number"
@@ -56,7 +58,7 @@ export default function CartRow({ item }) {
           onBlur={commitIfValid}
         /> */}
 
-        <input type="number" min="1"
+        {/* <input type="number" min="1"
             value={user ? localQty : item.quantity}
             onChange={user ? handleLocalChange : (e) => handleChangeGuest(id, e)}
             onBlur={user ? commitIfValid : undefined}
@@ -75,7 +77,11 @@ export default function CartRow({ item }) {
         >
           +
         </button>
+      </div> */}
+      <div className="col-span-2 flex items-center justify-center gap-2">
+      <QuantityInput item={item} />
       </div>
+
 
       {/* סכום ביניים לשורה */}
       <div className="col-span-2 text-left font-semibold">

@@ -5,7 +5,8 @@ import axios from 'axios';
 import LogoutButton from "../../authentication/LogoutButton";
 import { useListFavoritesQuery } from "../../../redux/api/favoritesApi";
 import { useSelector } from "react-redux";
-
+import CategoryRow from "../../Categories/CategoryRow";
+import ProductFilter from "./ProductFilter";
 
 function ProductsList() {
   const user = useSelector((state) => state.user.user); // נניח שזה ה־state של המשתמש המחובר
@@ -31,29 +32,21 @@ function ProductsList() {
       .catch((err) => console.error("שגיאה בטעינה:", err));
   }, []);
 
-  return (
-    <div style={listStyles.wrapper}>
+  return (<>
+    <CategoryRow />
+    <ProductFilter/>
+    <div className="flex flex-wrap gap-5 justify-center p-8">
 
+      
       {products.map((product) => {
         console.log(product); // כאן רואים מה מגיע
         return (
           <ProductCard key={product._id} product={product} favorites={items} />
         );
       })}
-
-
     </div>
+  </>
   );
 }
-
-const listStyles = {
-  wrapper: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "20px",
-    justifyContent: "center",
-    padding: "2rem",
-  },
-};
 
 export default ProductsList;

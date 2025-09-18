@@ -23,9 +23,29 @@ export function useCartItemLogic(item) {
   const user = useSelector((s) => s.user.user);
 
   const productId = getId(item);
-  console.log("item",item)
-  const id = item._id || (item.product && item.product._id);
-  const idUser = typeof item.productId === "object" ? item.productId._id : item.productId;
+
+//  const id =
+//   typeof item.productId === "object"
+//     ? item.productId._id
+//     : item.productId;
+
+// console.log("DEBUG productId:", item.productId._id);
+
+const id =
+  typeof item?.productId === "object" && item.productId !== null
+    ? item.productId._id
+    : item?.productId ?? null;
+
+
+
+
+  // const idUser = typeof item.productId === "object" ? item.productId._id : item.productId;
+
+  const idUser =
+  item?.productId && typeof item.productId === "object"
+    ? item.productId._id
+    : item?.productId ?? null;
+
 
   // 1) כמות מקור אמת מ-Redux
   const qtyFromRedux = useSelector((s) => {
@@ -95,7 +115,7 @@ export function useCartItemLogic(item) {
         return updated;
       });
     } else {
-      dispatch(addGuestItem(item.product || item));
+      dispatch(addGuestItem(item.productId || item));
     }
   };
 

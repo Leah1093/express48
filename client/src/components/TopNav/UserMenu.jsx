@@ -14,13 +14,13 @@ const UserMenu = () => {
     <div className="relative group text-right inline-block">
       <div
         key={displayName}
-        className="flex items-center gap-2 font-semibold hover:text-orange-500 cursor-pointer">
+        className="flex items-center gap-2 font-semibold text-gray-700 hover:text-orange-500 cursor-pointer">
         <FaUserCircle className="text-xl" />
         <span>{displayName}</span>
         <span className="text-xs">▾</span>
       </div>
 
-      <div className="absolute right-0 mt-2 w-44 bg-white border rounded-md shadow-lg text-sm opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
+      <div className="absolute right-0 mt-2 w-44 bg-white border rounded-md shadow-lg text-sm  invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
         {user ? (
           <>
             <HoverLink to="/account" label="חשבון" />
