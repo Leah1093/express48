@@ -22,7 +22,7 @@ export const authApi = createApi({
         }),
         googleLogin: builder.mutation({
             query: (body) => ({
-                url: "/auth/google",   // ← הנתיב שהגדרת בשרת
+                url: "/auth/google",
                 method: "POST",
                 body,
             }),
@@ -36,6 +36,29 @@ export const authApi = createApi({
                 method: "POST",
             }),
         }),
+
+        forgotPassword: builder.mutation({
+            query: ({ email, recaptchaToken }) => ({
+                url: "/password/forgot-password",
+                method: "POST",
+                body: { email, recaptchaToken },
+            }),
+        }),
+
+        resetPassword: builder.mutation({
+            query: ({ token, newPassword }) => ({
+                url: "/password/reset-password",
+                method: "POST",
+                body: { token, newPassword },
+            }),
+        }),
+        updatePassword: builder.mutation({
+            query: (body) => ({
+                url: "/password/update-password",
+                method: "POST",
+                body,
+            }),
+        }),
     }),
 });
 
@@ -45,4 +68,7 @@ export const {
     useGoogleLoginMutation,
     useGetCurrentUserQuery,
     useLogoutMutation,
+    useForgotPasswordMutation,
+    useResetPasswordMutation,
+    useUpdatePasswordMutation,
 } = authApi;

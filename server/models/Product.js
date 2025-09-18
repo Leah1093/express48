@@ -118,18 +118,18 @@ const variationSchema = new mongoose.Schema({
 });
 
 // אימות שמפתחות attributes מותרים לפי קטגוריה של המוצר
-variationSchema.path("attributes").validate({
-  validator: function (val) {
-    if (!val) return true;
-    const keys = val instanceof Map ? Array.from(val.keys()) : Object.keys(val);
-    if (!keys.length) return true;
-    const parentDoc = typeof this.ownerDocument === "function" ? this.ownerDocument() : (typeof this.parent === "function" ? this.parent() : null);
-    const category = parentDoc?.category;
-    const allowed = new Set(getAllowedVariationKeysForCategory(category) || []);
-    return keys.every(k => allowed.has(k));
-  },
-  message: () => `attributes מכיל מפתח וריאציה שאינו מותר עבור קטגוריה זו`,
-});
+// variationSchema.path("attributes").validate({
+//   validator: function (val) {
+//     if (!val) return true;
+//     const keys = val instanceof Map ? Array.from(val.keys()) : Object.keys(val);
+//     if (!keys.length) return true;
+//     const parentDoc = typeof this.ownerDocument === "function" ? this.ownerDocument() : (typeof this.parent === "function" ? this.parent() : null);
+//     const category = parentDoc?.category;
+//     const allowed = new Set(getAllowedVariationKeysForCategory(category) || []);
+//     return keys.every(k => allowed.has(k));
+//   },
+//   message: () => `attributes מכיל מפתח וריאציה שאינו מותר עבור קטגוריה זו`,
+// });
 
 // ---------- Product Schema ----------
 const productSchema = new mongoose.Schema({
@@ -205,6 +205,8 @@ const productSchema = new mongoose.Schema({
 
   // נראות
   status: { type: String, enum: ["draft", "published", "suspended"], default: "draft", index: true },
+  publishedAt: { type: Date },
+
   visibility: { type: String, enum: ["public", "private", "restricted"], default: "public" },
   scheduledAt: { type: Date },
   visibleUntil: { type: Date },
@@ -239,7 +241,7 @@ const productSchema = new mongoose.Schema({
 
   // --- דגלונים להצגה ב-UI ---
   badges: {
-    isNew: { type: Boolean, default: false },    // נקבע אוטומטית לפי זמן
+    // isNew: { type: Boolean, default: false },    // נקבע אוטומטית לפי זמן
     isBestSeller: { type: Boolean, default: false },    // נקבע לפי purchases
     isRecommended: { type: Boolean, default: false },    // נקבע לפי ratings
   },
@@ -320,6 +322,19 @@ productSchema.pre("validate", function (next) {
   }
   next();
 });
+
+// productSchema middleware
+productSchema.pre("save", function (next) {
+  if (this.isModified("status")) {
+    if (this.status === "published" && !this.publishedAt) {
+      this.publishedAt = new Date();
+    } else if (this.status !== "published") {
+      this.publishedAt = undefined; // או להשאיר - תלוי בצורך העסקי
+    }
+  }
+  next();
+});
+
 
 // יצירת SKU אוטומטי לכל וריאציה
 productSchema.pre("save", function (next) {

@@ -12,17 +12,20 @@ export const allowedVariationAttributes = [
   "pack",        // גודל אריזה/כמות בחבילה
   "flavor",      // טעם
   "voltage",     // מתח/גרסה חשמלית
-  "compatibility"// תאימות (דגמים נתמכים)
+  "compatibility",// תאימות (דגמים נתמכים)
+  "mo",
+  "sizee"
+
 ];
 
 // מיפוי לפי קטגוריה (אופציונלי). אם לקטגוריה אין ערך כאן – נופלים לרשימה הכללית.
 export const categoryVariationMap = {
-  "ביגוד":       ["size","color","material","style"],
-  "נעליים":      ["size","color","style"],
-  "טלפונים":     ["color","storage","edition"],
-  "מחשבים":      ["storage","material","compatibility"],
-  "מטבח":        ["color","capacity","material"],
-  "תוספי תזונה": ["flavor","pack"]
+  "ביגוד": ["size", "color", "material", "style"],
+  "נעליים": ["size", "color", "style"],
+  "טלפונים": ["color", "storage", "edition"],
+  "מחשבים": ["storage", "material", "compatibility"],
+  "מטבח": ["color", "capacity", "material"],
+  "תוספי תזונה": ["flavor", "pack"]
 };
 
 // תוויות לתצוגה ב-UI (אופציונלי)
@@ -37,15 +40,18 @@ export const attributeLabels = {
   pack: "אריזה",
   flavor: "טעם",
   voltage: "מתח",
-  compatibility: "תאימות"
+  compatibility: "תאימות",
+  mo: "מערכת הפעלה",
+  sizee: "נפח אחסון"
+
 };
 
 // ערכים נפוצים להשלמה/בחירה (אופציונלי)
 export const attributeValueHints = {
-  color: ["שחור","לבן","כחול","אדום","ירוק","אפור","כסף","זהב"],
-  size: ["XS","S","M","L","XL","XXL"],
-  storage: ["64GB","128GB","256GB","512GB","1TB"],
-  material: ["כותנה","אלומיניום","פלסטיק","נירוסטה"]
+  color: ["שחור", "לבן", "כחול", "אדום", "ירוק", "אפור", "כסף", "זהב"],
+  size: ["XS", "S", "M", "L", "XL", "XXL"],
+  storage: ["64GB", "128GB", "256GB", "512GB", "1TB"],
+  material: ["כותנה", "אלומיניום", "פלסטיק", "נירוסטה"]
 };
 
 // עזר: מאחזיר את הסט המותר עבור קטגוריה נתונה

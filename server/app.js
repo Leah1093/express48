@@ -70,9 +70,10 @@ app.use("/public/stores", storePublicRouter)
 
 app.use("/seller/products", sellerProductsRouter)
 app.use(errorHandler);
-
+//לפני העלה לבדוק מה לעלות איזה דך
 app.use('/cart', cartRouter);
 app.use('/products', productRoutes);
+// app.use('/products', productRouter);
 app.use("/favorites", favoritesRouter);
 app.use("/categories", categoryRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));

@@ -1,41 +1,47 @@
 // services/productService.js
 import { Product } from "../models/Product.js";
 
-function buildDuplicateKeyMessage(err) {
-    // ניסיון לזהות שדה מתנגש מהשגיאה של מונגו
-    const dupField = err?.keyPattern ? Object.keys(err.keyPattern)[0] : null;
-    if (dupField === "sku") return "קיים כבר מוצר עם SKU זהה";
-    if (dupField === "slug") return "קיים כבר מוצר עם slug זהה בחנות";
-    return "מוצר עם מזהה ייחודי זה כבר קיים במערכת";
+// פונקציית עזר
+function isNewProduct(publishedAt) {
+  if (!publishedAt) return false;
+  const days = (Date.now() - new Date(publishedAt)) / (1000 * 60 * 60 * 24);
+  return days <= 12;
 }
 
 class ProductService {
-    async createProduct({ data, actor }) {
-        try {
-            const doc = new Product({ ...data, createdBy: actor.id, updatedBy: actor.id, });
-            console.log("servise product")
-            const saved = await doc.save();
-            return saved;
-        } catch (err) {
-            if (err?.code === 11000) {
-                if (err?.code === 11000) {
-                    console.log("Duplicate key:", err.keyValue, " index:", err.keyPattern);
-                    const field = Object.keys(err.keyValue || err.keyPattern || {})[0] || "uniqueField";
-                    const e = new Error(`Duplicate ${field}`);
-                    e.status = 409;
-                    e.field = field;
-                    throw e;
-                }
-                throw err;
-            }
-            if (err?.name === "ValidationError") {
-                const e = new Error(err.message);
-                e.status = 400;
-                throw e;
-            }
-            throw err;
-        }
-    }
+  async listNewProducts(limit = 12) {
+    const now = new Date();
+    const twelveDaysAgo = new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000);
+
+    const query = {
+      status: "published",
+      publishedAt: { $gte: twelveDaysAgo }
+    };
+
+    const products = await Product.find(query)
+      .sort({ publishedAt: -1 })
+      .limit(limit)
+      .select("title images price currency slug _id storeId discount publishedAt")
+      .lean({ virtuals: true });
+
+    return products.map((p) => {
+      const { finalAmount, baseAmount, savedAmount, hasDiscount } =
+        Product.hydrate(p).getEffectivePricing();
+
+      return {
+        _id: p._id,
+        title: p.title,
+        slug: p.slug,
+        images: p.images,
+        currency: p.currency,
+        basePrice: baseAmount,
+        finalPrice: finalAmount,
+        discountValue: hasDiscount ? savedAmount : 0,
+        hasDiscount,
+        isNew: isNewProduct(p.publishedAt) // ← כאן השימוש
+      };
+    });
+  }
 }
 
 export const productService = new ProductService();

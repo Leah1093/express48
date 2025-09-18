@@ -1,6 +1,6 @@
 import TopBar from './components/TopNav/TopBar'
 import React, { createContext, useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import About from "./components/mainNav/About";
 import Faq from "./components/mainNav/Faq";
 import BestSellers from "./components/mainNav/BestSellers";
@@ -54,7 +54,7 @@ import CartLayout from "./components/TopNav/cart/CartLayout.jsx";
 import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
 
 import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx";
-import CouponForm from "./components/seller/Coupons.jsx"; 
+import CouponForm from "./components/seller/Coupons.jsx";
 import ProductPage from "./components/Main Content/product/ProductPage.jsx"
 
 // import ProductCreateForm from './components/seller/products/ProductCreateForm.jsx';
@@ -69,14 +69,15 @@ import ProductDetailPage from './components/seller/ProductDetailPage.jsx';
 import ProductCreate from './components/seller/products/ProductCreate.jsx';
 import ProductEdit from './components/seller/products/ProductEdit.jsx';
 import ProductsList from './components/Main Content/product/ProductsList.jsx';
-import CouponForm from "./components/seller/Coupons.jsx";
+import HomeNewProducts from './components/Main Content/home/HomeNewProducts.jsx';
+import AuthHeader from './components/authentication/AuthHeader.jsx';
 
 
 function App() {
-
+  const location = useLocation();
   const dispatch = useDispatch();
   const isMobile = useSelector((state) => state.ui.isMobile);
-
+  const hideMainHeader = ["/login", "/register", "/forgot-password"].includes(location.pathname) || location.pathname.startsWith("/reset-password/");
 
   useEffect(() => {
     // עדכון מצב מובייל ב-redux
@@ -121,10 +122,9 @@ function App() {
         },
       }} reverseOrder={false} />
 
-      <CategorySidebarMenu></CategorySidebarMenu>
-
-      <TopBar />
-      {!isMobile && <MainNav />}
+      {/* <CategorySidebarMenu></CategorySidebarMenu> */}
+      {!hideMainHeader && <TopBar />}
+      {(!isMobile && !hideMainHeader) && <MainNav />}
 
       <main className="flex-grow">
         <Routes>
@@ -141,7 +141,7 @@ function App() {
           </Route>
 
 
-          <Route path="/" element={<StorefrontList />} />
+          <Route path="/" element={<HomeNewProducts />} />
 
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
@@ -163,7 +163,7 @@ function App() {
           <Route path="/shipping-policy" element={<ShippingPolicy />} />
           <Route path="/returns-policy" element={<ReturnsPolicy />} />
 
-          <Route path="forgot-password" element={<ForgotPassword />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           <Route path="/account" element={<ProtectedRoute allow={["user", "seller", "admin"]}>< Layout /> </ProtectedRoute>}>
@@ -197,7 +197,7 @@ function App() {
             <Route path="reviews" element={<Reviews />} />
             <Route path="reports" element={<Reports />} />
             <Route path="coupons" element={<CouponForm />} />
-            
+
           </Route>
 
           <Route path='/admin' element={<ProtectedRoute allow={["seller", "admin"]}><Layout /> </ProtectedRoute>} >
@@ -225,7 +225,7 @@ function App() {
 
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }
