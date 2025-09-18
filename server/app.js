@@ -68,6 +68,7 @@ app.use("/public/stores", storePublicRouter)
 app.use("/seller/products", sellerProductsRouter)
 app.use(errorHandler);
 app.use('/cart', cartRouter);
+// app.use('/products', productRoutes);
 app.use('/products', productRouter);
 app.use("/favorites", favoritesRouter);
 app.use("/categories", categoryRoutes);
