@@ -24,13 +24,28 @@ export function useCartItemLogic(item) {
 
   const productId = getId(item);
 
- const id =
-  typeof item.productId === "object"
+//  const id =
+//   typeof item.productId === "object"
+//     ? item.productId._id
+//     : item.productId;
+
+// console.log("DEBUG productId:", item.productId._id);
+
+const id =
+  typeof item?.productId === "object" && item.productId !== null
     ? item.productId._id
-    : item.productId;
+    : item?.productId ?? null;
 
 
-  const idUser = typeof item.productId === "object" ? item.productId._id : item.productId;
+
+
+  // const idUser = typeof item.productId === "object" ? item.productId._id : item.productId;
+
+  const idUser =
+  item?.productId && typeof item.productId === "object"
+    ? item.productId._id
+    : item?.productId ?? null;
+
 
   // 1) כמות מקור אמת מ-Redux
   const qtyFromRedux = useSelector((s) => {

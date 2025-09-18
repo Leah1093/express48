@@ -1,6 +1,7 @@
 import TopBar from './components/TopNav/TopBar'
+
 import { useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route ,useLocation} from 'react-router-dom';
 import About from "./components/mainNav/About";
 import Faq from "./components/mainNav/Faq";
 import BestSellers from "./components/mainNav/BestSellers";
@@ -56,15 +57,21 @@ import CategoryManagementPage from "./components/Categories/CategoryManagementPa
 import CartLayout from "./components/TopNav/cart/CartLayout.jsx";
 import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
 import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx";
+import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
+import Layout from './components/Layout.jsx';
+
+import CouponForm from "./components/seller/Coupons.jsx"
 import ProductPage from "./components/Main Content/product/productPage/ProductPage.jsx"
 // import ProductCreateForm from './components/seller/products/ProductCreateForm.jsx';
 import ProductsList from './components/Main Content/product/ProductsList.jsx';
-
+import HomeNewProducts from './components/Main Content/home/HomeNewProducts.jsx';
+import AuthHeader from './components/authentication/AuthHeader.jsx';
 
 function App() {
-
+  const location = useLocation();
   const dispatch = useDispatch();
-
+  const isMobile = useSelector((state) => state.ui.isMobile);
+  const hideMainHeader = ["/login", "/register", "/forgot-password"].includes(location.pathname) || location.pathname.startsWith("/reset-password/");
 
   useEffect(() => {
     // עדכון מצב מובייל ב-redux
@@ -110,8 +117,11 @@ function App() {
       }} reverseOrder={false} />
 
       {/* <CategorySidebarMenu></CategorySidebarMenu> */}
+      {!hideMainHeader && <TopBar />}
 
-      <TopBar />
+
+
+
       {/* {!isMobile && <MainNav />} */}
 
       <main className="flex-grow">
@@ -128,6 +138,10 @@ function App() {
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/order/success/:id" element={<OrderSuccessPage />} />
           </Route>
+
+
+          <Route path="/" element={<HomeNewProducts />} />
+          {/* <Route path="/unauthorized" element={<UnauthorizedPage />} /> */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/about" element={<About />} />
@@ -167,13 +181,28 @@ function App() {
           />
           <Route path="/admin/applications" element={<AdminApplicationsPage />} />
 
-          <Route path="/seller" element={<SellerLayout />}>
+
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+          <Route path="/account" element={<ProtectedRoute allow={["user", "seller", "admin"]}>< Layout /> </ProtectedRoute>}>
+            <Route index element={<AccountDashboard />} />
+
+            <Route path="profile" element={<Profile />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="addresses" element={<Addresses />} />
+            <Route path="favorites" element={<Favorites />} />
+            <Route path="downloads" element={<Downloads />} />
+          </Route>
+          <Route path="/seller" element={<ProtectedRoute allow={["seller", "admin"]}><SellerLayout /></ProtectedRoute>}>
             <Route index element={<SellerDashboard />} />
             <Route path="settings" element={<StoreSettings />} />
             <Route path="products" element={<Products />} />
             <Route path="orders" element={<OrdersSeller />} />
             <Route path="reviews" element={<Reviews />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="coupons" element={<CouponForm />} />
+
           </Route>
           <Route path="/store/:slug" element={<StorePage />}>
             {/* <Route index element={<StoreProducts />} /> */}
@@ -185,7 +214,7 @@ function App() {
 
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }
