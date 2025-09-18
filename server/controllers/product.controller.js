@@ -6,11 +6,13 @@ export class ProductController {
             const limit = parseInt(req.query.limit, 10) || 12;
             const products = await productService.listNewProducts(limit);
 
+
             res.json({ items: products });
         } catch (err) {
             next(err);
         }
     }
+    
     getAllProducts = async (req, res) => {
         try {
             const products = await productService.getAllProductsService();
