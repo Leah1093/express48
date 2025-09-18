@@ -15,13 +15,13 @@ export class EntranceService {
 //לוגין
   async verifyCredentials(email, password) {
     const user = await User.findOne(userQueries.findByEmail(email));
-    if (!user) throw new Error("משתמש לא נמצא");
+    if (!user) throw new Error("INVALID_CREDENTIALS");
 
     const passwordRecord = await Password.findOne({ userId: user._id });
-    if (!passwordRecord) throw new Error("סיסמה לא קיימת");
+    if (!passwordRecord) throw new Error("INVALID_CREDENTIALS");
 
     const isMatch = await bcrypt.compare(password, passwordRecord.password);
-    if (!isMatch) throw new Error("סיסמה שגויה");
+    if (!isMatch) throw new Error("INVALID_CREDENTIALS");
 
     const { sellerId, storeId } = await this.getSellerAndStore(user._id);
 
