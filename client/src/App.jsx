@@ -126,7 +126,7 @@ function App() {
 
       <main className="flex-grow">
         <Routes>
-          <Route index element={<ProductsList />} />
+          
           <Route path="products" element={<ProductsList />} />
           <Route path="products/:storeSlug/:productSlug" element={<ProductPage />} />
           <Route path="/favorites" element={<FavoritesList />} />
