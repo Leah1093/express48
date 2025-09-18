@@ -31,14 +31,14 @@ function stripSellerControlledFields(body) {// עוזר: מסנן שדות שס�
 }
 
 export class ProductController {
-     async create(req, res, next) {
-        console.log("creat",req.body)
+    async create(req, res, next) {
+        console.log("creat", req.body)
         try {
             const user = req.user || {};
             const role = user.role;
 
             if (role === "seller") {
-        console.log("seller")
+                console.log("seller")
 
                 if (!user.sellerId || !user.storeId) { // ודאות שכל המידע הכרחי אכן קיים על המשתמש
                     const e = new Error("חסר שיוך מוכר/חנות למשתמש. פנה לתמיכה.");
@@ -47,20 +47,20 @@ export class ProductController {
                 }
 
                 const cleaned = stripSellerControlledFields(req.body);// סלר לא שולט על שדות רגישים
-                const data = { ...cleaned, sellerId: String(user.sellerId), storeId: String(user.storeId), status: "draft", visibility: "private", };               
+                const data = { ...cleaned, sellerId: String(user.sellerId), storeId: String(user.storeId), status: "draft", visibility: "private", };
                 validateSchedulingFields(data); // בדיקות תזמון (למרות שסלר לא יכול לשלוח כרגע - שמירה לעתיד)
                 const product = await productService.createProduct({ data, actor: { id: user._id, role }, });
                 return res.status(201).json(product);
             }
 
-            if (role === "admin") {            
+            if (role === "admin") {
                 if (!req.body?.sellerId || !req.body?.storeId) { // אדמין חייב לציין sellerId+storeId תקפים
                     const e = new Error("על אדמין לספק גם sellerId וגם storeId");
                     e.status = 400;
                     throw e;
                 }
                 validateSchedulingFields(req.body);
-                const product = await productService.createProduct({ data: req.body, actor: { id: user_id, role }, });
+                const product = await productService.createProduct({ data: req.body, actor: { id: user._id, role }, });
                 return res.status(201).json(product);
             }
 
@@ -71,4 +71,28 @@ export class ProductController {
             next(err);
         }
     }
+
+    getAllProducts = async (req, res) => {
+        try {
+            const products = await productService.getAllProductsService();
+            res.json(products);
+        } catch (err) {
+            next(err);
+        }
+    };
+
+    getProductsBySlug = async (req, res) => {
+        const { slug } = req.params;
+        try {
+            const product = await productService.getProductBySlugService(slug);
+            if (!product) {
+                const e = new Error('מוצר לא נמצא');
+                e.status = 404;
+                throw e;
+            }
+            res.json(product);
+        } catch (err) {
+            next(err);
+        }
+    };
 }
