@@ -6,7 +6,7 @@ import LogoutButton from "../../authentication/LogoutButton";
 import { useListFavoritesQuery } from "../../../redux/api/favoritesApi";
 import { useSelector } from "react-redux";
 import CategoryRow from "../../Categories/CategoryRow";
-
+import ProductFilter from "./ProductFilter";
 
 function ProductsList() {
   const user = useSelector((state) => state.user.user); // נניח שזה ה־state של המשתמש המחובר
@@ -34,8 +34,10 @@ function ProductsList() {
 
   return (<>
     <CategoryRow />
-    <div style={listStyles.wrapper}>
+    <ProductFilter/>
+    <div className="flex flex-wrap gap-5 justify-center p-8">
 
+      
       {products.map((product) => {
         console.log(product); // כאן רואים מה מגיע
         return (
@@ -46,15 +48,5 @@ function ProductsList() {
   </>
   );
 }
-
-const listStyles = {
-  wrapper: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "20px",
-    justifyContent: "center",
-    padding: "2rem",
-  },
-};
 
 export default ProductsList;

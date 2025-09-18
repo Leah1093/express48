@@ -12,5 +12,7 @@ sellerProductsRouter.patch("/:id", authMiddleware, requireRoles("seller", "admin
 sellerProductsRouter.delete("/:id", authMiddleware, requireRoles("seller", "admin"), sellerProductsController.softDelete);
 sellerProductsRouter.patch("/:id/restore", authMiddleware, requireRoles("seller", "admin"), sellerProductsController.restore);
 sellerProductsRouter.patch("/:id/status", authMiddleware, requireRoles("seller", "admin"), sellerProductsController.updateStatus);
+
+
 export { sellerProductsRouter };
 

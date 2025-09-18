@@ -48,30 +48,16 @@ export class PasswordService {
             error.statusCode = 404;
             throw error;
         }
-
-        // const token = crypto.randomBytes(32).toString("hex");
-        // const expiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 דקות תוקף
-        // await PasswordResetToken.create({ userId: user._id, token, expires: expiresAt });
-        // const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
-
         const rawToken = crypto.randomBytes(32).toString("hex");
         const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
         const expiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 דקות
         await PasswordResetToken.create({ userId: user._id, token: hashedToken, expires: expiresAt });
         const resetLink = `${process.env.FRONTEND_URL}/reset-password/${rawToken}`;
-
-
-        console.log("🔗 Reset link:", resetLink);
-
         await sendResetEmail(user.email, resetLink);
-
     }
 
     async resetPassword(token, newPassword) {
-        // const tokenRecord = await PasswordResetToken.findOne({ token });
-
         const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-
         const tokenRecord = await PasswordResetToken.findOne({ token: hashedToken });
 
         if (!tokenRecord || tokenRecord.expires < new Date()) {
@@ -87,8 +73,6 @@ export class PasswordService {
             { new: true }
         );
         await PasswordResetToken.deleteMany({ userId: tokenRecord.userId });
-
-        console.log(`הסיסמה עודכנה עבור משתמש: ${tokenRecord.userId}`);
         await sendPasswordChangedEmail(tokenRecord.userId)
     }
 }

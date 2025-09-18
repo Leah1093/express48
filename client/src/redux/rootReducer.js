@@ -9,6 +9,10 @@ import addressReducer from "./slices/addressSlice";
 import uiReducer from './slices/uiSlice';
 import categoriesReducer from './slices/categoriesSlice';
 
+import { sellerProductsApi } from "./services/sellerProductsApi";
+import { authApi } from "./services/authApi";
+import { productsApi } from "./services/productsApi"; // ← הוספה
+
 export default combineReducers({
   cart: cartReducer,
   user: userReducer,
@@ -18,4 +22,8 @@ export default combineReducers({
   ui: uiReducer,
   categories: categoriesReducer,
   [favoritesApi.reducerPath]: favoritesApi.reducer,
+  [sellerProductsApi.reducerPath]: sellerProductsApi.reducer,
+  [authApi.reducerPath]: authApi.reducer,
+  [productsApi.reducerPath]: productsApi.reducer, // ← הוספה
+
 });
