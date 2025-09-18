@@ -173,7 +173,7 @@ const productSchema = new mongoose.Schema({
   price: { type: PriceSchema, required: true },
   discount: { type: DiscountSchema, required: false },
 
-  // וריאציות
+  // וריאציותש
   variations: [variationSchema],
 
   // מלאי

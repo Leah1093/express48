@@ -101,7 +101,9 @@ export default function FavoritesList() {
             </div>
 
             <div className="grid gap-4">
-                {normalizedFavorites.map((fav) => (
+                {normalizedFavorites.map((fav) => {
+                     console.log("fav", fav);
+                return (
                     <div
                         key={fav.id}
                         className="flex items-center justify-between border rounded-lg p-3 bg-white shadow-sm hover:shadow-md transition"
@@ -109,7 +111,7 @@ export default function FavoritesList() {
                         <div className="flex items-center gap-4">
                             {/* תמונה */}
                             <img
-                                src={fav.product.image || "/placeholder.png"}
+                                src={fav.product.images || "/placeholder.png"}
                                 alt={fav.product.title}
                                 className="w-16 h-16 object-cover rounded-lg border"
                             />
@@ -118,7 +120,7 @@ export default function FavoritesList() {
                             <div>
                                 <h3 className="font-semibold text-lg">{fav.product.title || "מוצר"}</h3>
                                 <p className="text-sm text-gray-600">
-                                    {fav.product.price ? `${fav.product.price} ₪` : "ללא מחיר"}
+                                    {fav.product?.price?.amount ? `${fav.product.price.amount} ₪` : "ללא מחיר"}
                                 </p>
                             </div>
                         </div>
@@ -131,7 +133,8 @@ export default function FavoritesList() {
                             <X size={20} />
                         </button>
                     </div>
-                ))}
+                )
+            })}
             </div>
         </div>
     );

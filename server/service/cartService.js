@@ -202,7 +202,8 @@ export class CartService {
 
     cart = new Cart({ userId, items: itemsWithPrice });
     await cart.save();
-    return cart;
+    return await Cart.findOne({ userId })
+  .populate("items.productId", "title price images");
   }
 
   // ✅ עגלה קיימת: מיזוג פריטים + השלמת unitPrice כשצריך
@@ -225,7 +226,8 @@ export class CartService {
   }
 
   await cart.save();
-  return cart;
+  return await Cart.findOne({ userId })
+  .populate("items.productId", "title price images");
 }
 
   async updateItemQuantity(userId, productId, quantity) {
