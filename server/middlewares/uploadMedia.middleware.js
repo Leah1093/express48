@@ -70,7 +70,7 @@ export async function processStoreMedia(req, _res, next) {
       _newUrls: [],                 // לניקוי במקרה של כשל
     };
 
-    async function handleSingle(field) {
+    const handleSingle = async (field) => {
       const f = files[field]?.[0];
       if (!f) return null;
 
@@ -87,7 +87,7 @@ export async function processStoreMedia(req, _res, next) {
       throw new Error("Unsupported file type");
     }
 
-    async function handleManyImages(field) {
+    const handleManyImages = async (field) => {
       const arr = files[field] || [];
       const urls = [];
       for (const f of arr) {
