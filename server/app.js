@@ -66,7 +66,6 @@ app.use("/marketplace", marketplaceRouter)
 app.use("/seller-store", storeRouter)
 app.use("/public/stores", storePublicRouter)
 app.use("/seller/products", sellerProductsRouter)
-app.use(errorHandler);
 app.use('/cart', cartRouter);
 // app.use('/products', productRoutes);
 app.use('/products', productRouter);

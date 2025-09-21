@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import DOMPurify from "dompurify";
 
 // Helper: resolve absolute media URL from relative "/uploads/..." returned by the API
 function resolveMediaUrl(url) {
@@ -289,6 +290,7 @@ export default function StorePublicPage() {
                     </section>
                 )}
 
+
                 {tab === "about" && (
                     <section className="space-y-6">
                         {/* אודות */}
@@ -297,7 +299,7 @@ export default function StorePublicPage() {
                                 <h2 className="text-lg md:text-xl font-semibold mb-2">אודות</h2>
                                 <div
                                     className="prose prose-sm md:prose lg:prose-lg rtl text-gray-800 leading-7"
-                                    dangerouslySetInnerHTML={{ __html: store.description }}
+                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(store.description) }}
                                 />
                             </div>
                         ) : (
@@ -335,6 +337,7 @@ export default function StorePublicPage() {
                         </div>
                     </section>
                 )}
+
 
                 {tab === "ratings" && (
                     <section className="grid md:grid-cols-3 gap-6">
