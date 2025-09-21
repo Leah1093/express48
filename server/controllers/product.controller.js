@@ -30,7 +30,6 @@ export class ProductController {
       }
       res.json(product);
     } catch (err) {
-        
       if (err instanceof CustomError) {
         next(err);
       } else {

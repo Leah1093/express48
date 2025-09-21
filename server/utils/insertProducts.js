@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import axios from 'axios';
-import { Product } from "../models/product";
+import { Product } from "../models/Product.js"
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -19,7 +19,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 async function run() {
   await mongoose.connect(process.env.MONGO_URI);
 
-   // --- Extract ---
+  // --- Extract ---
   // שלב 1: שליפת מוצרים מה-API
   const fetchProductsFromAPI = async () => {
     const response = await axios.get('https://fakestoreapi.com/products/category/electronics');
@@ -34,12 +34,12 @@ async function run() {
 
       for (const p of products) {
         const mappedProduct = mapFakeStoreProduct(p); // Transform
-        
+
 
         // const normalized = await normalizeWithAI(mappedProduct);
-       
 
-        async function test() {
+
+        const test = async () => {
           const product = { title: "טלפון חדש", specs: { battery: "4000mAh" } };
           const normalized = await mockNormalizeWithAI(product);
           console.log("Normalized:", normalized);
