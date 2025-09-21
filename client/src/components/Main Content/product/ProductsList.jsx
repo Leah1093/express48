@@ -27,7 +27,7 @@ function ProductsList() {
     axios.get("http://localhost:8080/products")
       .then(res => {
         setProducts(res.data)
-        console.log("Products loaded:", res.data);
+      
       })
       .catch((err) => console.error("שגיאה בטעינה:", err));
   }, []);

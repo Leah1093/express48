@@ -68,16 +68,15 @@ const Register = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {!isMobile && (<div className="w-1/2 bg-cover bg-center" style={{ backgroundImage: "url('/auth.jpg')" }} />)}
-      <div className={`flex w-full ${!isMobile ? "md:w-1/2" : "w-full"} flex-col relative bg-white`}>
+    <div className="relative min-h-screen ">
+      {!isMobile && (<div className="fixed top-0 left-0 h-screen w-1/2 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/auth.jpg')" }} />)}
+      <div className={`absolute top-0 right-0 h-screen w-1/2 overflow-y-auto bg-white`}>
         <AuthHeader />
 
         <form
           onSubmit={handleSubmit(onSubmit)}
           noValidate
-          className={`flex-1 flex flex-col items-center justify-start px-[24px] ${!isMobile ? "md:px-[24%]" : ""}`}>
-
+          className={`flex flex-col items-center justify-start px-[24px] ${!isMobile ? "md:px-[24%]" : ""}`}>
           {formError && (
             <div className="w-full max-w-[600px]  mt-[64px]">
               <div id="error-box" className="flex items-center gap-2 w-full p-4 rounded-[12px] bg-[#FFF2F2]" style={{ direction: "rtl" }}>

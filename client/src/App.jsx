@@ -90,7 +90,7 @@ function App() {
         const res = await axios.get("http://localhost:8080/entrance/me", {
           withCredentials: true,
         });
-        console.log("🤣", res.data)
+       
         dispatch(setUser(res.data.user));
       } catch (err) {
         dispatch(clearUser());
