@@ -1,16 +1,16 @@
 // services/rating.service.js
 import { Rating } from "../models/rating.js";
 import { RatingLike } from "../models/rating.js";
-import { Product } from "../models/product.js";
+import { Product } from "../models/Product.js";
 import { Seller } from "../models/seller.js";
 
 function applyDeltaToProduct(prod, { addStars = 0, addCount = 0, oldStars = null, newStars = null }) {
   if (!prod) return;
   if (oldStars) prod.ratingBreakdown[oldStars] = Math.max(0, (prod.ratingBreakdown[oldStars] || 0) - 1);
   if (newStars) prod.ratingBreakdown[newStars] = (prod.ratingBreakdown[newStars] || 0) + 1;
-  prod.ratingSum   = Math.max(0, prod.ratingSum + addStars);
+  prod.ratingSum = Math.max(0, prod.ratingSum + addStars);
   prod.ratingCount = Math.max(0, prod.ratingCount + addCount);
-  prod.ratingAvg   = prod.ratingCount ? +(prod.ratingSum / prod.ratingCount).toFixed(1) : 0;
+  prod.ratingAvg = prod.ratingCount ? +(prod.ratingSum / prod.ratingCount).toFixed(1) : 0;
 }
 
 async function applyDeltaToSeller(sellerId, { addStars = 0, addCount = 0, oldStars = null, newStars = null }) {
@@ -50,7 +50,7 @@ export class RatingService {
 
     const oldStars = r.stars;
     if (typeof stars === "number") r.stars = stars;
-    if (typeof text === "string")  r.text = text;
+    if (typeof text === "string") r.text = text;
     if (images) r.images = images;
     if (videos) r.videos = videos;
     r.updatedBy = updaterUserId || userId;
@@ -143,7 +143,7 @@ export class RatingService {
       return { items, total, page, pageSize };
     }
 
-    const sortMap = { new:{createdAt:-1}, old:{createdAt:1}, high:{stars:-1,createdAt:-1}, low:{stars:1,createdAt:-1} };
+    const sortMap = { new: { createdAt: -1 }, old: { createdAt: 1 }, high: { stars: -1, createdAt: -1 }, low: { stars: 1, createdAt: -1 } };
     const [items, total] = await Promise.all([
       Rating.find(q).sort(sortMap[sort] || sortMap.new).skip((page - 1) * pageSize).limit(pageSize),
       Rating.countDocuments(q),
