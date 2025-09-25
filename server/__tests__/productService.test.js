@@ -191,16 +191,28 @@ describe("ProductService", () => {
     });
 
     it("should throw CustomError if slug not provided", async () => {
-      await expect(productService.getProductBySlugService()).rejects.toThrow(
-        "Slug is required"
-      );
+      try {
+        await productService.getProductBySlugService();
+        throw new Error("Should have thrown");
+      } catch (err) {
+        expect(err).toBeInstanceOf(Error);
+        expect(err.name).toBe("CustomError");
+        expect(err.status).toBe(400);
+        expect(err.message).toBe("Slug is required");
+      }
     });
 
     it("should throw CustomError if product not found", async () => {
       Product.findOne.mockReturnValue({ populate: jest.fn().mockResolvedValue(null) });
-      await expect(productService.getProductBySlugService("not-exist")).rejects.toThrow(
-        "Product with slug 'not-exist' not found"
-      );
+      try {
+        await productService.getProductBySlugService("not-exist");
+        throw new Error("Should have thrown");
+      } catch (err) {
+        expect(err).toBeInstanceOf(Error);
+        expect(err.name).toBe("CustomError");
+        expect(err.status).toBe(404);
+        expect(err.message).toMatch(/not found/);
+      }
     });
 
     it("should throw CustomError if DB fails", async () => {
