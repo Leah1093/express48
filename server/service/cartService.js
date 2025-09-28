@@ -1,6 +1,7 @@
 import { Cart } from '../models/cart.js';
 import { Product } from "../models/Product.js"; // ודאי את הנתיב הנכון
 import { cartQueries } from '../mongoQueries/cartQueries.js';
+import { CustomError } from '../utils/customError.js';
 const toIdStr = (x) => (typeof x === 'object' && x?._id ? String(x._id) : String(x));
 
 export class CartService {
@@ -13,7 +14,7 @@ export class CartService {
     let cart = await Cart.findOne(cartQueries.findByUserId(userId));
     if (!cart) {
         const prod = await Product.findById(productId).select('price').lean();
-    if (!prod) throw new Error('Product not found');
+  if (!prod) throw new CustomError('Product not found', 404);
       cart = new Cart({ userId, items: [{ productId, quantity,unitPrice: prod.price.amount }] });
     } else {
       const existingItem = cart.items.find(item => item.productId.toString() === productId.toString());
@@ -21,7 +22,7 @@ export class CartService {
         existingItem.quantity += quantity;
       } else {
          const prod = await Product.findById(productId).select('price').lean();
-      if (!prod) throw new Error('Product not found');
+  if (!prod) throw new CustomError('Product not found', 404);
         cart.items.push({ productId, quantity, unitPrice: prod.price.amount });
       }
     }
@@ -54,7 +55,7 @@ export class CartService {
     // שליפת העגלה של המשתמש
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
     if (!cart) {
-      throw new Error('Cart not found');
+      throw new CustomError('Cart not found', 404);
     }
     // מציאת המוצר בעגלה לפי productId
     const item = cart.items.find(item => item.productId.toString() === productId);
@@ -78,7 +79,7 @@ export class CartService {
     // שליפת העגלה של המשתמש
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
     if (!cart) {
-      throw new Error('Cart not found');
+      throw new CustomError('Cart not found', 404);
     }
 
     // סינון כל הפריטים שאינם המוצר הרצוי (כלומר - הסרה מוחלטת)
@@ -196,7 +197,7 @@ export class CartService {
     // ✅ עגלה חדשה: לבנות items עם unitPrice, לשמור ולהחזיר
     const itemsWithPrice = normalized.map(it => {
       const price = priceMap[it.productId];
-      if (price == null) throw new Error(`Product not found: ${it.productId}`);
+  if (price == null) throw new CustomError(`Product not found: ${it.productId}`, 404);
       return { productId: it.productId, quantity: it.quantity, unitPrice: price,selected: it.selected ?? false };
     });
 
@@ -212,7 +213,7 @@ export class CartService {
     if (existing) {
       if (existing.unitPrice == null) {
         const price = priceMap[it.productId];
-        if (price == null) throw new Error(`Product not found: ${it.productId}`);
+  if (price == null) throw new CustomError(`Product not found: ${it.productId}`, 404);
         existing.unitPrice = price;
       }
       existing.quantity += it.quantity;
@@ -220,7 +221,7 @@ export class CartService {
       if (it.selected) existing.selected = true;
     } else {
       const price = priceMap[it.productId];
-      if (price == null) throw new Error(`Product not found: ${it.productId}`);
+  if (price == null) throw new CustomError(`Product not found: ${it.productId}`, 404);
       cart.items.push({ productId: it.productId, quantity: it.quantity, unitPrice: price,selected: it.selected ?? false });
     }
   }
@@ -233,11 +234,11 @@ export class CartService {
   async updateItemQuantity(userId, productId, quantity) {
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
     if (!cart) {
-      throw new Error("Cart not found");
+      throw new CustomError("Cart not found", 404);
     }
     const item = cart.items.find((i) => i.productId.toString() === productId.toString());
     if (!item) {
-      throw new Error("Product not found in cart");
+      throw new CustomError("Product not found in cart", 404);
     }
     item.quantity = quantity; // ⬅️ עדכון הכמות
     await cart.save();
@@ -257,10 +258,10 @@ export class CartService {
       { new: true }
     ).populate("items.productId");
     if (!cart) {
-    throw new Error("Cart not found or item not found");
-  }else{
-    console.log("cart", cart);
-  }
+      throw new CustomError("Cart not found or item not found", 404);
+    } else {
+      console.log("cart", cart);
+    }
 
 
     return cart;
