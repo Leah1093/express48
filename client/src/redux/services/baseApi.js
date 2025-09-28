@@ -11,7 +11,7 @@ export const baseQueryWithReauth = async (args, api, extraOptions) => {
 
     if (result?.error?.status === 401) {
         // מנסה לרענן טוקן
-        console.log("refresh")
+        console.log("refresh",extraOptions,api)
         const refreshResult = await baseQuery({ url: "/entrance/refresh", method: "POST" }, api, extraOptions);
         console.log("after refresh")
 
