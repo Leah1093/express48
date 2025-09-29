@@ -10,5 +10,5 @@ uploads/
 server/.env
 server/uploads/
 
-.config/
-
+# Coverage
+coverage/
