@@ -37,4 +37,14 @@ export class ProductController {
       }
     }
   };
+
+  searchProducts = async (req, res, next) => {
+    try {
+      const { search, page = 1, limit = 20 } = req.query;
+      const result = await productService.searchProductsService({ search, page, limit });
+      res.json(result);
+    } catch (err) {
+      next(new CustomError("שגיאה בחיפוש מוצרים", 500));
+    }
+  };
 }

@@ -76,6 +76,58 @@ class ProductService {
       throw new CustomError(err.message || "Error fetching product by slug", err.status || 500);
     }
   };
+
+  searchProductsService = async ({ search, page = 1, limit = 20 }) => {
+    const p = Math.max(1, Number(page) || 1);
+    const l = Math.max(1, Number(limit) || 20);
+    const skip = (p - 1) * l;
+
+    const match = {};
+    if (search && search.trim()) {
+  const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const normalizeHebrew = (str = "") => {
+        const FINAL_MAP = { "ך": "כ", "ם": "מ", "ן": "נ", "ף": "פ", "ץ": "צ" };
+        let s = String(str)
+          .replace(/[\u0591-\u05C7]/g, "")
+          .replace(/[\u05F3\u05F4'"]/g, "")
+          .replace(/[^\u0590-\u05FF0-9A-Za-z\s-]/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        s = s.replace(/[ךםןףץ]/g, ch => FINAL_MAP[ch] || ch);
+        return s.toLowerCase();
+      };
+      const q = escapeRegex(search.trim());
+      const qHe = normalizeHebrew(search.trim());
+      match.$or = [
+        { title: new RegExp(q, "i") },
+        { brand: new RegExp(q, "i") },
+        { model: new RegExp(q, "i") },
+        { sku: new RegExp(q, "i") },
+        { gtin: search.trim() },
+        { slug: new RegExp(q, "i") },
+        { slug: search.trim() },
+        { "variations.sku": new RegExp(q, "i") },
+        { "variations.gtin": search.trim() },
+        { title_he_plain: new RegExp(escapeRegex(qHe), "i") },
+        { brand_he_plain: new RegExp(escapeRegex(qHe), "i") },
+        { model_he_plain: new RegExp(escapeRegex(qHe), "i") },
+        { description_he_plain: new RegExp(escapeRegex(qHe), "i") },
+      ];
+    }
+
+    try {
+      const products = await Product.find(match)
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(l)
+        .populate("storeId");
+
+      const total = await Product.countDocuments(match);
+      return { items: products, page: p, limit: l, total, hasNextPage: skip + products.length < total };
+    } catch (err) {
+      throw new CustomError(err.message || "Error searching products", err.status || 500);
+    }
+  };
 }
 
 export const productService = new ProductService();
