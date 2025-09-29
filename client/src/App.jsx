@@ -71,9 +71,11 @@ import SellerProductsPage from './components/seller/SellerProductsPage.jsx';
 import ProductDetailPage from './components/seller/ProductDetailPage.jsx';
 import ProductCreate from './components/seller/products/ProductCreate.jsx';
 import ProductEdit from './components/seller/products/ProductEdit.jsx';
+import SearchResultsPage from './components/Main Content/product/SearchResultsPage.jsx';
+import ProductsPage from './components/Main Content/product/ProductsPage.jsx';
 
 
-function App() {  
+function App() {
   const location = useLocation();
   const dispatch = useDispatch();
   const isMobile = useSelector((state) => state.ui.isMobile);
@@ -132,7 +134,7 @@ function App() {
       <main className="flex-grow">
         <Routes>
 
-          <Route path="products" element={<ProductsList />} />
+          <Route path="products" element={<ProductsPage />} />
           <Route path="products/:storeSlug/:productSlug" element={<ProductPage />} />
           <Route path="/favorites" element={<FavoritesList />} />
           <Route path="/categories/manage" element={<CategoryManagementPage />} />

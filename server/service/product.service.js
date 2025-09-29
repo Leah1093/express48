@@ -1,5 +1,6 @@
 import { Product } from "../models/Product.js";
 import { CustomError } from "../utils/CustomError.js";
+import { SearchLog } from "../models/SearchLog.js";
 
 // פונקציית עזר
 function isNewProduct(publishedAt) {
@@ -84,7 +85,7 @@ class ProductService {
 
     const match = {};
     if (search && search.trim()) {
-  const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const normalizeHebrew = (str = "") => {
         const FINAL_MAP = { "ך": "כ", "ם": "מ", "ן": "נ", "ף": "פ", "ץ": "צ" };
         let s = String(str)
@@ -116,6 +117,14 @@ class ProductService {
     }
 
     try {
+
+      if (search && search.trim()) {
+        await SearchLog.findOneAndUpdate(
+          { term: search.trim().toLowerCase() },
+          { $inc: { count: 1 } },
+          { upsert: true, new: true }
+        );
+      }
       const products = await Product.find(match)
         .sort({ updatedAt: -1 })
         .skip(skip)
@@ -128,6 +137,20 @@ class ProductService {
       throw new CustomError(err.message || "Error searching products", err.status || 500);
     }
   };
+
+  getPopularSearches = async (limit = 10) => {
+    try {
+      const terms = await SearchLog.find({})
+        .sort({ count: -1 })
+        .limit(limit)
+        .select("term count -_id");
+
+      return terms;
+    } catch (err) {
+      throw new CustomError(err.message || "Error fetching popular searches", err.status || 500);
+    }
+  };
+
 }
 
 export const productService = new ProductService();

@@ -47,4 +47,14 @@ export class ProductController {
       next(new CustomError("שגיאה בחיפוש מוצרים", 500));
     }
   };
+
+  getPopularSearches = async (req, res, next) => {
+    try {
+      const limit = Number(req.query.limit) || 10;
+      const data = await productService.getPopularSearches(limit);
+      res.json({ items: data });
+    } catch (err) {
+      next(err);
+    }
+  };
 }

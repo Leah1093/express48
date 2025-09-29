@@ -5,6 +5,7 @@ const productRouter = express.Router();
 
 productRouter.get("/new", productController.getNewProducts);
 productRouter.get("/search", productController.searchProducts);
+productRouter.get("/popular-searches", productController.getPopularSearches);
 productRouter.get('/', productController.getAllProducts);
 productRouter.get('/:slug', productController.getProductsBySlug);
 

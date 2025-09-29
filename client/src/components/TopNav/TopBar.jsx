@@ -1,7 +1,7 @@
 // export default TopBar;
 import IconWithCounter from "./IconWithCounter";
 import Logo from "./Logo";
-import SearchBar from "./SearchBar";
+import SearchBar from "./search/SearchBar";
 import UserMenu from "./UserMenu";
 import { useState, useEffect } from "react";
 import CartDrawer from "./cart/CartDrawer";
