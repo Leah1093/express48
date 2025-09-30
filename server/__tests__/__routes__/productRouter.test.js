@@ -3,7 +3,7 @@ import request from "supertest";
 import express from "express";
 
 // עושים מוק ל־service
-jest.unstable_mockModule("../service/product.service.js", () => ({
+jest.unstable_mockModule("../../service/product.service.js", () => ({
   __esModule: true,
   productService: {
     listNewProducts: jest.fn(),
@@ -13,11 +13,11 @@ jest.unstable_mockModule("../service/product.service.js", () => ({
 }));
 
 // אחרי המוק מייבאים את ה־service
-const { productService } = await import("../service/product.service.js");
+const { productService } = await import("../../service/product.service.js");
 
 // ואז מייבאים את שאר הקבצים
-const { default: productRouter } = await import("../router/product.router.js");
-const { errorHandler } = await import("../middlewares/errorHandler.js");
+const { default: productRouter } = await import("../../router/product.router.js");
+const { errorHandler } = await import("../../middlewares/errorHandler.js");
 
 // בונים אפליקציה אמיתית
 const app = express();

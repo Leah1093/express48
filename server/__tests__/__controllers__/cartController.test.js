@@ -1,8 +1,8 @@
 import { jest } from '@jest/globals';
-import * as cartController from '../controllers/cartController.js';
-import { CartService } from '../service/cartService.js';
+import * as cartController from '../../controllers/cartController.js';
+import { CartService } from '../../service/cartService.js';
 
-jest.mock('../service/cartService.js');
+jest.mock('../../service/cartService.js');
 
 describe('cartController', () => {
   let req, res, next;

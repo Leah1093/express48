@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 
-jest.unstable_mockModule("../models/Product.js", () => ({
+jest.unstable_mockModule("../../models/Product.js", () => ({
   __esModule: true,
   Product: {
     find: jest.fn(),
@@ -10,7 +10,7 @@ jest.unstable_mockModule("../models/Product.js", () => ({
   }
 }));
 
-jest.unstable_mockModule("../models/SearchLog.js", () => ({
+jest.unstable_mockModule("../../models/SearchLog.js", () => ({
   __esModule: true,
   SearchLog: {
     findOneAndUpdate: jest.fn(),
@@ -18,9 +18,9 @@ jest.unstable_mockModule("../models/SearchLog.js", () => ({
   }
 }));
 
-const { productService } = await import("../service/product.service.js");
-const { Product } = await import("../models/Product.js");
-const { SearchLog } = await import("../models/SearchLog.js");
+const { productService } = await import("../../service/product.service.js");
+const { Product } = await import("../../models/Product.js");
+const { SearchLog } = await import("../../models/SearchLog.js");
 
 describe("ProductService", () => {
   afterEach(() => {

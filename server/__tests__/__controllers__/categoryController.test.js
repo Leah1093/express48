@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 
 // מוקים ל־CategoryService
-jest.unstable_mockModule("../service/categoryService.js", () => ({
+jest.unstable_mockModule("../../service/categoryService.js", () => ({
   __esModule: true,
   CategoryService: jest.fn().mockImplementation(() => ({
     create: jest.fn(),
@@ -14,8 +14,8 @@ jest.unstable_mockModule("../service/categoryService.js", () => ({
 }));
 
 // אחרי ה־mock נייבא את הקונטרולר וה־service
-const { CategoryController, service } = await import("../controllers/categoryController.js");
-const { CustomError } = await import("../utils/CustomError.js");
+const { CategoryController, service } = await import("../../controllers/categoryController.js");
+const { CustomError } = await import("../../utils/CustomError.js");
 
 describe("CategoryController (global service)", () => {
   let controller, req, res, next;

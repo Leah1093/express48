@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 
-jest.unstable_mockModule("../models/category.js", () => ({
+jest.unstable_mockModule("../../models/category.js", () => ({
     __esModule: true,
     Category: {
         create: jest.fn(),
@@ -12,9 +12,9 @@ jest.unstable_mockModule("../models/category.js", () => ({
     },
 }));
 
-const { Category } = await import("../models/category.js");
-const { CategoryService } = await import("../service/categoryService.js");
-const { CustomError } = await import("../utils/CustomError.js");
+const { Category } = await import("../../models/category.js");
+const { CategoryService } = await import("../../service/categoryService.js");
+const { CustomError } = await import("../../utils/CustomError.js");
 
 describe("CategoryService", () => {
     let service;

@@ -1,5 +1,5 @@
 
-jest.unstable_mockModule("../utils/customError.js", () => ({
+jest.unstable_mockModule("../../utils/customError.js", () => ({
   __esModule: true,
   CustomError: class CustomError extends Error {
     constructor(message, status) {
@@ -12,7 +12,7 @@ jest.unstable_mockModule("../utils/customError.js", () => ({
 
 import { jest } from "@jest/globals";
 
-jest.unstable_mockModule("../models/cart.js", () => {
+jest.unstable_mockModule("../../models/cart.js", () => {
   function Cart(data) {
     this.userId = data?.userId;
     this.items = data?.items || [];
@@ -23,24 +23,24 @@ jest.unstable_mockModule("../models/cart.js", () => {
   Cart.prototype = { save: jest.fn() };
   return { __esModule: true, Cart };
 });
-jest.unstable_mockModule("../models/Product.js", () => ({
+jest.unstable_mockModule("../../models/Product.js", () => ({
   __esModule: true,
   Product: {
     findById: jest.fn(),
     find: jest.fn()
   }
 }));
-jest.unstable_mockModule("../mongoQueries/cartQueries.js", () => ({
+jest.unstable_mockModule("../../mongoQueries/cartQueries.js", () => ({
   __esModule: true,
   cartQueries: {
     findByUserId: jest.fn()
   }
 }));
 
-const { CartService } = await import("../service/cartService.js");
-const { Cart } = await import("../models/cart.js");
-const { Product } = await import("../models/Product.js");
-const { cartQueries } = await import("../mongoQueries/cartQueries.js");
+const { CartService } = await import("../../service/cartService.js");
+const { Cart } = await import("../../models/cart.js");
+const { Product } = await import("../../models/Product.js");
+const { cartQueries } = await import("../../mongoQueries/cartQueries.js");
 
 function chainableMock(resolvedValue) {
   return {

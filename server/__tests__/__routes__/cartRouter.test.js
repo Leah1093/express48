@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-jest.unstable_mockModule("../controllers/cartController.js", () => ({
+jest.unstable_mockModule("../../controllers/cartController.js", () => ({
   __esModule: true,
   getCart: jest.fn(),
   addToCart: jest.fn(),
@@ -11,13 +11,13 @@ jest.unstable_mockModule("../controllers/cartController.js", () => ({
   toggleSelected: jest.fn(),
   toggleSelecteAll: jest.fn()
 }));
-jest.unstable_mockModule("../middlewares/auth.js", () => ({
+jest.unstable_mockModule("../../middlewares/auth.js", () => ({
   __esModule: true,
   authMiddleware: (req, res, next) => { req.user = { userId: "u1" }; next(); }
 }));
 
-const cartController = await import("../controllers/cartController.js");
-const cartRouter = (await import("../router/cartRouter.js")).default;
+const cartController = await import("../../controllers/cartController.js");
+const cartRouter = (await import("../../router/cartRouter.js")).default;
 
 import request from "supertest";
 import express from "express";

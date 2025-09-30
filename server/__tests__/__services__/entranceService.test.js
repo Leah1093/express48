@@ -2,7 +2,7 @@
 import { jest } from "@jest/globals";
 
 // ---- Mock Models ----
-jest.unstable_mockModule("../models/user.js", () => ({
+jest.unstable_mockModule("../../models/user.js", () => ({
   User: {
     findOne: jest.fn(),
     create: jest.fn(),
@@ -10,14 +10,14 @@ jest.unstable_mockModule("../models/user.js", () => ({
   },
 }));
 
-jest.unstable_mockModule("../models/password.js", () => ({
+jest.unstable_mockModule("../../models/password.js", () => ({
   Password: {
     create: jest.fn(),
     findOne: jest.fn(),
   },
 }));
 
-jest.unstable_mockModule("../models/store.js", () => ({
+jest.unstable_mockModule("../../models/store.js", () => ({
   Store: {
     findOne: jest.fn(),
   },
@@ -32,21 +32,21 @@ jest.unstable_mockModule("bcrypt", () => ({
 }));
 
 // ---- Mock userQueries ----
-jest.unstable_mockModule("../mongoQueries/user.queries.js", () => ({
+jest.unstable_mockModule("../../mongoQueries/user.queries.js", () => ({
   userQueries: {
     findByEmail: jest.fn((email) => ({ email })),
   },
 }));
 
 // ---- Import mocked modules AFTER mocking ----
-const { User } = await import("../models/user.js");
-const { Password } = await import("../models/password.js");
-const { Store } = await import("../models/store.js");
+const { User } = await import("../../models/user.js");
+const { Password } = await import("../../models/password.js");
+const { Store } = await import("../../models/store.js");
 const bcrypt = (await import("bcrypt")).default;
-const { userQueries } = await import("../mongoQueries/user.queries.js");
+const { userQueries } = await import("../../mongoQueries/user.queries.js");
 
 // ⚠️ EntranceService loaded only after mocks
-const { EntranceService } = await import("../service/entrance.service.js");
+const { EntranceService } = await import("../../service/entrance.service.js");
 
 describe("EntranceService", () => {
   afterEach(() => {

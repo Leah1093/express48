@@ -3,7 +3,7 @@ import express from "express";
 import { jest } from "@jest/globals";
 
 // מוק ל־EntranceController
-jest.unstable_mockModule("../controllers/entrance.controller.js", () => {
+jest.unstable_mockModule("../../controllers/entrance.controller.js", () => {
   return {
     default: jest.fn().mockImplementation(() => ({
       register: (req, res) => res.status(201).json({ success: true }),
@@ -16,7 +16,7 @@ jest.unstable_mockModule("../controllers/entrance.controller.js", () => {
 });
 
 // מוק ל־authMiddleware
-jest.unstable_mockModule("../middlewares/auth.js", () => {
+jest.unstable_mockModule("../../middlewares/auth.js", () => {
   return {
     authMiddleware: (req, res, next) => {
       req.user = { id: "123" }; // לדמות משתמש מחובר
@@ -28,7 +28,7 @@ jest.unstable_mockModule("../middlewares/auth.js", () => {
 let app;
 
 beforeAll(async () => {
-  const { entranceRouter } = await import("../router/entrance.router.js");
+  const { entranceRouter } = await import("../../router/entrance.router.js");
   app = express();
   app.use(express.json());
   app.use("/entrance", entranceRouter);

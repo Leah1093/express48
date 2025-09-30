@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 
 // mock ל־CategoryService
-jest.unstable_mockModule("../service/categoryService.js", () => ({
+jest.unstable_mockModule("../../service/categoryService.js", () => ({
     __esModule: true,
     CategoryService: jest.fn().mockImplementation(() => ({
         create: jest.fn(),
@@ -24,10 +24,10 @@ jest.unstable_mockModule("../service/categoryService.js", () => ({
 }));
 
 // אחרי ה־mock נייבא את שאר הקבצים
-const { default: categoryRouter } = await import("../router/categoryRoutes.js");
-const { service } = await import("../controllers/categoryController.js");
-const { errorHandler } = await import("../middlewares/errorHandler.js");
-const { CustomError } = await import("../utils/CustomError.js");
+const { default: categoryRouter } = await import("../../router/categoryRoutes.js");
+const { service } = await import("../../controllers/categoryController.js");
+const { errorHandler } = await import("../../middlewares/errorHandler.js");
+const { CustomError } = await import("../../utils/CustomError.js");
 
 // בונים אפליקציה אמיתית
 const app = express();
@@ -93,7 +93,7 @@ describe("Category Router (Integration)", () => {
 
         const res = await request(app)
             .post("/categories")
-            .attach("icon", path.join(__dirname, "fixtures", "icon.png"))
+            .attach("icon", path.join(__dirname, "../fixtures/icon.png"))
             .field("name", "With File");
 
         expect(res.status).toBe(201);

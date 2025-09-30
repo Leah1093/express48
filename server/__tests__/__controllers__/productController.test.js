@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 
 // Mock ל-service
-jest.unstable_mockModule("../service/product.service.js", () => ({
+jest.unstable_mockModule("../../service/product.service.js", () => ({
   __esModule: true,
   productService: {
     listNewProducts: jest.fn(),
@@ -10,9 +10,9 @@ jest.unstable_mockModule("../service/product.service.js", () => ({
   },
 }));
 
-const { productService } = await import("../service/product.service.js");
-const { ProductController } = await import("../controllers/product.controller.js");
-const { CustomError } = await import("../utils/CustomError.js");
+const { productService } = await import("../../service/product.service.js");
+const { ProductController } = await import("../../controllers/product.controller.js");
+const { CustomError } = await import("../../utils/CustomError.js");
 
 describe("ProductController (Unit) עם Middleware imitation", () => {
   let controller;
