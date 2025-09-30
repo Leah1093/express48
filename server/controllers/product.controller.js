@@ -38,6 +38,7 @@ export class ProductController {
     }
   };
 
+
   searchProducts = async (req, res, next) => {
     try {
       const { search, page = 1, limit = 20 } = req.query;

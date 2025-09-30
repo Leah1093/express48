@@ -66,6 +66,7 @@ import ProductsList from './components/Main Content/product/ProductsList.jsx';
 import HomeNewProducts from './components/Main Content/home/HomeNewProducts.jsx';
 import AuthHeader from './components/authentication/AuthHeader.jsx';
 
+
 import ProductForm from './components/seller/products/forms/ProductForm.jsx';
 import SellerProductsPage from './components/seller/SellerProductsPage.jsx';
 import ProductDetailPage from './components/seller/ProductDetailPage.jsx';
@@ -133,6 +134,7 @@ function App() {
 
       <main className="flex-grow">
         <Routes>
+
 
           <Route path="products" element={<ProductsPage />} />
           <Route path="products/:storeSlug/:productSlug" element={<ProductPage />} />

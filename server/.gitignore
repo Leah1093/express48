@@ -1,8 +1,60 @@
+# 📦 Node.js
+node_modules/
+.env
+uploads/
+coverage/
+server.zip
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ⚙️ Environment
+.env
+*.local
+.env.*.local
+
+# 🧪 Tests & Coverage
+coverage/
+*.lcov
+.jest/
+
+# 📝 Logs
+logs/
+*.log
+*.log.*
+*.out
+*.err
+
+# 💻 System files
+.DS_Store
+Thumbs.db
+
+# 🗄️ Build / Cache
+dist/
+build/
+.cache/
+.next/
+out/
+
+# 🔒 AWS / Elastic Beanstalk
+
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 
-# Ignore test coverage reports
-coverage/
+# 🗜️ Archives
+*.zip
+*.tar
+*.gz
+*.tgz
+*.7z
+
+# 📑 VSCode / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+

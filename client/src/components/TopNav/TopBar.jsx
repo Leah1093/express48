@@ -11,6 +11,7 @@ import MobileDrawerContent from "./MobileDrawerContent";
 import { useDispatch } from "react-redux";
 import { fetchCategories } from "../../redux/slices/categoriesSlice";
 import { IoSearchOutline, IoHeartOutline, IoMenuOutline } from "react-icons/io5";
+
 import { HiOutlineUser, HiOutlineShoppingCart, HiOutlineChevronRight } from "react-icons/hi2";
 
 
@@ -40,6 +41,7 @@ function TopBar() {
     <>
       <header className="fixed top-0 left-0 z-[9999] w-full bg-white shadow-[0_2px_6px_0_rgba(108,108,108,0.15)] font-[Rubik]">
         <div
+
           className={isMobile
             ? "flex items-center justify-between mx-auto px-[24px] h-[68px] w-[430px] max-w-full flex-shrink-0"
             : "flex items-center justify-between w-full px-[64px] py-[9px]"}
@@ -126,8 +128,21 @@ function TopBar() {
               </Link>
             </>
           )}
+
+          {/* אייקון המבורגר מובייל */}
+          {isMobile && (
+            <div className="flex items-center">
+              <button
+                className="flex items-center justify-center w-[47px] h-[44px] p-0"
+                onClick={() => setDrawerOpen(true)}
+              >
+                  <IoMenuOutline className="w-6 h-6 text-[#141414]" />
+              </button>
+            </div>
+          )}
         </div>
       </header>
+
       {/* Drawer */}
       {isMobile && drawerOpen && (
         <MobileDrawerContent categories={categories} onClose={() => setDrawerOpen(false)} />

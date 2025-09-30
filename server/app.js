@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 
 import { connectDB } from "./config/db.js";
 import 'dotenv/config';
-import { passwordRouter } from "./router/pwd.router.js";
+import { passwordRouter } from "./router/password.router.js";
 import { entranceRouter } from "./router/entrance.router.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { googleAuthRouter } from "./router/googleAuth.router.js";
@@ -54,6 +54,10 @@ app.use(cors({
   methods: ["GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
+app.get("/", (req, res) => {
+  res.send("Express48 API is running 🚀");
+});
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
@@ -77,7 +81,9 @@ app.use("/orders", orderRoutes);
 app.use("/coupons",couponsRoutes);
 
 app.use(errorHandler);
+const PORT = process.env.PORT || 8080;
 
-app.listen(process.env.PORT || 8080, () => {
-  console.log(`start server port: ${process.env.PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`start server port: ${PORT}`);
+
 });

@@ -1,5 +1,6 @@
 import { Product } from "../models/Product.js";
 import { CustomError } from "../utils/CustomError.js";
+
 import { SearchLog } from "../models/SearchLog.js";
 
 // פונקציית עזר
@@ -45,6 +46,7 @@ class ProductService {
           finalPrice: finalAmount,
           discountValue: hasDiscount ? savedAmount : 0,
           hasDiscount,
+
           isNew: p.publishedAt ? isNewProduct(p.publishedAt) : false
         };
       });
@@ -74,6 +76,7 @@ class ProductService {
       throw new CustomError(err.message || "Error fetching product by slug", err.status || 500);
     }
   };
+
 
   searchProductsService = async ({ search, page = 1, limit = 20 }) => {
     const p = Math.max(1, Number(page) || 1);

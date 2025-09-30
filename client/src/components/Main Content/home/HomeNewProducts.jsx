@@ -1,5 +1,6 @@
 
 import { useGetNewProductsQuery } from "../../../redux/services/productsApi";
+
 import MiniProductCard from "../product/MiniProductCard";
 
 function HomeNewProducts() {
@@ -31,6 +32,7 @@ function HomeNewProducts() {
     md:grid-cols-[repeat(auto-fit,minmax(230px,1fr))] /* מחשב */
     w-full
   "
+
       >
         {data?.items?.map((p) => (
           <MiniProductCard key={p._id} product={p} />
