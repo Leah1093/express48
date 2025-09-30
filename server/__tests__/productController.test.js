@@ -132,4 +132,56 @@ describe("ProductController (Unit) עם Middleware imitation", () => {
       error: "בעיית Custom",
     });
   });
+
+  // ----- searchProducts -----
+  test("searchProducts מחזיר תוצאות חיפוש בהצלחה", async () => {
+    req.query = { search: "טלפון", page: 2, limit: 5 };
+    const fakeResult = { items: [{ id: 4, title: "טלפון" }], total: 1 };
+    productService.searchProductsService = jest.fn().mockResolvedValue(fakeResult);
+
+    await controller.searchProducts(req, res, next);
+
+    expect(productService.searchProductsService).toHaveBeenCalledWith({
+      search: "טלפון",
+      page: 2,
+      limit: 5,
+    });
+    expect(res.json).toHaveBeenCalledWith(fakeResult);
+  });
+
+  test("searchProducts מחזיר JSON עם שגיאה במקרה של חריגה", async () => {
+    req.query = { search: "מחשב" };
+    productService.searchProductsService = jest.fn().mockRejectedValue(new Error("DB error"));
+
+    await controller.searchProducts(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      status: 500,
+      error: "שגיאה בחיפוש מוצרים",
+    });
+  });
+
+  // ----- getPopularSearches -----
+  test("getPopularSearches מחזיר חיפושים פופולריים", async () => {
+    req.query = { limit: "3" };
+    const fakeSearches = ["טלפון", "מחשב", "טאבלט"];
+    productService.getPopularSearches = jest.fn().mockResolvedValue(fakeSearches);
+
+    await controller.getPopularSearches(req, res, next);
+
+    expect(productService.getPopularSearches).toHaveBeenCalledWith(3);
+    expect(res.json).toHaveBeenCalledWith({ items: fakeSearches });
+  });
+
+  test("getPopularSearches מעביר שגיאה ל-next במקרה חריגה", async () => {
+    const error = new Error("DB error");
+    productService.getPopularSearches = jest.fn().mockRejectedValue(error);
+
+    await controller.getPopularSearches(req, res, next);
+
+    // next אמור לקבל את ה-error המקורי
+    expect(next).toHaveBeenCalledWith(error);
+  });
+
 });

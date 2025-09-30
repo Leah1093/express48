@@ -31,9 +31,6 @@ class ProductService {
         .lean({ virtuals: true });
 
       return products.map((p) => {
-        if (!p.publishedAt) {
-          throw new CustomError(`Product ${p._id} does not have a publishedAt date`, 500);
-        }
 
         const { finalAmount, baseAmount, savedAmount, hasDiscount } =
           Product.hydrate(p).getEffectivePricing();
@@ -48,7 +45,7 @@ class ProductService {
           finalPrice: finalAmount,
           discountValue: hasDiscount ? savedAmount : 0,
           hasDiscount,
-          isNew: isNewProduct(p.publishedAt)
+          isNew: p.publishedAt ? isNewProduct(p.publishedAt) : false
         };
       });
     } catch (err) {

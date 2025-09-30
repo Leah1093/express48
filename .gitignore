@@ -13,3 +13,5 @@ server/uploads/
 
 .config/
 
+# Ignore test coverage reports
+**/coverage/

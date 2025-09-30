@@ -13,7 +13,7 @@ const controller = new CategoryController();
 // יצירת קטגוריה עם אייקון בקריאה אחת
 // router.post("/", upload.single("icon"), controller.create);
 router.post("/",upload.single("icon"),
-  (req, res, next) => { req.file && (req.body.icon == `/uploads/icons/${req.file.filename}`); next(); },
+  (req, res, next) => { req.file && (req.body.icon = `/uploads/icons/${req.file.filename}`); next(); },
   validate(createCategorySchema),
   controller.create
 );
