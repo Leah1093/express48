@@ -2,7 +2,7 @@
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const baseQuery = fetchBaseQuery({
-    baseUrl: "http://localhost:8080",
+    baseUrl: import.meta.env.VITE_API_URL,
     credentials: "include", // שולח cookies אוטומטית
 });
 

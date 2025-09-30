@@ -27,7 +27,7 @@
 // }
 
 // export const favoritesService = new FavoritesService();
-import { Favorite } from "../models/Favorite.js";
+import { Favorite } from "../models/favorite.js";
 import { favoriteQueries } from "../mongoQueries/favoriteQueries.js";
 
 export class FavoritesService {
