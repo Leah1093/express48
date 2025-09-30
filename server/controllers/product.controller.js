@@ -37,4 +37,25 @@ export class ProductController {
       }
     }
   };
+
+
+  searchProducts = async (req, res, next) => {
+    try {
+      const { search, page = 1, limit = 20 } = req.query;
+      const result = await productService.searchProductsService({ search, page, limit });
+      res.json(result);
+    } catch (err) {
+      next(new CustomError("שגיאה בחיפוש מוצרים", 500));
+    }
+  };
+
+  getPopularSearches = async (req, res, next) => {
+    try {
+      const limit = Number(req.query.limit) || 10;
+      const data = await productService.getPopularSearches(limit);
+      res.json({ items: data });
+    } catch (err) {
+      next(err);
+    }
+  };
 }

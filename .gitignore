@@ -7,8 +7,15 @@ uploads/
 
 # local ignores (added)
 .env
+
 server/.env
 server/uploads/
 
+
 # Coverage
 coverage/
+
+.config/
+
+# Ignore test coverage reports
+**/coverage/

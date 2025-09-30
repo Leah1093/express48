@@ -38,6 +38,9 @@ build/
 out/
 
 # 🔒 AWS / Elastic Beanstalk
+
+
+# Elastic Beanstalk Files
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
@@ -54,3 +57,4 @@ out/
 .idea/
 *.swp
 *.swo
+
