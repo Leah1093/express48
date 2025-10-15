@@ -1,63 +1,278 @@
-import request from "supertest";
-import express from "express";
 import { jest } from "@jest/globals";
+import { cookieNames } from "../../utils/cookies.js";
 
-// מוק ל־EntranceController
-jest.unstable_mockModule("../../controllers/entrance.controller.js", () => {
-  return {
-    default: jest.fn().mockImplementation(() => ({
-      register: (req, res) => res.status(201).json({ success: true }),
-      login: (req, res) => res.status(200).json({ success: true }),
-      logout: (req, res) => res.status(200).json({ success: true }),
-      getCurrentUser: (req, res) => res.status(200).json({ success: true, user: { id: "123" } }),
-      refresh: (req, res) => res.status(200).json({ ok: true }),
-    })),
-  };
-});
+const mockRes = () => {
+  const res = {};
+  res.cookie = jest.fn().mockReturnValue(res);
+  return res;
+};
 
-// מוק ל־authMiddleware
-jest.unstable_mockModule("../../middlewares/auth.js", () => {
-  return {
-    authMiddleware: (req, res, next) => {
-      req.user = { id: "123" }; // לדמות משתמש מחובר
-      next();
-    },
-  };
-});
+describe("Auth Service", () => {
+  let loginFlow, refreshFlow, logoutFlow, logoutAllFlow;
+  let createSession, rotateRefresh, revokeSession, revokeAllUserSessions;
+  let signAccessToken;
+  let CustomError;
 
-let app;
+  beforeAll(async () => {
+    jest.unstable_mockModule("../../service/session.service.js", () => ({
+      createSession: jest.fn(),
+      rotateRefresh: jest.fn(),
+      revokeSession: jest.fn(),
+      revokeAllUserSessions: jest.fn(),
+    }));
 
-beforeAll(async () => {
-  const { entranceRouter } = await import("../../router/entrance.router.js");
-  app = express();
-  app.use(express.json());
-  app.use("/entrance", entranceRouter);
-});
+    jest.unstable_mockModule("../../utils/jwt.js", () => ({
+      signAccessToken: jest.fn(),
+    }));
 
-describe("Entrance Router (mocked)", () => {
-  it("POST /entrance/register", async () => {
-    const res = await request(app).post("/entrance/register").send({ username: "user" });
-    expect(res.status).toBe(201);
+    jest.unstable_mockModule("../../utils/CustomError.js", () => ({
+      CustomError: class CustomError extends Error {
+        constructor(message, status) {
+          super(message);
+          this.status = status;
+        }
+      },
+    }));
+
+    ({
+      loginFlow,
+      refreshFlow,
+      logoutFlow,
+      logoutAllFlow,
+    } = await import("../../service/auth.service.js"));
+
+    ({
+      createSession,
+      rotateRefresh,
+      revokeSession,
+      revokeAllUserSessions,
+    } = await import("../../service/session.service.js"));
+
+    ({ signAccessToken } = await import("../../utils/jwt.js"));
+    ({ CustomError } = await import("../../utils/CustomError.js"));
   });
 
-  it("POST /entrance/login", async () => {
-    const res = await request(app).post("/entrance/login").send({ email: "u@test.com", password: "123456" });
-    expect(res.status).toBe(200);
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  it("POST /entrance/logout", async () => {
-    const res = await request(app).post("/entrance/logout");
-    expect(res.status).toBe(200);
+  // ----------------- loginFlow -----------------
+  describe("loginFlow", () => {
+    test("should create session and set cookies", async () => {
+      const res = mockRes();
+      createSession.mockResolvedValue({ refreshToken: "refresh123" });
+      signAccessToken.mockReturnValue("access123");
+
+      const result = await loginFlow({
+        res,
+        user: { _id: "u1", role: "admin" },
+        userAgent: "UA",
+        ipHash: "ip",
+      });
+
+      expect(createSession).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: "u1" })
+      );
+      expect(signAccessToken).toHaveBeenCalled();
+      expect(res.cookie).toHaveBeenCalledTimes(2);
+      expect(result).toEqual({ ok: true });
+    });
+
+    test("should throw if createSession fails", async () => {
+      const res = mockRes();
+      createSession.mockRejectedValue(new Error("DB fail"));
+
+      await expect(
+        loginFlow({
+          res,
+          user: { _id: "u1" },
+          userAgent: "UA",
+          ipHash: "ip",
+        })
+      ).rejects.toThrow("DB fail");
+    });
+
+    // ----- טסטים משלימים -----
+
+    
+    test("should handle user with roles array", async () => {
+      const res = mockRes();
+      createSession.mockResolvedValue({ refreshToken: "refresh123" });
+      signAccessToken.mockReturnValue("access123");
+
+      await loginFlow({
+        res,
+        user: { _id: "u1", roles: ["admin", "editor"] },
+        userAgent: "UA",
+        ipHash: "ip",
+      });
+
+      expect(createSession).toHaveBeenCalledWith(
+        expect.objectContaining({ roles: ["admin", "editor"] })
+      );
+    });
+
+    test("should handle user with single role string", async () => {
+      const res = mockRes();
+      createSession.mockResolvedValue({ refreshToken: "refresh123" });
+      signAccessToken.mockReturnValue("access123");
+
+      await loginFlow({
+        res,
+        user: { _id: "u1", role: "manager" },
+        userAgent: "UA",
+        ipHash: "ip",
+      });
+
+      expect(createSession).toHaveBeenCalledWith(
+        expect.objectContaining({ role: "manager", roles: ["manager"] })
+      );
+    });
+
+    test("should default role to 'user' if no role/storeId", async () => {
+      const res = mockRes();
+      createSession.mockResolvedValue({ refreshToken: "refresh123" });
+      signAccessToken.mockReturnValue("access123");
+
+      await loginFlow({
+        res,
+        user: { _id: "u1" },
+        userAgent: "UA",
+        ipHash: "ip",
+      });
+
+      expect(createSession).toHaveBeenCalledWith(
+        expect.objectContaining({ role: "user", roles: [] })
+      );
+    });
+
+    test("should assign seller role if storeId present", async () => {
+      const res = mockRes();
+      createSession.mockResolvedValue({ refreshToken: "refresh123" });
+      signAccessToken.mockReturnValue("access123");
+
+      await loginFlow({
+        res,
+        user: { _id: "u1", storeId: "st1" },
+        userAgent: "UA",
+        ipHash: "ip",
+      });
+
+      expect(createSession).toHaveBeenCalledWith(
+        expect.objectContaining({ role: "seller", roles: ["seller"] })
+      );
+    });
+
+    // 👇 טסט חדש שסוגר את שורה 22
+    test("should handle user.roles that is not an array", async () => {
+      const res = mockRes();
+      createSession.mockResolvedValue({ refreshToken: "refresh123" });
+      signAccessToken.mockReturnValue("access123");
+
+      await loginFlow({
+        res,
+        user: { _id: "uNonArray", roles: "notAnArray" }, // roles לא מערך
+        userAgent: "UA",
+        ipHash: "ip",
+      });
+
+      expect(createSession).toHaveBeenCalledWith(
+        expect.objectContaining({ roles: [], role: "user" })
+      );
+    });
   });
 
-  it("GET /entrance/me", async () => {
-    const res = await request(app).get("/entrance/me");
-    expect(res.status).toBe(200);
-    expect(res.body.user).toEqual({ id: "123" });
+  // ----------------- refreshFlow -----------------
+  describe("refreshFlow", () => {
+    test("should throw CustomError if no token", async () => {
+      const res = mockRes();
+      const req = { cookies: {} };
+
+      await expect(refreshFlow({ req, res })).rejects.toThrow(CustomError);
+    });
+
+    test("should refresh tokens successfully", async () => {
+      const res = mockRes();
+      const req = { cookies: { [cookieNames.refresh]: "refresh123" } };
+      rotateRefresh.mockResolvedValue({
+        session: { userId: "u1", sessionId: "s1" },
+        newToken: "newRefresh",
+      });
+      signAccessToken.mockReturnValue("access123");
+
+      const result = await refreshFlow({ req, res });
+
+      expect(rotateRefresh).toHaveBeenCalledWith({
+        presentedToken: "refresh123",
+      });
+      expect(signAccessToken).toHaveBeenCalled();
+      expect(res.cookie).toHaveBeenCalledTimes(2);
+      expect(result.ok).toBe(true);
+      expect(result.session).toEqual({ userId: "u1", sessionId: "s1" });
+    });
+
+    test("should throw if rotateRefresh fails", async () => {
+      const res = mockRes();
+      const req = { cookies: { [cookieNames.refresh]: "refresh123" } };
+      rotateRefresh.mockRejectedValue(new Error("rotate failed"));
+
+      await expect(refreshFlow({ req, res })).rejects.toThrow("rotate failed");
+    });
+
+    test("should throw if session is null", async () => {
+      const res = mockRes();
+      const req = { cookies: { [cookieNames.refresh]: "refresh123" } };
+      rotateRefresh.mockResolvedValue({ session: null, newToken: "newR" });
+
+      await expect(refreshFlow({ req, res })).rejects.toThrow("Invalid session");
+    });
   });
 
-  it("POST /entrance/refresh", async () => {
-    const res = await request(app).post("/entrance/refresh");
-    expect(res.status).toBe(200);
+  // ----------------- logoutFlow -----------------
+  describe("logoutFlow", () => {
+    test("should revoke session if sessionId provided", async () => {
+      const res = mockRes();
+      await logoutFlow({ res, sessionId: "s1" });
+
+      expect(revokeSession).toHaveBeenCalledWith("s1");
+      expect(res.cookie).toHaveBeenCalledTimes(2);
+    });
+
+    test("should not revoke session if no sessionId", async () => {
+      const res = mockRes();
+      await logoutFlow({ res });
+
+      expect(revokeSession).not.toHaveBeenCalled();
+      expect(res.cookie).toHaveBeenCalledTimes(2);
+    });
+
+    test("should throw if revokeSession fails", async () => {
+      const res = mockRes();
+      revokeSession.mockRejectedValue(new Error("DB error"));
+
+      await expect(logoutFlow({ res, sessionId: "s1" })).rejects.toThrow(
+        "DB error"
+      );
+    });
+  });
+
+  // ----------------- logoutAllFlow -----------------
+  describe("logoutAllFlow", () => {
+    test("should revoke all sessions and clear cookies", async () => {
+      const res = mockRes();
+      await logoutAllFlow({ res, userId: "u1" });
+
+      expect(revokeAllUserSessions).toHaveBeenCalledWith("u1");
+      expect(res.cookie).toHaveBeenCalledTimes(2);
+    });
+
+    test("should throw if revokeAllUserSessions fails", async () => {
+      const res = mockRes();
+      revokeAllUserSessions.mockRejectedValue(new Error("DB error"));
+
+      await expect(logoutAllFlow({ res, userId: "u1" })).rejects.toThrow(
+        "DB error"
+      );
+    });
   });
 });
