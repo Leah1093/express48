@@ -20,7 +20,7 @@ import session from "express-session";
 import { apiLimiter } from "./middlewares/rateLimit.middleware.js";
 import './config/googleOAuth.config.js'
 import productRouter from "./router/product.router.js";
-import {sellerProductsRouter} from "./router/seller.products.router.js";
+import { sellerProductsRouter } from "./router/seller.products.router.js";
 // import { sellerProfileRouter } from "./router/sellerProfile.router.js";
 import { marketplaceRouter } from "./router/marketplace.router.js";
 const __filename = fileURLToPath(import.meta.url);
@@ -31,6 +31,7 @@ import categoryRoutes from "./router/categoryRoutes.js"
 import addressRoutes from "./router/addressRoutes.js"
 import orderRoutes from "./router/orderRoutes.js";
 import couponsRoutes from "./router/couponsRoutes.js";
+import paymentsRouter from "./router/payments.routes.js";
 
 const app = express();
 
@@ -78,7 +79,8 @@ app.use("/categories", categoryRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/addresses", addressRoutes);
 app.use("/orders", orderRoutes);
-app.use("/coupons",couponsRoutes);
+app.use("/coupons", couponsRoutes);
+app.use('/payments', paymentsRouter);
 
 app.use(errorHandler);
 const PORT = process.env.PORT || 8080;
