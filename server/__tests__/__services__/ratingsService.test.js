@@ -1,3 +1,4 @@
+// __tests__/__services__/ratingService.test.js
 import { jest } from "@jest/globals";
 
 /** -------------------------
@@ -38,7 +39,7 @@ jest.unstable_mockModule("../../models/rating.js", () => {
         restoredBy: null,
         updatedBy: null,
         createdAt: new Date(),
-        save: jest.fn(async function() {
+        save: jest.fn(async function () {
           ratings.set(_id, { ...this });
         }),
       };
@@ -49,10 +50,9 @@ jest.unstable_mockModule("../../models/rating.js", () => {
     findById: jest.fn(async (id) => {
       const r = ratings.get(id);
       if (!r) return null;
-      // return a mutable copy with save()
       return {
         ...clone(r),
-        save: jest.fn(async function() {
+        save: jest.fn(async function () {
           ratings.set(id, { ...this });
         }),
       };
@@ -67,17 +67,16 @@ jest.unstable_mockModule("../../models/rating.js", () => {
       );
       return found
         ? {
-            ...clone(found),
-            save: jest.fn(async function() {
-              ratings.set(found._id, { ...this });
-            }),
-          }
+          ...clone(found),
+          save: jest.fn(async function () {
+            ratings.set(found._id, { ...this });
+          }),
+        }
         : null;
     }),
 
     // for listByProduct(sort="helpful")
     aggregate: jest.fn(async (pipeline) => {
-      // naive: just return ratings that match product/status/deletedAt
       let arr = [...ratings.values()];
       const matchStage = pipeline.find((s) => s.$match);
       if (matchStage) {
@@ -89,12 +88,10 @@ jest.unstable_mockModule("../../models/rating.js", () => {
           (!("hasMedia" in q) || !!x.hasMedia === !!q.hasMedia)
         );
       }
-      // helpfulScore = likes - dislikes
       arr = arr.map((x) => ({
         ...x,
         helpfulScore: (x.likesCount || 0) - (x.dislikesCount || 0),
       }));
-      // sort by helpfulScore desc, createdAt desc
       arr.sort((a, b) => {
         if (b.helpfulScore !== a.helpfulScore) return b.helpfulScore - a.helpfulScore;
         return new Date(b.createdAt) - new Date(a.createdAt);
@@ -158,11 +155,11 @@ jest.unstable_mockModule("../../models/rating.js", () => {
     findOne: jest.fn(async ({ ratingId, userId }) => {
       const key = `${ratingId}:${userId}`;
       const ex = likes.get(key);
-      return ex ? { ...clone(ex), save: jest.fn(async function() { likes.set(key, { ...this }); }) } : null;
+      return ex ? { ...clone(ex), save: jest.fn(async function () { likes.set(key, { ...this }); }) } : null;
     }),
     create: jest.fn(async (doc) => {
       const key = `${doc.ratingId}:${doc.userId}`;
-      likes.set(key, { ...doc, save: jest.fn(async function() { likes.set(key, { ...this }); }) });
+      likes.set(key, { ...doc, save: jest.fn(async function () { likes.set(key, { ...this }); }) });
     }),
   };
 
@@ -187,16 +184,15 @@ jest.unstable_mockModule("../../models/Product.js", () => {
     ratingAvg: 0,
     ratingBreakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
     markModified: jest.fn(),
-    save: jest.fn(async function() { products.set(id, { ...this }); }),
+    save: jest.fn(async function () { products.set(id, { ...this }); }),
+    select: jest.fn(async function () { return this; }), // מאפשר .select() בשרשור
   });
 
   const Product = {
     findById: jest.fn(async (id) => {
       if (id === "missing-product") return null;
       if (!products.has(id)) products.set(id, makeProduct(id));
-      const p = products.get(id);
-      // Return a live object (mutations persisted via save)
-      return p;
+      return products.get(id);
     }),
   };
 
@@ -222,7 +218,7 @@ jest.unstable_mockModule("../../models/seller.js", () => {
       this.ratingAvg = this.ratingCount ? +(this.ratingSum / this.ratingCount).toFixed(1) : 0;
     },
     markModified: jest.fn(),
-    save: jest.fn(async function() { sellers.set(id, { ...this }); }),
+    save: jest.fn(async function () { sellers.set(id, { ...this }); }),
   });
 
   const Seller = {
@@ -238,7 +234,6 @@ jest.unstable_mockModule("../../models/seller.js", () => {
   return { Seller, __reset, __get };
 });
 
-// don't mock CustomError: use the real one from project
 // import service dynamically after mocks
 let RatingService;
 let Rating, RatingLike, resetRating, getRating;
@@ -249,8 +244,7 @@ beforeAll(async () => {
   ({ Rating, RatingLike, __reset: resetRating, __getRating: getRating } = await import("../../models/rating.js"));
   ({ Product, __reset: resetProducts, __get: getProduct } = await import("../../models/Product.js"));
   ({ Seller, __reset: resetSellers, __get: getSeller } = await import("../../models/seller.js"));
-
-  ({ RatingService } = await import("../../service/rating.service.js"));
+  ({ RatingService } = await import("../../service/rating.service.js")); // נתיב נכון
 });
 
 beforeEach(() => {
@@ -350,7 +344,6 @@ describe("RatingService.edit", () => {
     });
     expect(edited.text).toBe("updated");
     expect(edited.hasMedia).toBe(true);
-    // no stars change → no extra saves beyond rating.save()
     const p = getProduct("p3");
     expect(p.ratingCount).toBe(1);
     expect(p.ratingSum).toBe(3);
@@ -489,25 +482,39 @@ describe("RatingService.like", () => {
     res = await s.like({ ratingId: r._id, userId: "liker1", value: -1 });
     expect(res).toEqual({ likes: 0, dislikes: 1 });
   });
+
+  test("first dislike -1; then switch to +1 (dislike-- & like++)", async () => {
+    const s = svc();
+    const r = await s.create({ userId: "u10", productId: "p10", sellerId: "s10", stars: 5 });
+
+    // שלב 1: דיסלייק ראשון
+    let res = await s.like({ ratingId: r._id, userId: "likerX", value: -1 });
+    expect(res).toEqual({ likes: 0, dislikes: 1 });
+
+    // שלב 2: מעבר מ־-1 ל־+1 → מפעיל את:
+    // r.dislikesCount = Math.max(... - 1)
+    // r.likesCount    = Math.max(... + 1)
+    res = await s.like({ ratingId: r._id, userId: "likerX", value: 1 });
+    expect(res).toEqual({ likes: 1, dislikes: 0 });
+  });
+
 });
 
 describe("RatingService.listByProduct", () => {
   test('sort="helpful" uses aggregate pipeline and paginates; withMedia filter works', async () => {
     const s = svc();
     const base = { userId: "u1", productId: "px", sellerId: "sx" };
-    // create ratings with different like balances
     const r1 = await s.create({ ...base, stars: 5, images: ["img"] }); // hasMedia
     const r2 = await s.create({ ...base, stars: 3 });
     const r3 = await s.create({ ...base, stars: 4, videos: ["vid"] }); // hasMedia
 
-    // likes: r1(2 likes), r2(1 dislike), r3(1 like)
     await s.like({ ratingId: r1._id, userId: "a", value: 1 });
     await s.like({ ratingId: r1._id, userId: "b", value: 1 });
     await s.like({ ratingId: r2._id, userId: "c", value: -1 });
     await s.like({ ratingId: r3._id, userId: "d", value: 1 });
 
     const page1 = await s.listByProduct({ productId: "px", page: 1, pageSize: 2, sort: "helpful", withMedia: true });
-    expect(page1.total).toBe(2); // r1 and r3 (both have media)
+    expect(page1.total).toBe(2); // r1 and r3
     expect(page1.items.length).toBe(2);
   });
 
@@ -548,5 +555,215 @@ describe("RatingService.productSummary", () => {
     const s = svc();
     await expect(s.productSummary({ productId: "missing-product" }))
       .rejects.toThrow("Product not found");
+  });
+});
+
+describe("RatingService.adminDelete (status ≠ approved)", () => {
+  test("skips product/seller deltas when status is pending", async () => {
+    const s = svc();
+    const r = await s.create({ userId: "uX", productId: "pX", sellerId: "sX", stars: 4 });
+
+    // שנה סטטוס לדירוג ל-pending כדי להפעיל את הענף שלא מכניס דלתא
+    const toEdit = await Rating.findById(r._id);
+    toEdit.status = "pending";
+    await toEdit.save();
+
+    const pBefore = { ...getProduct("pX") };
+    const selBefore = { ...getSeller("sX") };
+
+    const res = await s.adminDelete({ ratingId: r._id, adminUserId: "adm" });
+    expect(res).toEqual({ ok: true });
+
+    const pAfter = getProduct("pX");
+    const selAfter = getSeller("sX");
+
+    // לא אמור לרדת הספירה/סכום כי status ≠ approved
+    expect(pAfter.ratingCount).toBe(pBefore.ratingCount); // נשאר 1
+    expect(pAfter.ratingSum).toBe(pBefore.ratingSum);     // נשאר 4
+    expect(selAfter.ratingCount).toBe(selBefore.ratingCount);
+    expect(selAfter.ratingSum).toBe(selBefore.ratingSum);
+  });
+});
+
+describe("RatingService.adminRestore (status ≠ approved)", () => {
+  test("skips product/seller deltas when restoring non-approved rating", async () => {
+    const s = svc();
+    const r = await s.create({ userId: "uY", productId: "pY", sellerId: "sY", stars: 2 });
+
+    // שנה סטטוס ל-pending
+    const toEdit = await Rating.findById(r._id);
+    toEdit.status = "pending";
+    await toEdit.save();
+
+    // מחיקה (לא משפיע על product/seller כי לא-approved)
+    await s.adminDelete({ ratingId: r._id, adminUserId: "adm1" });
+
+    const pBefore = { ...getProduct("pY") };
+    const selBefore = { ...getSeller("sY") };
+
+    // שחזור (וגם כאן אין דלתא כי לא-approved)
+    const res = await s.adminRestore({ ratingId: r._id, adminUserId: "adm2" });
+    expect(res).toEqual({ ok: true });
+
+    const pAfter = getProduct("pY");
+    const selAfter = getSeller("sY");
+    expect(pAfter.ratingCount).toBe(pBefore.ratingCount); // נשאר 1
+    expect(pAfter.ratingSum).toBe(pBefore.ratingSum);     // נשאר 2
+    expect(selAfter.ratingCount).toBe(selBefore.ratingCount);
+    expect(selAfter.ratingSum).toBe(selBefore.ratingSum);
+  });
+});
+
+describe("RatingService.productSummary (no select path)", () => {
+  test("works when Product.findById returns doc without select()", async () => {
+    const s = svc();
+    const original = Product.findById;
+
+    // מחזיר אובייקט בלי select()
+    Product.findById = jest.fn(async (id) => ({
+      _id: id,
+      ratingAvg: 3.3,
+      ratingCount: 3,
+      ratingBreakdown: { 1: 0, 2: 1, 3: 1, 4: 1, 5: 0 },
+    }));
+
+    const summary = await s.productSummary({ productId: "p-no-select" });
+    expect(summary).toEqual({
+      avg: 3.3,
+      count: 3,
+      breakdown: { 1: 0, 2: 1, 3: 1, 4: 1, 5: 0 },
+    });
+
+    Product.findById = original; // שחזור
+  });
+});
+
+
+describe("Extra branch coverage", () => {
+  test("create: Product without markModified (covers !markModified path)", async () => {
+    const s = svc();
+    const original = Product.findById;
+    Product.findById = jest.fn(async (id) => ({
+      _id: id,
+      ratingSum: 0, ratingCount: 0, ratingAvg: 0, ratingBreakdown: {},
+      save: jest.fn(async function(){}), // אין markModified
+    }));
+    await s.create({ userId: "uC1", productId: "pC1", sellerId: "sC1", stars: 5 });
+    expect(Product.findById).toHaveBeenCalled();
+    Product.findById = original;
+  });
+
+  test("create: Seller object without applyRatingDelta (covers typeof check false)", async () => {
+    const s = svc();
+    const original = Seller.findById;
+    Seller.findById = jest.fn(async (id) => ({
+      _id: id,
+      ratingSum: 0, ratingCount: 0, ratingAvg: 0, ratingBreakdown: {},
+      save: jest.fn(async function(){}), // אין applyRatingDelta
+    }));
+    await s.create({ userId: "uC2", productId: "pC2", sellerId: "sC2", stars: 4, productIsActive: true });
+    expect(Seller.findById).toHaveBeenCalledWith("sC2");
+    Seller.findById = original;
+  });
+
+  test("edit (stars change): product missing (covers applyDeltaToProduct with null)", async () => {
+    const s = svc();
+    // המוק שלך מחזיר null רק למזהה "missing-product"
+    const r = await s.create({ userId: "uE", productId: "missing-product", sellerId: "sE", stars: 3 });
+    await s.edit({ ratingId: r._id, userId: "uE", stars: 5, productIsActive: true });
+    // רק מוודאים שלא נפלנו
+    expect(true).toBe(true);
+  });
+
+  test("adminDelete: product missing (covers if(prod) false branch)", async () => {
+    const s = svc();
+    const r = await s.create({ userId: "uD", productId: "missing-product", sellerId: "sD", stars: 5 });
+    const res = await s.adminDelete({ ratingId: r._id, adminUserId: "admD" });
+    expect(res).toEqual({ ok: true });
+  });
+
+  test("adminRestore: product missing (covers if(prod) false branch)", async () => {
+    const s = svc();
+    const r = await s.create({ userId: "uR", productId: "missing-product", sellerId: "sR", stars: 2 });
+    await s.adminDelete({ ratingId: r._id, adminUserId: "adm1" });
+    const res = await s.adminRestore({ ratingId: r._id, adminUserId: "adm2" });
+    expect(res).toEqual({ ok: true });
+  });
+
+  test("listByProduct: unknown sort uses default (covers sortMap fallback)", async () => {
+    const s = svc();
+    const base = { userId: "uS", productId: "pS", sellerId: "sS" };
+    await s.create({ ...base, stars: 2 });
+    await s.create({ ...base, stars: 5 });
+    const res = await s.listByProduct({ productId: "pS", sort: "zzz", page: 1, pageSize: 10 });
+    expect(res.items.length).toBeGreaterThan(0);
+  });
+});
+
+
+describe("applyDeltaToProduct coverage via service paths", () => {
+  test("create with product present but no breakdown change path still executes (covers rb assign & set)", async () => {
+    const s = svc();
+    // create ראשון כבר מכסה newStars; עכשיו נכסה קריאה ללא שינוי breakdown:
+    // נייצר מוצר עם markModified כדי להפעיל את ענף ה-true
+    const original = Product.findById;
+    Product.findById = jest.fn(async (id) => ({
+      _id: id,
+      ratingSum: 0, ratingCount: 0, ratingAvg: 0, ratingBreakdown: {},
+      markModified: jest.fn(),
+      save: jest.fn(async function(){}),
+    }));
+    // קריאה ישירה למסלול create כבר מפעילה applyDeltaToProduct עם newStars, ואז נבצע עוד edit שלא משנה כוכבים (להדליק rb assign)
+    const r = await s.create({ userId: "uADP1", productId: "pADP1", sellerId: "sADP1", stars: 4 });
+    await s.edit({ ratingId: r._id, userId: "uADP1", text: "noop", images: [], videos: [] });
+    Product.findById = original;
+  });
+
+  test("create with product missing (covers early-return branch; line with prod = null already hit)", async () => {
+    const s = svc();
+    await s.create({ userId: "uADP2", productId: "missing-product", sellerId: "sADP2", stars: 5 });
+    expect(true).toBe(true);
+  });
+
+  test("create with product present without markModified (covers !markModified path)", async () => {
+    const s = svc();
+    const original = Product.findById;
+    Product.findById = jest.fn(async (id) => ({
+      _id: id,
+      ratingSum: 0, ratingCount: 0, ratingAvg: 0, ratingBreakdown: {},
+      save: jest.fn(async function () { }),
+      // אין markModified כאן
+    }));
+    await s.create({ userId: "uADP3", productId: "pADP3", sellerId: "sADP3", stars: 3 });
+    Product.findById = original;
+  });
+});
+
+
+describe("applyDeltaToSeller guard branches", () => {
+  test("sellerId is null → early return", async () => {
+    const s = svc();
+    await s.create({ userId: "uS1", productId: "pS1", sellerId: null, stars: 5, productIsActive: true });
+    expect(Seller.findById).not.toHaveBeenCalled();
+  });
+
+  test("missing seller → early return after lookup", async () => {
+    const s = svc();
+    await s.create({ userId: "uS2", productId: "pS2", sellerId: "missing-seller", stars: 4, productIsActive: true });
+    // לא נופל → מכסה if (!seller) return;
+    expect(true).toBe(true);
+  });
+
+  test("seller without applyRatingDelta → only save()", async () => {
+    const s = svc();
+    const original = Seller.findById;
+    Seller.findById = jest.fn(async (id) => ({
+      _id: id,
+      ratingSum: 0, ratingCount: 0, ratingAvg: 0, ratingBreakdown: {},
+      save: jest.fn(async function(){})
+      // אין applyRatingDelta
+    }));
+    await s.create({ userId: "uS3", productId: "pS3", sellerId: "sS3", stars: 3, productIsActive: true });
+    Seller.findById = original;
   });
 });

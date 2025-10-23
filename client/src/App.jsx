@@ -74,6 +74,8 @@ import ProductCreate from './components/seller/products/ProductCreate.jsx';
 import ProductEdit from './components/seller/products/ProductEdit.jsx';
 import SearchResultsPage from './components/Main Content/product/SearchResultsPage.jsx';
 import ProductsPage from './components/Main Content/product/ProductsPage.jsx';
+import CheckoutSuccess from './components/checkouts/CheckoutSuccess.jsx';
+import CheckoutFaild from './components/checkouts/CheckoutFailed.jsx';
 
 
 function App() {
@@ -147,6 +149,10 @@ function App() {
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/order/success/:id" element={<OrderSuccessPage />} />
           </Route>
+
+          <Route path="/checkout/success" element={<CheckoutSuccess />} />
+          <Route path="/checkout/failed" element={<CheckoutFaild />} />
+
 
 
           <Route path="/" element={<HomeNewProducts />} />

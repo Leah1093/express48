@@ -73,6 +73,9 @@ export default function PaymentPage() {
                 items,
             });
 
+            console.log('TRZ iframeUrl →', data.iframeUrl);
+
+
             setIframeUrl(data.iframeUrl);
             setPayOpen(true);
         } catch (e) {
@@ -143,9 +146,11 @@ export default function PaymentPage() {
                             <iframe
                                 title="Tranzila Payment"
                                 src={iframeUrl}
-                                className="w-full h-[560px] rounded-b-2xl"
+                                className="w-full h-[560px]"
                                 allow="payment *"
+                                referrerPolicy="origin"
                             />
+
                         </div>
                         <div className="px-4 py-3 text-center text-xs text-gray-500 border-t">
                             תשלום מתבצע בדף מאובטח של טרנזילה

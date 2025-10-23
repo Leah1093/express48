@@ -1,3 +1,4 @@
+import { OrderService } from '../../service/orderService.js';
 import { TranzilaService } from '../../service/payments/TranzilaService.js';
 import { CustomError } from '../../utils/CustomError.js';
 
@@ -28,20 +29,77 @@ export class TranzilaController {
     }
   }
 
+
+
   static async webhook(req, res) {
+    // תמיד מחזירים 200 ל-gateway, מתעדים אצלנו
     try {
-      // payload מה־gateway. לדוגמה: req.body.transaction_index
-      const payload = req.body || {};
-      const transaction_index = Number(payload?.transaction_index || payload?.index);
+      const payload = req.validated ?? req.body ?? {};
+      const { orderid, transaction_index, sum, currency } = payload;
 
-      // מומלץ: אימות מול ה־API ואז סימון הזמנה כ־Paid
-      // const verify = await TranzilaService.verifyTransaction({ transaction_index });
-      // if (verify.approved) await OrdersService.markPaid(orderId, { transaction_index, gateway: 'tranzila' });
+      console.log('[TRZ][WEBHOOK] got:', {
+        orderid, transaction_index, sum, currency, keys: Object.keys(payload)
+      });
 
-      // תמיד להחזיר 200 ולתעד לוגים בצד שלך
-      res.status(200).send('OK');
-    } catch {
-      res.status(200).send('OK');
+      // שלב 1: הבאת הזמנה (אופציונלי אך מומלץ)
+      const order = await OrderService.getByOrderId?.(orderid).catch(() => null);
+      if (!order) {
+        console.warn('[TRZ][WEBHOOK] order not found:', orderid);
+        return res.status(200).send('OK');
+      }
+
+      // אידמפוטנטיות: אם כבר שולם – רק נרשום את האירוע ונסיים
+      if (order.payment?.status === 'paid') {
+        await OrdersService.logGatewayEvent?.(orderid, {
+          gateway: 'tranzila',
+          event: 'duplicate_webhook',
+          payload
+        }).catch(() => { });
+        return res.status(200).send('OK');
+      }
+
+      // שלב 2: אימות העסקה מול API (או mock/test)
+      const verification = await TranzilaService.verifyTransaction({ transaction_index });
+
+      const approved =
+        verification?.approved === true ||
+        verification?.status === 'approved' ||
+        verification?.response === '000';
+
+      if (!approved) {
+        console.warn('[TRZ][WEBHOOK] not approved:', { orderid, transaction_index, verification });
+        // לא מסמנים כ-paid, רק מתעדים
+        await OrdersService.logGatewayEvent?.(orderid, {
+          gateway: 'tranzila',
+          event: 'not_approved',
+          payload,
+          verification
+        }).catch(() => { });
+        return res.status(200).send('OK');
+      }
+
+      // שלב 3: (אופציונלי) בדיקת התאמת סכום/מטבע
+      try {
+        const orderTotal = Number(order.totals?.grand ?? order.total ?? 0);
+        if (sum && isFinite(orderTotal) && Number(sum) !== orderTotal) {
+          console.warn('[TRZ][WEBHOOK] amount mismatch', { orderid, sum, orderTotal });
+        }
+      } catch { }
+
+      // שלב 4: סימון בתשלום + תיעוד גולמי
+      await OrdersService.markPaid(orderid, {
+        gateway: 'tranzila',
+        transaction_index,
+        payload,
+        verification,
+      });
+
+      return res.status(200).send('OK');
+    } catch (e) {
+      console.error('[TRZ][WEBHOOK][ERR]', e);
+      return res.status(200).send('OK');
     }
   }
 }
+
+
