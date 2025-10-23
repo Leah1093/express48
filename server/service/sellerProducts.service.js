@@ -1,4 +1,3 @@
-// FILE: server/service/sellerProducts.service.js
 import crypto from "crypto";
 import mongoose from "mongoose";
 import { CustomError } from "../utils/CustomError.js";
