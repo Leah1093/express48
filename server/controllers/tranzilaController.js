@@ -1,11 +1,10 @@
-import { OrderService } from '../../service/orderService.js';
-import { TranzilaService } from '../../service/payments/TranzilaService.js';
-import { CustomError } from '../../utils/CustomError.js';
+import { OrderService } from '../service/orderService.js';
+import { TranzilaService } from '../service/tranzilaService.js';
+import { CustomError } from '../utils/CustomError.js';
 
 export class TranzilaController {
   static async startIframe(req, res, next) {
     try {
-
       const payload = req.validated ?? req.body ?? {};
       const { orderId, items } = payload.body || payload;
 

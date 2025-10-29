@@ -31,7 +31,7 @@ import categoryRoutes from "./router/categoryRoutes.js"
 import addressRoutes from "./router/addressRoutes.js"
 import orderRoutes from "./router/orderRoutes.js";
 import couponsRoutes from "./router/couponsRoutes.js";
-import paymentsRouter from "./router/payments.routes.js";
+import tranzilaRouter from "./router/tranzilaRouter.js";
 
 const app = express();
 
@@ -80,7 +80,7 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/addresses", addressRoutes);
 app.use("/orders", orderRoutes);
 app.use("/coupons", couponsRoutes);
-app.use('/payments', paymentsRouter);
+app.use('/payments', tranzilaRouter);
 
 app.use(errorHandler);
 const PORT = process.env.PORT || 8080;

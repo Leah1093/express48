@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import bodyParser from 'body-parser';
-import { TranzilaController } from '../controllers/payments/TranzilaController.js';
+import { TranzilaController } from '../controllers/tranzilaController.js';
 import { validate } from '../middlewares/validate.js';
 import { startPaymentSchema, tranzilaWebhookSchema } from '../validations/paymentSchema.js';
 
