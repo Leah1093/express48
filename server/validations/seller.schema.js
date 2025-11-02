@@ -10,7 +10,7 @@ const toCategoriesArray = (v) =>
 
 // יצירה ע"י משתמש מחובר (userId יוזן בשרת, לא מהלקוח)
 export const createSellerSchema = z.object({
-  userId: objectIdStr,
+  userId: objectIdStr.optional(),
   companyName: z.string().min(2, "שם חברה קצר מדי").trim(),
   fullName:    z.string().min(2, "שם מלא קצר מדי").trim(),
   email:       z.string().email("אימייל לא תקין").transform(e => e.toLowerCase().trim()),

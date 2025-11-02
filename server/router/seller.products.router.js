@@ -15,4 +15,3 @@ sellerProductsRouter.patch("/:id/status", authMiddleware, requireRoles("seller",
 
 
 export { sellerProductsRouter };
-

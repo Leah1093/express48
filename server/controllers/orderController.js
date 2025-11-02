@@ -1,5 +1,5 @@
 import { OrderService } from "../service/orderService.js";
-import { createOrderSchema, updateStatusSchema } from "../validations/orderValidation.js";
+import { CustomError } from "../utils/CustomError.js";
 
 const orderService = new OrderService();
 
@@ -24,8 +24,15 @@ export class OrderController {
 
   async getOne(req, res, next) {
     try {
-      const order = await orderService.getOrderById(req.params.id, req.user.userId);
-      if (!order) return res.status(404).json({ error: "ההזמנה לא נמצאה" });
+      const order = await orderService.getOrderById(
+        req.params.id,
+        req.user.userId
+      );
+
+      if (!order) {
+        throw new CustomError("ההזמנה לא נמצאה", 404);
+      }
+
       res.json(order);
     } catch (err) {
       next(err);
@@ -34,9 +41,15 @@ export class OrderController {
 
   async updateStatus(req, res, next) {
     try {
-    
-      const order = await orderService.updateOrderStatus(req.params.id, req.body);
-      if (!order) return res.status(404).json({ error: "ההזמנה לא נמצאה" });
+      const order = await orderService.updateOrderStatus(
+        req.params.id,
+        req.body.status
+      );
+
+      if (!order) {
+        throw new CustomError("ההזמנה לא נמצאה", 404);
+      }
+
       res.json(order);
     } catch (err) {
       next(err);
@@ -45,8 +58,15 @@ export class OrderController {
 
   async remove(req, res, next) {
     try {
-      const deleted = await orderService.deleteOrder(req.params.id, req.user.userId);
-      if (!deleted) return res.status(404).json({ error: "ההזמנה לא נמצאה" });
+      const deleted = await orderService.deleteOrder(
+        req.params.id,
+        req.user.userId
+      );
+
+      if (!deleted) {
+        throw new CustomError("ההזמנה לא נמצאה", 404);
+      }
+
       res.json({ message: "ההזמנה נמחקה בהצלחה" });
     } catch (err) {
       next(err);

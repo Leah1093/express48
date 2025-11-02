@@ -1,4 +1,3 @@
-// controllers/storefront.controller.js
 import { StorefrontService } from "../services/storefront.service.js";
 const service = new StorefrontService();
 
