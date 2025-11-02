@@ -70,7 +70,12 @@ const Register = () => {
   return (
     <div className="relative min-h-screen ">
       {!isMobile && (<div className="fixed top-0 left-0 h-screen w-1/2 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/auth.jpg')" }} />)}
-      <div className={`absolute top-0 right-0 h-screen w-1/2 overflow-y-auto bg-white`}>
+      <div  className={`${
+    isMobile
+      ? "relative w-full min-h-screen"
+      : "absolute top-0 right-0 h-screen w-1/2"
+  } overflow-y-auto bg-white`}
+>
         <AuthHeader />
 
         <form

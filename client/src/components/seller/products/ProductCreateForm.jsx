@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCreateProductMutation } from "./productsApi";
+import { useCreateProductMutation } from "../../../redux/services/productsApi";
 // אם יש לך redux עם userSlice: 
 // import { useSelector } from "react-redux";
 // import { selectUser } from "../../redux/slices/userSelectors";

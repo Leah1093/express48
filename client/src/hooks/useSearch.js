@@ -53,7 +53,7 @@ export function useSearch({ minLength = 2, debounce = 600 } = {}) {
         setError("");
 
         try {
-            const res = await axios.get("http://localhost:8080/products/search", {
+            const res = await axios.get("https://api.express48.com/products/search", {
                 params: { search: value },
                 signal: controllerRef.current.signal,
             });

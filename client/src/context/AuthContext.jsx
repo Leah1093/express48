@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
         // בדיקת התחברות ראשונית כשנכנסים לאתר
         const checkAuth = async () => {
             try {
-                const res = await axios.get("http://localhost:8080/entrance/me", { withCredentials: true });
+                const res = await axios.get("https://api.express48.com/entrance/me", { withCredentials: true });
                 setUser(res.data.user);
             } catch (err) {
                 setUser(null);
@@ -35,7 +35,7 @@ export function AuthProvider({ children }) {
     };
 
     const logout = async () => {
-        await axios.post("http://localhost:8080/entrance/logout", {}, { withCredentials: true });
+        await axios.post("https://api.express48.com/entrance/logout", {}, { withCredentials: true });
 
         setUser(null);
     };

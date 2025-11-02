@@ -43,7 +43,7 @@ export default function OrderSummary({ selectedItems }) {
     try {
       // const sellers = selectedItems.map(it => it.sellerId);
       const res = await axios.post(
-        "http://localhost:8080/coupons/validate",
+        "https://api.express48.com/coupons/validate",
         { code: coupon, cart:{ total: subtotal },  },
         { withCredentials: true }
       );

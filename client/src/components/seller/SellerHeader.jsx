@@ -11,7 +11,7 @@ export default function SellerHeader({ seller }) {
           <div className="h-10 w-10 rounded-xl overflow-hidden border bg-gray-50">
             {console.log("logo",seller?.logoUrl)}
             {seller?.logoUrl
-              ? <img src={`http://localhost:8080${seller.logoUrl}`} alt="logo" className="h-full w-full object-cover" />
+              ? <img src={`https://api.express48.com${seller.logoUrl}`} alt="logo" className="h-full w-full object-cover" />
               : <div className="h-full w-full grid place-items-center text-xs text-gray-400">LOGO</div>}
           </div>
           <div>

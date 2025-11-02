@@ -13,7 +13,7 @@ export default function OrderSuccessPage() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const res = await axios.get(`http://localhost:8080/orders/${id}`, { withCredentials: true });
+        const res = await axios.get(`https://api.express48.com/orders/${id}`, { withCredentials: true });
         setOrder(res.data);
       } catch (err) {
         console.error("שגיאה בטעינת ההזמנה:", err);

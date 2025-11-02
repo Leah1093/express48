@@ -1,19 +1,39 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSelector, useDispatch } from "react-redux";
-import { setUser } from "../../redux/slices/userSlice";
-import axios from "axios";
 import toast from "react-hot-toast";
-import { profileSchema, passwordSchema } from "../validations/profileSchema"; // ודאי שזה לא rofileSchema
+import { profileSchema, passwordSchema } from "../validations/profileSchema";
+import { setUser } from "../../redux/slices/userSlice";
+import { authApi, useGetCurrentUserQuery,useUpdateProfileMutation,useChangePasswordMutation } from "../../redux/services/authApi";
 
 export default function Profile() {
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.user.user);
+
+  const userFromSlice = useSelector((s) => s.user.user);
+  const hasUser = Boolean(userFromSlice);
+
+  const { data: meData, isFetching: isFetchingMe, isError: isMeError } =
+    useGetCurrentUserQuery(undefined, { skip: hasUser });
+
+  const meFromCache = authApi.endpoints.getCurrentUser.useQueryState()?.data;
+  const user = useMemo(
+    () => userFromSlice || meData?.user || meFromCache?.user || null,
+    [userFromSlice, meData, meFromCache]
+  );
+
+  useEffect(() => {
+    if (!userFromSlice && meData?.user) {
+      dispatch(setUser(meData.user));
+    }
+    if (!userFromSlice && isMeError) {
+      dispatch(setUser(null));
+    }
+  }, [userFromSlice, meData, isMeError, dispatch]);
+
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  // טופס פרופיל
   const {
     register,
     handleSubmit,
@@ -22,14 +42,9 @@ export default function Profile() {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      username: "",
-      email: "",
-      phone: "",
-    },
+    defaultValues: { username: "", email: "", phone: "" },
   });
 
-  // טופס סיסמה
   const {
     register: registerPass,
     handleSubmit: handleSubmitPass,
@@ -37,12 +52,11 @@ export default function Profile() {
     formState: { errors: errorsPass },
   } = useForm({
     resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    },
+    defaultValues: { currentPassword: "", newPassword: "", confirmPassword: "" },
   });
+
+  const [updateProfile, { isLoading: isSavingProfile }] = useUpdateProfileMutation();
+  const [changePassword, { isLoading: isChangingPass }] = useChangePasswordMutation();
 
   useEffect(() => {
     if (user) {
@@ -55,29 +69,26 @@ export default function Profile() {
   }, [user, reset]);
 
   const onSave = async (data) => {
-    if (!isEditing) return; // הגנה כפולה
+    if (!isEditing) return;
     try {
-      const res = await axios.put("http://localhost:8080/user/update-profile", data, {
-        withCredentials: true,
-      });
-      dispatch(setUser(res.data.updatedUser));
+      const res = await updateProfile(data).unwrap();
+      const updated = res?.updatedUser || res?.user || null;
+      if (updated) dispatch(setUser(updated));
       toast.success("הפרטים עודכנו בהצלחה");
       setIsEditing(false);
     } catch (err) {
-      toast.error("שגיאה בעדכון הפרטים");
+      toast.error(err?.data?.message || "שגיאה בעדכון הפרטים");
     }
   };
 
   const onChangePassword = async (data) => {
     try {
-      await axios.post("http://localhost:8080/password/change-password", data, {
-        withCredentials: true,
-      });
+      await changePassword(data).unwrap();
       toast.success("הסיסמה עודכנה בהצלחה");
       resetPass();
       setShowModal(false);
     } catch (err) {
-      toast.error(err.response?.data?.message || "שגיאה בעדכון הסיסמה");
+      toast.error(err?.data?.message || "שגיאה בעדכון הסיסמה");
     }
   };
 
@@ -100,7 +111,13 @@ export default function Profile() {
     setIsEditing(false);
   };
 
-  if (!user) return <p className="text-center mt-10">אין משתמש מחובר</p>;
+  if (isFetchingMe && !user) {
+    return <p className="text-center mt-10">טוען משתמש...</p>;
+  }
+
+  if (!user) {
+    return <p className="text-center mt-10">אין משתמש מחובר</p>;
+  }
 
   return (
     <div className="max-w-xl mx-auto p-4 text-right">
@@ -111,16 +128,16 @@ export default function Profile() {
         <InputField label='דוא"ל' {...register("email")} readOnly error={errors.email} />
         <InputField label="טלפון" {...register("phone")} readOnly={!isEditing} error={errors.phone} />
 
-
         {isEditing && (
           <div className="flex gap-4 mt-4">
-            <button type="submit" className="btn-blue">שמור</button>
+            <button type="submit" className="btn-blue" disabled={isSavingProfile}>
+              {isSavingProfile ? "שומר..." : "שמור"}
+            </button>
             <button type="button" className="btn-gray" onClick={handleCancel}>ביטול</button>
           </div>
         )}
       </form>
 
-      {/* 🔽 כפתורים חיצוניים לטופס */}
       {!isEditing && (
         <div className="flex gap-4 mt-4">
           <button type="button" className="btn-green" onClick={handleEditToggle}>ערוך פרטים</button>
@@ -137,13 +154,12 @@ export default function Profile() {
             setShowModal(false);
             resetPass();
           }}
+          isLoading={isChangingPass}
         />
       )}
     </div>
   );
 }
-
-// 🔽 קומפוננטות עזר
 
 function InputField({ label, error, readOnly, ...rest }) {
   return (
@@ -159,7 +175,7 @@ function InputField({ label, error, readOnly, ...rest }) {
   );
 }
 
-function PasswordModal({ register, errors, onSubmit, onClose }) {
+function PasswordModal({ register, errors, onSubmit, onClose, isLoading }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded shadow max-w-md w-full text-right">
@@ -170,7 +186,9 @@ function PasswordModal({ register, errors, onSubmit, onClose }) {
           <InputField label="אישור סיסמה חדשה" {...register("confirmPassword")} error={errors.confirmPassword} />
 
           <div className="flex gap-4 mt-4">
-            <button type="submit" className="btn-blue">שמור סיסמה</button>
+            <button type="submit" className="btn-blue" disabled={isLoading}>
+              {isLoading ? "שומר..." : "שמור סיסמה"}
+            </button>
             <button type="button" className="btn-gray" onClick={onClose}>ביטול</button>
           </div>
         </form>

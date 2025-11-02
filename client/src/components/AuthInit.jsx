@@ -9,7 +9,7 @@ export default function AuthInit() {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const res = await axios.get("http://localhost:8080/entrance/me", { withCredentials: true });
+        const res = await axios.get("https://api.express48.com/entrance/me", { withCredentials: true });
         dispatch(setUser(res.data.user));
       } catch (err) {
         dispatch(clearUser());

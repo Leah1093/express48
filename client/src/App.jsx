@@ -85,6 +85,10 @@ function App() {
   const { data: currentUser, isSuccess, isError } = useGetCurrentUserQuery(undefined, {
     skip: !!user,
   });
+useEffect(() => {
+  // ידפיס פעם אחת בפרודקשן
+  console.log("API_URL =", import.meta.env.VITE_API_URL);
+}, []);
 
   useEffect(() => {
     // עדכון מצב מובייל ב-redux

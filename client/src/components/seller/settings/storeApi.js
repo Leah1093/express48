@@ -30,7 +30,7 @@
 import axios from "axios";
 
 // כתובת בסיס לשרת ה-API (שמשמשת גם לבניית כתובות מדיה מוחלטות)
-export const API_BASE_URL = "http://localhost:8080";
+export const API_BASE_URL = "https://api.express48.com";
 
 const api = axios.create({
   baseURL: API_BASE_URL + "/",

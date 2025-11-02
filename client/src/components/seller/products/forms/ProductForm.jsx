@@ -301,7 +301,7 @@
 
 //             const url = mode === "edit" && initialData?._id ? `${endpoint}/${initialData._id}` : endpoint;
 //             const method = mode === "edit" ? "PATCH" : "POST";
-//             const data = await axios.post("http://localhost:8080/seller/products", cleaned, {
+//             const data = await axios.post("https://api.express48.com/seller/products", cleaned, {
 //                 withCredentials: true,
 //             });
 //             // const res = await fetch(url, {
@@ -468,7 +468,7 @@
 //     mode = "create",
 //     initialData = null,
 //     onSuccess,
-//     endpoint = "http://localhost:8080/seller/products", // עדיף יחסי (proxy של Vite)
+//     endpoint = "https://api.express48.com/seller/products", // עדיף יחסי (proxy של Vite)
 // }) {
 //     const [serverError, setServerError] = useState(null);
 //     const [submitting, setSubmitting] = useState(false);
@@ -540,8 +540,8 @@
 
 //             const cleaned = clean(payload);
 //             const url = (mode === "edit" && initialData?._id)
-//                 ? `http://localhost:8080/seller/products/${initialData._id}`
-//                 : `http://localhost:8080/seller/products`;
+//                 ? `https://api.express48.com/seller/products/${initialData._id}`
+//                 : `https://api.express48.com/seller/products`;
 //             const method = mode === "edit" ? "PATCH" : "POST";
 //             console.log("method", method)
 //             console.log("cleaned", cleaned)

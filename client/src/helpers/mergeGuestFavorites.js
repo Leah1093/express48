@@ -12,7 +12,7 @@ export async function mergeGuestFavoritesIfAny() {
     addedAt: g.addedAt || new Date().toISOString(),
   }));
 
-  await axios.post("http://localhost:8080/favorites/merge",
+  await axios.post("https://api.express48.com/favorites/merge",
     { items },
     { withCredentials: true }
   );

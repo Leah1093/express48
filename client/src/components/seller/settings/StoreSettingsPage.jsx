@@ -4,6 +4,7 @@ import StoreGeneralForm from "./forms/StoreGeneralForm.jsx";
 import StoreMediaForm from "./forms/StoreMediaForm.jsx";
 import StoreSlugForm from "./forms/StoreSlugForm.jsx";
 
+
 // אפשר לייבא כאן את ה־API שלך (או להעביר handlers כ־props מהעמוד)
 import { uploadStoreMedia } from "./storeApi.js";
 
