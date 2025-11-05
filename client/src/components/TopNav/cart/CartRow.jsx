@@ -25,7 +25,7 @@ export default function CartRow({ item }) {
           ×
         </button>
         <img
-          src={item.productId.images}
+          src={item.snapshot?.images?.[0] }
           alt={item.productId.title}
           className="h-16 w-16 rounded-lg border object-cover"
         />

@@ -7,22 +7,81 @@ const guestCartSlice = createSlice({
   name: 'guestCart',
   initialState,
   reducers: {
+    // addGuestItem: (state, action) => {
+    //   const { product, variation = null, quantity = 1 } = action.payload;
+    //   console.log("🚀 addGuestItem", { product, variation, quantity });
+    //   const index = state.findIndex(item => item.productId._id === product._id &&
+    //     (item.variationId || null) === (variation?._id || null)
+    //   );
+
+    //   if (index >= 0) {
+    //     // אם כבר יש אותו מוצר+וריאציה → מוסיפים כמות
+    //     state[index].quantity += quantity;
+    //   } else {
+    //     const snapshot = {
+    //       attributes: variation?.attributes || {},   // מאפייני הוריאציה
+    //       images: variation?.images?.length ? variation.images : product.images,
+    //       price: variation?.price?.amount || product.price.amount,
+    //       discount: variation?.discount || product.discount || null,
+    //     };
+    //     state.push({
+    //       productId: product,
+    //       variationId: variation?._id || null,
+    //       quantity,
+    //       unitPrice: snapshot.price,
+    //       snapshot,
+    //       selected: false
+    //     });
+    //   }
+
+    //   saveLocalCart(state); // עדכון localStorage
+    // },
     addGuestItem: (state, action) => {
-      const product = action.payload;
-      const index = state.findIndex(item => item.productId._id === product._id);
+  const { product, variation = null, variationId = null, quantity = 1 } = action.payload;
 
-      if (index >= 0) {
-        state[index].quantity += 1;
-      } else {
-        state.push({ productId: product, quantity: 1, unitPrice: product.price.amount, selected: false });// ⬅️ כאן את מוסיפה 
-      }
+  // אם קיבלתי variationId בלי אובייקט → נחפש אותו בתוך product.variations
+  const selectedVariation =
+    variation ||
+    (variationId ? product.variations?.find(v => v._id === variationId) : null);
 
-      saveLocalCart(state); // עדכון localStorage
-    },
+  // לבדוק אם כבר יש אותו מוצר + אותה וריאציה בעגלה
+  const index = state.findIndex(item =>
+    item.productId._id === product._id &&
+    (item.variationId || null) === (selectedVariation?._id || variationId || null)
+  );
+
+  if (index >= 0) {
+    // אם כבר קיים → רק להגדיל כמות
+    state[index].quantity += quantity;
+  } else {
+    // לבנות snapshot
+    const snapshot = {
+      attributes: selectedVariation?.attributes || {},
+      images: selectedVariation?.images?.length ? selectedVariation.images : product.images,
+      price: selectedVariation?.price?.amount || product.price.amount,
+      discount: selectedVariation?.discount || product.discount || null,
+    };
+
+    // להכניס לעגלה
+    state.push({
+      productId: product,                         // כל המוצר
+      variationId: selectedVariation?._id || variationId || null, // מזהה הוריאציה
+      quantity,
+      unitPrice: snapshot.price,
+      snapshot,
+      selected: false
+    });
+  }
+
+  saveLocalCart(state); // עדכון localStorage
+},
+    
 
     removeGuestItem: (state, action) => {
-      const productId = action.payload;
-      const index = state.findIndex(item => item.productId._id === productId);
+      const {productId, variationId=null } = action.payload;
+     const index = state.findIndex(item => item.productId._id === productId &&
+        (item.variationId || null) === (variationId || null)
+      );
 
       if (index >= 0) {
         if (state[index].quantity > 1) {
@@ -36,15 +95,16 @@ const guestCartSlice = createSlice({
     },
 
     removeGuestProductCompletely: (state, action) => {
-      const productId = action.payload;
+      const {productId, variationId = null} = action.payload;
 
-  //    const updatedCart = state.filter(item => {
-  //   const id = item?.productId?._id;
-  //   return id ? id.toString() !== productId.toString() : true;
-  // });
-  const updatedCart = state.filter(item => {
-    const id = item?.productId?._id?.toString?.(); // אם אין id, נשאיר את המוצר
-    return id !== productId;
+      const updatedCart = state.filter(item => {
+    const id = item?.productId?._id?.toString?.() || item?.productId?.toString?.();
+    const sameProduct = id === productId?.toString();
+    const sameVariation =
+      (item.variationId?.toString?.() || null) === (variationId?.toString() || null);
+
+    // נשאיר רק פריטים שלא תואמים *גם* מוצר וגם וריאציה
+    return !(sameProduct && sameVariation);
   });
 
       saveLocalCart(updatedCart);
@@ -57,14 +117,13 @@ const guestCartSlice = createSlice({
     },
     // ⭐ חדש: עדכון כמות ישירה לפי קלט
     setGuestItemQuantity: (state, action) => {
-      const { productId, quantity } = action.payload;
+      const { productId,variationId = null, quantity } = action.payload;
 
-      // חפש מוצר גם לפי product._id וגם productId (למקרה של פורמטים שונים)
-      const index = state.findIndex(
-        item =>
-          (item.productId && item.productId._id === productId) ||
-          item.productId === productId
-      );
+      // חיפוש מוצר לפי productId + variationId
+  const index = state.findIndex(item =>
+    (item.productId?._id?.toString?.() || item.productId?.toString?.()) === productId.toString() &&
+    (item.variationId?.toString?.() || null) === (variationId?.toString() || null)
+  );
 
       if (index === -1) {
         // לא קיים בעגלה – לא עושים כלום (או שאפשר להחליט להוסיף אם quantity>0)
@@ -86,7 +145,7 @@ const guestCartSlice = createSlice({
 
     toggleGuestItemSelected: (state, action) => {
       const { productId, selected } = action.payload;
-      const item = state.find((it) => it.product._id === productId);
+      const item = state.find((it) => it.productId._id === productId);
       if (item) {
         item.selected = selected;
       }
@@ -105,5 +164,5 @@ const guestCartSlice = createSlice({
   },
 });
 
-export const { addGuestItem, removeGuestItem, clearGuestCart, loadGuestCart, removeGuestProductCompletely, setGuestItemQuantity, toggleGuestItemSelected ,toggleGuestSelectAll } = guestCartSlice.actions;
+export const { addGuestItem, removeGuestItem, clearGuestCart, loadGuestCart, removeGuestProductCompletely, setGuestItemQuantity, toggleGuestItemSelected, toggleGuestSelectAll } = guestCartSlice.actions;
 export default guestCartSlice.reducer;

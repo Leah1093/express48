@@ -15,9 +15,9 @@ const ProductCard = React.memo(({ product, favorites }) => {
   const handleAddToCart = (event) => {
     event.stopPropagation();
     if (user) {
-      dispatch(addItemAsync(product._id));
+      dispatch(addItemAsync({productId:product._id}));
     } else {
-      dispatch(addGuestItem(product));
+      dispatch(addGuestItem({product}));
     }
   };
 

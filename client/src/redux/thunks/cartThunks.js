@@ -9,8 +9,8 @@ export const loadCart = createAsyncThunk('cart/', async () => {
   return res.data.items;
 });
 
-export const addItemAsync = createAsyncThunk('cart/addItem', async (productId) => {
-  const res = await api.addToCart(productId, 1);
+export const addItemAsync = createAsyncThunk('cart/addItem', async ({ productId,variationId = null,  quantity = 1 }) => {
+  const res = await api.addToCart(productId,variationId,quantity);
   return res.data.items;
 });
 
@@ -24,12 +24,12 @@ export const clearCartAsync = createAsyncThunk('cart/clearCart', async () => {
   return res.data.items;
 });
 
-export const removeProductCompletelyThunk = createAsyncThunk('cart/removeCompletely',
- async (productId, { rejectWithValue }) => {
+export const  removeProductCompletelyThunk = createAsyncThunk('cart/removeCompletely',
+ async ({productId,variationId = null}, { rejectWithValue }) => {
       // לוג של הפרמטרים
   //  console.log('🚀 removeProductCompletelyThunk', { productId, source, stack: new Error().stack });
     try {
-      const res = await api.removeProductCompletely(productId);
+      const res = await api.removeProductCompletely(productId,variationId);
        return res.data.items;
     } catch (err) {
       return rejectWithValue(err.response.data);
@@ -39,9 +39,10 @@ export const removeProductCompletelyThunk = createAsyncThunk('cart/removeComplet
 
 export const updateItemQuantityThunk = createAsyncThunk(
   "cart/updateQuantity",
-  async ({ productId, quantity }, { rejectWithValue }) => {
+  async ({ productId,variationId = null, quantity }, { rejectWithValue }) => {
     try {
-      const res = await api.updateItemQuantity(productId, quantity);
+      console.log("variationId",variationId);  
+      const res = await api.updateItemQuantity(productId,variationId, quantity);
       return res.data.items;
     } catch (err) {
       return rejectWithValue(err.response.data);
@@ -66,7 +67,7 @@ export const mergeCartThunk = createAsyncThunk(
     }
   }
 );
-const API_URL = import.meta.env.REACT_APP_API_URL;
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const toggleItemSelectedThunk = createAsyncThunk(
   "cart/toggleItemSelected",
@@ -89,7 +90,7 @@ export const toggleSelectAllThunk = createAsyncThunk(
   async (selected, { rejectWithValue }) => {
     try {
       const res = await axios.patch(
-        `http://localhost:8080/cart/select-all`,
+        `${API_URL}/cart/select-all`,
         { selected },
         { withCredentials: true }
       );

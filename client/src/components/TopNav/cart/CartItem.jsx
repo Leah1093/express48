@@ -233,13 +233,18 @@
 import { useCartItemLogic } from "../../../hooks/useCartItemLogic";
 
 export default function CartItem({ item }) {
-  console.log("item",item);
+  console.log("item", item);
   const {
-    user, displayQty, unitPrice, title, image,localQty,
+    user, displayQty, unitPrice, title, image, localQty,
     handleAdd, handleRemove, handleRemoveCompletely,
     handleLocalChange, handleChangeGuest, commitIfValid,
-    id,setLocalQty,
+    id, setLocalQty,
   } = useCartItemLogic(item);
+
+  // --- ✨ לוגיקה להצגת פרטי וריאציה אם קיימת ✨ ---
+  const variationTitle = item.snapshot?.attributes?.color || item.snapshot?.attributes?.size;
+  const variationImage = item.snapshot?.images?.[0] || item.productId?.images?.[0];
+  const variationPrice = item.snapshot?.price || item.productId?.price?.amount;
 
   return (
     <div className="relative flex flex-row-reverse items-center border-b py-4 px-4 gap-4 text-right">
@@ -253,7 +258,7 @@ export default function CartItem({ item }) {
 
       {/* תמונה */}
       <img
-        src={item.productId.images}
+        src={variationImage}
         alt={item.productId.title}
         className="w-20 h-20 object-contain"
       />
@@ -264,6 +269,16 @@ export default function CartItem({ item }) {
           <h4 className="text-md font-semibold leading-snug">
             {item.productId.title}
           </h4>
+          {/* שם הווריאציה אם קיימת */}
+          {item.snapshot?.attributes && (
+            <p className="text-sm text-gray-600">
+              {" "}
+              {Object.entries(item.snapshot?.attributes || {})
+                .map(([key, value]) => `${key}: ${value}`)
+                .join(", ")}
+            </p>
+          )}
+
         </div>
 
         <div className="flex items-center justify-start mt-3 gap-2">
@@ -299,7 +314,7 @@ export default function CartItem({ item }) {
 
         <p className="text-blue-700 font-semibold mt-3 text-md">
           {/* ₪{item.productId.price.amount} × {item.quantity} */}
-          ₪{item.productId?.price?.amount ?? 0} × {item.quantity}
+          ₪{variationPrice} × {item.quantity}
 
         </p>
       </div>

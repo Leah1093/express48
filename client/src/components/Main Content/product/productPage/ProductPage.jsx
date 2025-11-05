@@ -31,6 +31,7 @@ export default function ProductPage() {
         if (!res.ok) throw new Error("Network error");
         const data = await res.json();
         setProduct(data);
+        console.log("Product data:", data);
       } catch (err) {
         console.error("Error fetching product:", err);
       } finally {
@@ -40,15 +41,21 @@ export default function ProductPage() {
     fetchProduct();
   }, [productSlug]);
 
-  const existing = cartItems.find(
-    (it) => (it.productId?._id ?? it.productId) === product?._id
-  );
+const existing = cartItems.find(
+  (it) =>
+    String(it.productId?._id ?? it.productId) === String(product?._id) &&
+    String(it.variationId ?? "") === String(selectedVariation?._id ?? "")
+);
+
+
+
 
   const handleAddToCart = (quantity) => {
+    console.log("selectedVariation:", selectedVariation?._id || null);
     if (user) {
-      dispatch(addItemAsync(product._id, quantity));
+      dispatch(addItemAsync({productId:product._id,variationId: selectedVariation?._id || null, quantity}));
     } else {
-      dispatch(addGuestItem(product, quantity));
+      dispatch(addGuestItem({product,variation: selectedVariation || null, quantity}));
     }
   };
 
@@ -64,7 +71,7 @@ export default function ProductPage() {
         {/* גלריה */}
         <div className="md:flex md:justify-end w-full md:w-[55%]">
           <div className="w-[100%] md:max-w-[600px]">
-            <ProductGallery product={product} />
+            <ProductGallery product={product}  selectedVariation={selectedVariation}/>
           </div>
         </div>
 

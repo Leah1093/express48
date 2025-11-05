@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { selectCartItems } from "../../../redux/slices/cartSelectors";
 import CartRow from "../cart/CartRow";
 import OrderSummary from "./OrderSummary";
-import SubmitOrderButton from "./SubmitOrderButton" 
+import SubmitOrderButton from "./SubmitOrderButton"; 
 
 export default function PaymentPage() {
     const dispatch = useDispatch();
@@ -47,7 +47,7 @@ export default function PaymentPage() {
         return <p className="text-center text-red-500">לא נמצאו נתונים</p>;
     }
 
-    // לוקחים את כתובת ברירת המחדל או את הראשונה
+     // לוקחים את כתובת ברירת המחדל או את הראשונה
     const defaultAddress =
         addresses.find((a) => a.isDefault) || addresses[0];
 

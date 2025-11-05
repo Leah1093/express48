@@ -33,7 +33,7 @@ function FavoriteButton({ productId, product, favorites }) {
   };
 
   return (
-    <button
+    <div
       onClick={toggleFavorite}
       className="flex flex-row items-center justify-center bg-[#FFF7F2] text-[#FF6500] rounded-[12px] h-[40px] w-[40px] transition hover:bg-[#ffe3d1] border-none p-0"
       tabIndex={-1}
@@ -44,7 +44,7 @@ function FavoriteButton({ productId, product, favorites }) {
       ) : (
         <AiOutlineHeart className="w-6 h-6 text-[#FF6500]" />
       )}
-    </button>
+    </div>
   );
 }
 

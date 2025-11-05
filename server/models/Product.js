@@ -173,6 +173,11 @@ const productSchema = new mongoose.Schema({
   price: { type: PriceSchema, required: true },
   discount: { type: DiscountSchema, required: false },
 
+  defaultVariationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false, // לא חובה, רק אם יש וריאציות
+  },
+
   // וריאציותש
   variations: [variationSchema],
 
@@ -463,6 +468,14 @@ productSchema.pre("save", function (next) {
   }
   next();
 });
+
+productSchema.pre("validate", function (next) {
+  if (this.variations?.length > 0 && !this.defaultVariationId) {
+    return next(new Error("Product with variations must have a defaultVariationId"));
+  }
+  next();
+});
+
 
 // ---------- Methods ----------
 productSchema.methods.getEffectivePricing = function (variationId = null) {

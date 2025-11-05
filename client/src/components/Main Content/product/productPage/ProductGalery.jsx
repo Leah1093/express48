@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useState ,useEffect } from "react";
 
-export default function ProductGallery({ product }) {
+export default function ProductGallery({ product, selectedVariation }) {
+
+   // אם יש וריאציה נבחרת → נשתמש בתמונות שלה, אחרת בתמונות של המוצר
+  const images = selectedVariation?.images || product.images || [];
+
   const [selectedImage, setSelectedImage] = useState(product.images?.[0]);
   const [fade, setFade] = useState(true);
 
@@ -12,6 +16,13 @@ export default function ProductGallery({ product }) {
       setFade(true);
     }, 200);
   };
+
+  useEffect(() => {
+    // אם המשתמש שינה צבע → נעדכן את התמונה הראשית לתמונה הראשונה של הווריאציה
+    if (images.length > 0) {
+      setSelectedImage(images[0]);
+    }
+  }, [selectedVariation]); // 👈 רץ כל פעם שהצבע משתנה
 
   return (
     <div className="w-full h-full flex flex-col gap-6">
@@ -48,7 +59,7 @@ export default function ProductGallery({ product }) {
 
         {/* שורת תמונות קטנות */}
         <div className="flex gap-4 w-full overflow-x-auto scrollbar-hide">
-          {product.images?.map((img, i) => (
+          {images?.map((img, i) => (
             <div
               key={i}
               onClick={() => handleChangeImage(img)}
