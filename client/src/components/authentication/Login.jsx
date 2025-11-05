@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // import { useForm } from "react-hook-form";
 // import { z } from "zod";
 // import { zodResolver } from "@hookform/resolvers/zod";
@@ -175,6 +176,8 @@
 
 
 
+=======
+>>>>>>> 09f9d3e93b71ea13f78e0f5427133a8dd3e1f9d4
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -210,7 +213,9 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     try {
+      console.log("data",data);
       const res = await login(data).unwrap();
+      console.log("res",res);
       dispatch(setUser(res.user));
       await mergeCartAfterLogin(res.user._id);
       reset();

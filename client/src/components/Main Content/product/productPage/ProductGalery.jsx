@@ -65,7 +65,7 @@ export default function ProductGallery({ product, selectedVariation }) {
               onClick={() => handleChangeImage(img)}
               className={`w-[95px] aspect-square flex-shrink-0 cursor-pointer rounded-[12px] border overflow-hidden transition
         ${selectedImage === img
-                  ? "border-[#ff6500] bg-[#fff7f2]"
+                  ? "border-[#ff6500]"
                   : "border-[#EDEDED] hover:border-gray-400"
                 }`}
             >

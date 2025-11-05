@@ -5,7 +5,7 @@ export const fetchCategories = createAsyncThunk(
   'categories/fetchCategories',
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axios.get('http://localhost:8080/categories', { withCredentials: true });
+      const res = await axios.get('https://api.express48.com/categories', { withCredentials: true });
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);

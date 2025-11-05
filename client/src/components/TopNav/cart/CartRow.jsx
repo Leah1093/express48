@@ -3,7 +3,6 @@ import { useCartItemLogic } from "../../../hooks/useCartItemLogic";
 import QuantityInput from "./QuantityInput";
 
 export default function CartRow({ item }) {
-  console.log("item",item)
   const {
     title, image, unitPrice, localQty,user,displayQty,id,
     handleAdd, handleRemove, handleRemoveCompletely,

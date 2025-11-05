@@ -3,6 +3,7 @@ import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const baseQuery = fetchBaseQuery({
     baseUrl: "http://localhost:8080",
+
     credentials: "include", // שולח cookies אוטומטית
 });
 
@@ -11,7 +12,7 @@ export const baseQueryWithReauth = async (args, api, extraOptions) => {
 
     if (result?.error?.status === 401) {
         // מנסה לרענן טוקן
-        console.log("refresh")
+        console.log("refresh", extraOptions, api)
         const refreshResult = await baseQuery({ url: "/entrance/refresh", method: "POST" }, api, extraOptions);
         console.log("after refresh")
 

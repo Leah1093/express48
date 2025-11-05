@@ -1,7 +1,7 @@
 import TopBar from './components/TopNav/TopBar'
-
+import { useGetCurrentUserQuery } from "./redux/services/authApi";
 import { useEffect } from 'react';
-import { Routes, Route ,useLocation} from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import About from "./components/mainNav/About";
 import Faq from "./components/mainNav/Faq";
 import BestSellers from "./components/mainNav/BestSellers";
@@ -28,7 +28,6 @@ import PrivacyPolicy from './components/footer/info/PrivacyPolicy';
 import WarrantyPolicy from './components/footer/info/WarrantyPolicy';
 import ShippingPolicy from './components/footer/info/ShippingPolicy';
 import ReturnsPolicy from './components/footer/info/ReturnsPolicy';
-import axios from "axios";
 import SellerDashboard from './components/seller/SellerDashboard';
 import MarketplaceInfo from './components/footer/support/MarketplaceInfo';
 import RoleGate from './components/auth/RoleGate';
@@ -67,11 +66,31 @@ import ProductsList from './components/Main Content/product/ProductsList.jsx';
 import HomeNewProducts from './components/Main Content/home/HomeNewProducts.jsx';
 import AuthHeader from './components/authentication/AuthHeader.jsx';
 
+
+import ProductForm from './components/seller/products/forms/ProductForm.jsx';
+import SellerProductsPage from './components/seller/SellerProductsPage.jsx';
+import ProductDetailPage from './components/seller/ProductDetailPage.jsx';
+import ProductCreate from './components/seller/products/ProductCreate.jsx';
+import ProductEdit from './components/seller/products/ProductEdit.jsx';
+import SearchResultsPage from './components/Main Content/product/SearchResultsPage.jsx';
+import ProductsPage from './components/Main Content/product/ProductsPage.jsx';
+import CheckoutSuccess from './components/checkouts/CheckoutSuccess.jsx';
+import CheckoutFaild from './components/checkouts/CheckoutFailed.jsx';
+
+
 function App() {
   const location = useLocation();
   const dispatch = useDispatch();
   const isMobile = useSelector((state) => state.ui.isMobile);
   const hideMainHeader = ["/login", "/register", "/forgot-password"].includes(location.pathname) || location.pathname.startsWith("/reset-password/");
+  const user = useSelector((state) => state.user?.user);
+  const { data: currentUser, isSuccess, isError } = useGetCurrentUserQuery(undefined, {
+    skip: !!user,
+  });
+useEffect(() => {
+  // ידפיס פעם אחת בפרודקשן
+  console.log("API_URL =", import.meta.env.VITE_API_URL);
+}, []);
 
   useEffect(() => {
     // עדכון מצב מובייל ב-redux
@@ -83,25 +102,20 @@ function App() {
     return () => window.removeEventListener("resize", handleResize);
   }, [dispatch]);
 
+
+  // אם אין משתמש, נפעיל את ה-query
+
   useEffect(() => {
-    console.log("🤣")
-    const checkLoggedInUser = async () => {
-      try {
-        const res = await axios.get("http://localhost:8080/entrance/me", {
-          withCredentials: true,
-        });
-        console.log("🤣", res.data)
-        dispatch(setUser(res.data.user));
-      } catch (err) {
+    if (!user) {
+      if (isSuccess && currentUser) {
+        dispatch(setUser(currentUser));
+      } else if (isError) {
         dispatch(clearUser());
       }
-    };
+    }
+  }, [isSuccess, isError, currentUser, user, dispatch]);
 
-    checkLoggedInUser();
-    console.log("🤣ff")
 
-  }, []);
-  const user = useSelector((state) => state.user?.user);
   useEffect(() => {
     if (user) {
       console.log("🔄 טוען עגלה ממונגו אחרי ריפרוש...");
@@ -126,8 +140,9 @@ function App() {
 
       <main className="flex-grow">
         <Routes>
-          
-          <Route path="products" element={<ProductsList />} />
+
+
+          <Route path="products" element={<ProductsPage />} />
           <Route path="products/:storeSlug/:productSlug" element={<ProductPage />} />
           <Route path="/favorites" element={<FavoritesList />} />
           <Route path="/categories/manage" element={<CategoryManagementPage />} />
@@ -138,6 +153,10 @@ function App() {
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/order/success/:id" element={<OrderSuccessPage />} />
           </Route>
+
+          <Route path="/checkout/success" element={<CheckoutSuccess />} />
+          <Route path="/checkout/failed" element={<CheckoutFaild />} />
+
 
 
           <Route path="/" element={<HomeNewProducts />} />
@@ -194,7 +213,7 @@ function App() {
             <Route path="favorites" element={<Favorites />} />
             <Route path="downloads" element={<Downloads />} />
           </Route>
-          <Route path="/seller" element={<ProtectedRoute allow={["seller", "admin"]}><SellerLayout /></ProtectedRoute>}>
+          {/* <Route path="/seller" element={<ProtectedRoute allow={["seller", "admin"]}><SellerLayout /></ProtectedRoute>}>
             <Route index element={<SellerDashboard />} />
             <Route path="settings" element={<StoreSettings />} />
             <Route path="products" element={<Products />} />
@@ -203,7 +222,34 @@ function App() {
             <Route path="reports" element={<Reports />} />
             <Route path="coupons" element={<CouponForm />} />
 
+          </Route> */}
+
+          <Route path="/seller" element={<ProtectedRoute allow={["seller", "admin"]}><SellerLayout /></ProtectedRoute>}>
+            <Route index element={<SellerDashboard />} />
+            <Route path="settings" element={<StoreSettings />} />
+
+            {/* <Route path="products">
+              <Route index element={<SellerProductsPage />} />                 
+              <Route path="new" element={<ProductForm />} />         
+              <Route path=":id" element={<ProductDetailPage />} />           
+            </Route> */}
+
+            <Route path="products">
+              <Route index element={<SellerProductsPage />} />            {/* רשימה */}
+              <Route path="new" element={<ProductCreate />} />  {/* הוספה */}
+              <Route path=":id/edit" element={<ProductEdit />} /> {/* עריכה */}
+              <Route path=":id" element={<ProductDetailPage />} />    {/* פרטים – אופציונלי */}
+            </Route>
+
+            <Route path="orders" element={<OrdersSeller />} />
+            <Route path="reviews" element={<Reviews />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="coupons" element={<CouponForm />} />
+
           </Route>
+
+
+
           <Route path="/store/:slug" element={<StorePage />}>
             {/* <Route index element={<StoreProducts />} /> */}
             {/* <Route path="about" element={<StoreAbout />} />

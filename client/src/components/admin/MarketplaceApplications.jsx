@@ -1,52 +1,35 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+// src/admin/MarketplaceApplications.jsx
 import RoleGate from "../../components/auth/RoleGate";
+import { useGetAdminSellerApplicationsSimpleQuery, useApproveAdminSellerApplicationMutation, useRejectAdminSellerApplicationMutation, } from "../../redux/services/adminApi";
 
 export default function MarketplaceApplications() {
-  const api = axios.create({
-    baseURL: "http://localhost:8080" ,
-    withCredentials: true,
-    timeout: 15000,
-  });
+  const { data, isFetching, isError } = useGetAdminSellerApplicationsSimpleQuery();
+  const rows = data?.rows || [];
 
-  const [rows, setRows] = useState([]);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
+  const [approve, { isLoading: approving }] = useApproveAdminSellerApplicationMutation();
+  const [reject, { isLoading: rejecting }] = useRejectAdminSellerApplicationMutation();
 
-  const load = async () => {
+  const busy = isFetching || approving || rejecting;
+
+  const handleApprove = async (id) => {
     try {
-      setBusy(true);
-      const { data } = await api.get("/marketplace/admin/seller-applications");
-      setRows(data?.rows || []);
-      setMsg("");
+      await approve(id).unwrap();
+      alert("הבקשה אושרה");
     } catch (e) {
-      setMsg(e?.response?.data?.message || "שגיאה בטעינה");
-    } finally { setBusy(false); }
+      alert(e?.data?.message || "שגיאה באישור");
+      console.error(e);
+    }
   };
 
-  useEffect(() => { load(); }, []);
-
-  const approve = async (id) => {
-    try {
-      setBusy(true);
-      await api.patch(`/marketplace/admin/seller-applications/${id}/approve`);
-      setMsg("הבקשה אושרה");
-      await load();
-    } catch (e) {
-      setMsg(e?.response?.data?.message || "שגיאה באישור");
-    } finally { setBusy(false); }
-  };
-
-  const reject = async (id) => {
+  const handleReject = async (id) => {
     const reason = prompt("סיבת דחייה (אופציונלי):") || "";
     try {
-      setBusy(true);
-      await api.patch(`/marketplace/admin/seller-applications/${id}/reject`, { reason });
-      setMsg("הבקשה נדחתה");
-      await load();
+      await reject({ id, reason }).unwrap();
+      alert("הבקשה נדחתה");
     } catch (e) {
-      setMsg(e?.response?.data?.message || "שגיאה בדחייה");
-    } finally { setBusy(false); }
+      alert(e?.data?.message || "שגיאה בדחייה");
+      console.error(e);
+    }
   };
 
   return (
@@ -54,7 +37,9 @@ export default function MarketplaceApplications() {
       <div className="max-w-6xl mx-auto p-4">
         <h1 className="text-2xl font-bold text-right mb-4">בקשות הצטרפות</h1>
 
-        {msg && <div className="mb-3 text-sm text-right">{msg}</div>}
+        {isError && (
+          <div className="mb-3 text-sm text-right text-red-600">שגיאה בטעינה</div>
+        )}
         {busy && <div className="h-10 animate-pulse bg-gray-100 rounded mb-3" />}
 
         <div className="overflow-auto border rounded-2xl">
@@ -82,14 +67,14 @@ export default function MarketplaceApplications() {
                   <td className="p-3 space-x-reverse space-x-2">
                     <button
                       disabled={busy || r.status === "approved"}
-                      onClick={() => approve(r._id)}
+                      onClick={() => handleApprove(r._id)}
                       className="rounded-2xl bg-green-600 text-white px-3 py-1 text-sm disabled:opacity-50"
                     >
                       אישור
                     </button>
                     <button
                       disabled={busy || r.status === "rejected"}
-                      onClick={() => reject(r._id)}
+                      onClick={() => handleReject(r._id)}
                       className="rounded-2xl bg-red-600 text-white px-3 py-1 text-sm disabled:opacity-50"
                     >
                       דחייה
@@ -98,7 +83,11 @@ export default function MarketplaceApplications() {
                 </tr>
               ))}
               {rows.length === 0 && !busy && (
-                <tr><td colSpan={6} className="p-6 text-center text-gray-500">אין בקשות כרגע</td></tr>
+                <tr>
+                  <td colSpan={6} className="p-6 text-center text-gray-500">
+                    אין בקשות כרגע
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

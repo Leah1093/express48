@@ -1,21 +1,34 @@
-import { sendContactEmail } from '../utils/email/sendContactEmail.js';
-import { ContactMessage } from '../models/contactMessage.js';
+import { sendContactEmail } from "../utils/email/sendContactEmail.js";
+import { ContactMessage } from "../models/contactMessage.js";
+import { CustomError } from "../utils/CustomError.js";
 
 export class ContactService {
-  async handleMessage({ name, email, message, phone }) {
-    console.log("ContactService ✉️");
+  async handleMessage({ name, email, message, phone, honeypot }) {
+    // 1. חסימת בוטים
+    if (honeypot) {
+      throw new CustomError("ניסיון שליחת בוט נחסם", 400);
+    }
 
-    // 1. שליחת מייל לשירות לקוחות
-    await sendContactEmail({ name, email, message });
+    // 2. ולידציה בסיסית
+    if (!name || !email || !message) {
+      throw new CustomError("שם, אימייל והודעה נדרשים", 400);
+    }
 
-    // 2. שמירת הפנייה למסד נתונים
-    await ContactMessage.create({
-      name,
-      email,
-      phone,
-      message,
-    });
-    console.log("✅ הפנייה נשמרה במסד נתונים");
+    const data = { name, email, message, phone };
+
+    // 3. שליחת מייל
+    try {
+      await sendContactEmail({ name, email, message });
+    } catch (err) {
+      throw new CustomError("כשלון בשליחת מייל לשירות לקוחות", 500, err);
+    }
+
+    // 4. שמירה במסד
+    try {
+      const saved = await ContactMessage.create(data);
+      return saved;
+    } catch (err) {
+      throw new CustomError("כשלון בשמירת פנייה במסד נתונים", 500, err);
+    }
   }
 }
-

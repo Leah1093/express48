@@ -1,4 +1,3 @@
-// routes/store.routes.js
 import express from "express";
 import StoreController from "../controllers/store.controller.js";
 import { authMiddleware } from "../middlewares/auth.js";

@@ -8,6 +8,7 @@ import { RatingReplyController } from "../controllers/rating/reply.controller.js
 import { RatingSellerController } from "../controllers/rating/seller.controller.js"
 import { isSellerMiddleware } from "../middlewares/isSeller.middleware.js"
 import { requireRoles } from "../middlewares/requireRoles.js"
+import { validate } from "../middlewares/validate.js";
 import { createRatingLimiter, editRatingLimiter, helpfulLimiter, sellerReplyLimiter } from "../middlewares/rateLimit.middleware.js";
 import { createRatingSchema, updateRatingSchema, updateSellerReplySchema, listMyRatingsQuerySchema, getMyRatingParamsSchema, setHelpfulVoteSchema, listSellerRatingsQuerySchema, sellerRatingsStatsQuerySchema, createSellerReplySchema, sellerReplyVisibilitySchema } from "../validations/ratingSchemas.js";
 export const ratingsRouter = express.Router();

@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 
 import { connectDB } from "./config/db.js";
 import 'dotenv/config';
-import { passwordRouter } from "./router/pwd.router.js";
+import { passwordRouter } from "./router/password.router.js";
 import { entranceRouter } from "./router/entrance.router.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { googleAuthRouter } from "./router/googleAuth.router.js";
@@ -20,7 +20,7 @@ import session from "express-session";
 import { apiLimiter } from "./middlewares/rateLimit.middleware.js";
 import './config/googleOAuth.config.js'
 import productRouter from "./router/product.router.js";
-import {sellerProductsRouter} from "./router/seller.products.router.js";
+import { sellerProductsRouter } from "./router/seller.products.router.js";
 // import { sellerProfileRouter } from "./router/sellerProfile.router.js";
 import { marketplaceRouter } from "./router/marketplace.router.js";
 const __filename = fileURLToPath(import.meta.url);
@@ -31,6 +31,7 @@ import categoryRoutes from "./router/categoryRoutes.js"
 import addressRoutes from "./router/addressRoutes.js"
 import orderRoutes from "./router/orderRoutes.js";
 import couponsRoutes from "./router/couponsRoutes.js";
+import tranzilaRouter from "./router/tranzilaRouter.js";
 
 const app = express();
 
@@ -49,11 +50,15 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(cors({
-  origin: 'http://localhost:5173', // או הדומיין שלך בפרודקשן
+  origin: [process.env.CLIENT_URL || "http://localhost:5173", 'https://affirmatively-unparenthesised-brandon.ngrok-free.dev'],
   credentials: true,
   methods: ["GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
+app.get("/", (req, res) => {
+  res.send("Express48 API is running 🚀");
+});
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
@@ -66,7 +71,6 @@ app.use("/marketplace", marketplaceRouter)
 app.use("/seller-store", storeRouter)
 app.use("/public/stores", storePublicRouter)
 app.use("/seller/products", sellerProductsRouter)
-app.use(errorHandler);
 app.use('/cart', cartRouter);
 // app.use('/products', productRoutes);
 app.use('/products', productRouter);
@@ -75,10 +79,13 @@ app.use("/categories", categoryRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/addresses", addressRoutes);
 app.use("/orders", orderRoutes);
-app.use("/coupons",couponsRoutes);
+app.use("/coupons", couponsRoutes);
+app.use('/payments', tranzilaRouter);
 
 app.use(errorHandler);
+const PORT = process.env.PORT || 8080;
 
-app.listen(process.env.PORT, () => {
-  console.log(`start server port: ${process.env.PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`start server port: ${PORT}`);
+
 });

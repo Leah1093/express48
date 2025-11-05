@@ -1,6 +1,8 @@
 import { Cart } from '../models/cart.js';
 import { Product } from "../models/Product.js"; // ודאי את הנתיב הנכון
 import { cartQueries } from '../mongoQueries/cartQueries.js';
+import { CustomError } from '../utils/CustomError.js';
+
 const toIdStr = (x) => (typeof x === 'object' && x?._id ? String(x._id) : String(x));
 
 export class CartService {
@@ -137,7 +139,7 @@ export class CartService {
     // שליפת העגלה של המשתמש
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
     if (!cart) {
-      throw new Error('Cart not found');
+      throw new CustomError('Cart not found', 404);
     }
     // מציאת המוצר בעגלה לפי productId
     const item = cart.items.find(item => item.productId.toString() === productId);
@@ -161,7 +163,7 @@ export class CartService {
     // שליפת העגלה של המשתמש
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
     if (!cart) {
-      throw new Error('Cart not found');
+      throw new CustomError('Cart not found', 404);
     }
 
     // סינון כל הפריטים שאינם המוצר הרצוי (כלומר - הסרה מוחלטת)
@@ -321,7 +323,7 @@ export class CartService {
   async updateItemQuantity(userId, productId, variationId = null, quantity) {
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
     if (!cart) {
-      throw new Error("Cart not found");
+      throw new CustomError("Cart not found", 404);
     }
     // מציאת פריט לפי productId + variationId (אם יש)
   const item = cart.items.find(
@@ -330,7 +332,7 @@ export class CartService {
       (i.variationId?.toString() || null) === (variationId?.toString() || null)
   );
     if (!item) {
-      throw new Error("Product not found in cart");
+      throw new CustomError("Product not found in cart", 404);
     }
     item.quantity = quantity; // ⬅️ עדכון הכמות
     await cart.save();

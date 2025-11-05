@@ -16,7 +16,7 @@
 //   const load = async () => {
 //     try {
 //       setLoading(true);
-//       const res = await axios.get("http://localhost:8080/seller-profile/me", { withCredentials: true });
+//       const res = await axios.get("https://api.express48.com/seller-profile/me", { withCredentials: true });
 //       setSeller(res.data?.seller || res.data);
 //     } finally {
 //       setLoading(false);
@@ -43,7 +43,7 @@
 //                 <div className="flex items-start gap-6">
 //                   <div className="h-24 w-24 overflow-hidden rounded-2xl border bg-white">
 //                     {seller?.logoUrl ? (
-//                       <img src={`http://localhost:8080${seller.logoUrl}`} alt="logo" className="h-full w-full object-cover" />
+//                       <img src={`https://api.express48.com${seller.logoUrl}`} alt="logo" className="h-full w-full object-cover" />
 //                     ) : (
 //                       <div className="grid h-full w-full place-items-center text-xs text-gray-400">NO LOGO</div>
 //                     )}

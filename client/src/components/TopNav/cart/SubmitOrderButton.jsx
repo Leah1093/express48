@@ -25,7 +25,7 @@ export default function SubmitOrderButton({ chosenItems, addressId, notes }) {
       };
 
       // שליחת ההזמנה לשרת
-      const res = await axios.post("http://localhost:8080/orders", payload, {
+      const res = await axios.post("https://api.express48.com/orders", payload, {
         withCredentials: true, // כדי לשלוח cookies (JWT)
       });
 

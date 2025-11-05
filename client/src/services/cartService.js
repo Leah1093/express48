@@ -14,7 +14,7 @@ export const mergeCartService = async (userId, guestCart) => {
 
 
   const response = await axios.post(
-    "http://localhost:8080/cart/merge",
+    "https://api.express48.com/cart/merge",
     {
       userId,
       items: formattedItems

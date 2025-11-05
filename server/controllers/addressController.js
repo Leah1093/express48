@@ -1,14 +1,13 @@
-// controllers/addressController.js
 import { AddressService } from "../service/addressService.js";
 
-const service = new AddressService();
+export const service = new AddressService();
 
 export class AddressController {
   async create(req, res, next) {
     try {
       const address = await service.createAddress({
         ...req.body,
-        userId: req.user.userId, // מזהה מתוך authMiddleware
+        userId: req.user.userId,
       });
       res.status(201).json(address);
     } catch (e) {
@@ -28,7 +27,6 @@ export class AddressController {
   async get(req, res, next) {
     try {
       const address = await service.getAddressById(req.params.id);
-      if (!address) return res.status(404).json({ error: "Address not found" });
       res.json(address);
     } catch (e) {
       next(e);
@@ -37,8 +35,11 @@ export class AddressController {
 
   async update(req, res, next) {
     try {
-      const updated = await service.updateAddress(req.params.id, req.user.userId, req.body);
-      if (!updated) return res.status(404).json({ error: "Address not found" });
+      const updated = await service.updateAddress(
+        req.params.id,
+        req.user.userId,
+        req.body
+      );
       res.json(updated);
     } catch (e) {
       next(e);
@@ -47,8 +48,7 @@ export class AddressController {
 
   async remove(req, res, next) {
     try {
-      const deleted = await service.deleteAddress(req.params.id);
-      if (!deleted) return res.status(404).json({ error: "Address not found" });
+      await service.deleteAddress(req.params.id);
       res.json({ message: "Deleted successfully" });
     } catch (e) {
       next(e);
@@ -57,7 +57,10 @@ export class AddressController {
 
   async setDefault(req, res, next) {
     try {
-      const updated = await service.setDefaultAddress(req.user.userId, req.params.id);
+      const updated = await service.setDefaultAddress(
+        req.user.userId,
+        req.params.id
+      );
       res.json(updated);
     } catch (e) {
       next(e);

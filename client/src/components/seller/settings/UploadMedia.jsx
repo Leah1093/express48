@@ -226,6 +226,7 @@
 import { useMemo, useRef, useState } from "react";
 import { mediaUrl } from "./mediaUrl";
 
+
 export default function UploadMedia({  label = "מדיה",  value,  onChange,  onUpload,                   // אופציונלי
   kinds = ["image", "video"],  accept = "auto",  allowClear = true,  hideKindSelector = false,}) {
   const [dragOver, setDragOver] = useState(false);

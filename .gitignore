@@ -3,11 +3,19 @@ node_modules/
 /server/.env
 /client/.env
 uploads/
+/server/coverage/
 
 # local ignores (added)
 .env
+
 server/.env
 server/uploads/
 
+
+# Coverage
+coverage/
+
 .config/
 
+# Ignore test coverage reports
+**/coverage/

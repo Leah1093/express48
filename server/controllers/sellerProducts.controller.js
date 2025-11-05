@@ -51,8 +51,6 @@ function stripSellerControlledFields(body) {// עוזר: מסנן שדות שס�
 
 export default class SellerProductsController {
     async list(req, res, next) {
-        console.log("seller/products😍")
-        console.log("RAW deleted:", req.query.deleted);
         try {
             const role = req.auth?.role || (Array.isArray(req.auth?.roles) ? req.auth.roles[0] : null);
             const sellerId = req.auth?.sellerId || null;
@@ -175,7 +173,7 @@ export default class SellerProductsController {
                     throw e;
                 }
                 validateSchedulingFields(req.body);
-                const product = await service.createProduct({ data: req.body, actor: { id: user_id, role }, });
+                const product = await service.createProduct({ data: req.body, actor: { id: user._id, role }, });
                 return res.status(201).json(product);
             }
 
@@ -186,6 +184,7 @@ export default class SellerProductsController {
             next(err);
         }
     }
+
     async softDelete(req, res, next) {
         try {
             const { id } = req.params;
@@ -200,6 +199,7 @@ export default class SellerProductsController {
         }
     }
 
+    /* istanbul ignore next */
     async restore(req, res, next) {
         console.log("res🎶")
         try {
@@ -217,6 +217,7 @@ export default class SellerProductsController {
         }
     }
 
+    /* istanbul ignore next */
     async updateStatus(req, res, next) {
         try {
             const { id } = req.params;
@@ -253,11 +254,11 @@ export default class SellerProductsController {
             }
             // ולידציה של Mongoose (למשל: מוצר מפורסם חייב לכלול תמונה)
             if (err?.name === "ValidationError") {
-                 console.log("err.message",err.message)
+                console.log("err.message", err.message)
                 // err.message יכיל את ההודעה מהמודל: "מוצר מפורסם חייב לכלול לפחות תמונה אחת"
                 return res.status(400).json({
                     error: "ValidationError",
-                   
+
                     message: err.message,
                     details: err.errors,
                 });

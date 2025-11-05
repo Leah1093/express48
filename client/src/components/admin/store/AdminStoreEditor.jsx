@@ -1,82 +1,89 @@
 // src/admin/AdminStoreEditor.jsx
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  adminGetStoreById,
-  adminUpdateStoreStatus,
-  adminUpdateStoreSlug,
-} from "./storeAdminApi";
+  useGetAdminStoreByIdQuery,
+  useUpdateAdminStoreStatusMutation,
+  useUpdateAdminStoreSlugMutation,
+} from "../redux/services/adminApi"; // עדכני נתיב לפי הפרויקט שלך
 
 const STATUS_OPTS = [
-  { value: "draft", label: "טיוטה" },
-  { value: "active", label: "פעילה" },
+  { value: "draft",     label: "טיוטה" },
+  { value: "active",    label: "פעילה" },
   { value: "suspended", label: "מושהית" },
 ];
 
 export default function AdminStoreEditor({ storeId }) {
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [store, setStore] = useState(null);
+  const { data: store, isLoading, isError } = useGetAdminStoreByIdQuery(
+    storeId,
+    { refetchOnMountOrArgChange: true }
+  );
 
-  const [status, setStatus] = useState("draft");
-  const [note, setNote] = useState("");
-  const [slug, setSlug] = useState("");
+  const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateAdminStoreStatusMutation();
+  const [updateSlug,   { isLoading: isUpdatingSlug   }] = useUpdateAdminStoreSlugMutation();
+
+  const [status, setStatus] = useState(undefined);
+  const [note,   setNote]   = useState("");
+  const [slug,   setSlug]   = useState(undefined);
 
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        setLoading(true);
-        const s = await adminGetStoreById(storeId);
-        if (!alive) return;
-        setStore(s);
-        setStatus(s?.status || "draft");
-        setSlug(s?.slug || "");
-      } catch (e) {
-        alert("טעינת חנות נכשלה");
-        console.error(e);
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
-    return () => { alive = false; };
+    setStatus(undefined);
+    setSlug(undefined);
+    setNote("");
   }, [storeId]);
 
+  useEffect(() => {
+    if (store) {
+      setStatus((prev) => prev ?? (store.status || "draft"));
+      setSlug((prev)   => prev ?? (store.slug   || ""));
+    }
+  }, [store]);
+
+  const effectiveStatus = status ?? "draft";
+  const effectiveSlug   = slug   ?? "";
+
+  const normalizeSlug = (val) =>
+    String(val || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "-")
+      .replace(/-{2,}/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+  const normalizedSlug = normalizeSlug(effectiveSlug);
+
+  const isStatusDirty = store ? (effectiveStatus !== (store.status || "draft")) : false;
+  const isSlugDirty   = store ? (normalizedSlug   !== (store.slug   || ""))     : false;
+
   const badge = useMemo(() => {
-    const st = (store?.status || "").toLowerCase();
-    if (st === "active")   return { class: "bg-green-100 text-green-800", text: "פעילה" };
-    if (st === "suspended")return { class: "bg-red-100 text-red-800",   text: "מושהית" };
+    const st = String(store?.status || "").toLowerCase();
+    if (st === "active")    return { class: "bg-green-100 text-green-800", text: "פעילה" };
+    if (st === "suspended") return { class: "bg-red-100 text-red-800",   text: "מושהית" };
     return { class: "bg-yellow-100 text-yellow-800", text: "טיוטה" };
   }, [store]);
 
   async function doUpdateStatus() {
     try {
-      setBusy(true);
-      const updated = await adminUpdateStoreStatus(store._id, { status, note });
-      setStore(updated);
+      await updateStatus({ id: storeId, status: effectiveStatus, note }).unwrap();
       setNote("");
       alert("סטטוס עודכן");
     } catch (e) {
-      alert(e?.response?.data?.message || "עדכון סטטוס נכשל");
+      alert(e?.data?.message || e?.error || "עדכון סטטוס נכשל");
       console.error(e);
-    } finally { setBusy(false); }
+    }
   }
 
   async function doUpdateSlug() {
     try {
-      setBusy(true);
-      const res = await adminUpdateStoreSlug(store._id, { slug: String(slug || "").trim() });
-      // תמיכה בשני פורמטים אפשריים:
-      if (res?.slug) setSlug(res.slug);
-      if (res?._id)  setStore(res);
+      await updateSlug({ id: storeId, slug: normalizedSlug }).unwrap();
+      setSlug(normalizedSlug);
       alert("סלוג עודכן");
     } catch (e) {
-      alert(e?.response?.data?.message || "עדכון סלוג נכשל");
+      alert(e?.data?.message || e?.error || "עדכון סלוג נכשל");
       console.error(e);
-    } finally { setBusy(false); }
+    }
   }
 
-  if (loading) return <div className="p-6">טוען…</div>;
-  if (!store)   return <div className="p-6">לא נמצאה חנות</div>;
+  if (isLoading)         return <div className="p-6">טוען…</div>;
+  if (isError || !store) return <div className="p-6">לא נמצאה חנות</div>;
 
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
@@ -95,7 +102,7 @@ export default function AdminStoreEditor({ storeId }) {
           <label className="text-sm">סלוג נוכחי</label>
           <input
             className="border rounded p-2 w-full"
-            value={slug}
+            value={effectiveSlug}
             onChange={(e) => setSlug(e.target.value)}
             placeholder="english-only, kebab-case"
             dir="ltr"
@@ -107,10 +114,10 @@ export default function AdminStoreEditor({ storeId }) {
             <button
               type="button"
               onClick={doUpdateSlug}
-              disabled={busy}
+              disabled={isUpdatingSlug || !isSlugDirty}
               className="px-3 py-2 rounded bg-indigo-700 text-white hover:bg-indigo-600 disabled:opacity-60"
             >
-              שמירת סלוג
+              {isUpdatingSlug ? "שומר…" : "שמירת סלוג"}
             </button>
           </div>
         </div>
@@ -124,7 +131,7 @@ export default function AdminStoreEditor({ storeId }) {
             <div className="text-sm mb-1">בחרי סטטוס</div>
             <select
               className="border rounded p-2 w-full"
-              value={status}
+              value={effectiveStatus}
               onChange={(e) => setStatus(e.target.value)}
             >
               {STATUS_OPTS.map(o => (
@@ -147,10 +154,10 @@ export default function AdminStoreEditor({ storeId }) {
           <button
             type="button"
             onClick={doUpdateStatus}
-            disabled={busy}
+            disabled={isUpdatingStatus || !isStatusDirty}
             className="px-3 py-2 rounded bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60"
           >
-            עדכון סטטוס
+            {isUpdatingStatus ? "מעדכן…" : "עדכון סטטוס"}
           </button>
         </div>
       </section>

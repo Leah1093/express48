@@ -20,6 +20,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <ToastContainer position="top-center" rtl />
 
           <AuthInit /> {/* ⬅️ מריץ בדיקת התחברות ראשונית */}
+          
           <App />
         </BrowserRouter>
       </Provider>

@@ -45,7 +45,7 @@
 //         try {
 //             setDeletingId(id);
 //             // אם יש proxy של Vite אפשר להשתמש בנתיב יחסי: `/seller/products/${id}`
-//             await axios.delete(`http://localhost:8080/seller/products/${id}`, { withCredentials: true });
+//             await axios.delete(`https://api.express48.com/seller/products/${id}`, { withCredentials: true });
 //             await refetch();
 //         } catch (e) {
 //             alert(e?.response?.data?.error || e?.message || "שגיאה במחיקה");
@@ -59,7 +59,7 @@
 //         if (!id) return;
 //         try {
 //             setRestoringId(id);
-//             await axios.patch(`http://localhost:8080/seller/products/${id}/restore`, null, { withCredentials: true });
+//             await axios.patch(`https://api.express48.com/seller/products/${id}/restore`, null, { withCredentials: true });
 //             await refetch();
 //         } catch (e) {
 //             alert(e?.response?.data?.error || e?.message || "שגיאה בשחזור");

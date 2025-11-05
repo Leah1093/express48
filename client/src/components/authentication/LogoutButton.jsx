@@ -1,20 +1,19 @@
-import axios from "axios";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../redux/slices/userSlice";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useLogoutMutation, authApi } from "../../redux/services/authApi";
 
 function LogoutButton() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [logout, { isLoading }] = useLogoutMutation();
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:8080/entrance/logout", {}, {
-        withCredentials: true
-      });
-
+      await logout().unwrap();
       dispatch(setUser(null));
+      dispatch(authApi.util.resetApiState());
       toast.success("התנתקת בהצלחה");
       navigate("/");
     } catch (error) {

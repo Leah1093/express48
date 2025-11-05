@@ -90,7 +90,11 @@ export const toggleSelectAllThunk = createAsyncThunk(
   async (selected, { rejectWithValue }) => {
     try {
       const res = await axios.patch(
+<<<<<<< HEAD
         `${API_URL}/cart/select-all`,
+=======
+        `https://api.express48.com/cart/select-all`,
+>>>>>>> 09f9d3e93b71ea13f78e0f5427133a8dd3e1f9d4
         { selected },
         { withCredentials: true }
       );

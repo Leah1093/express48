@@ -233,7 +233,10 @@
 import { useCartItemLogic } from "../../../hooks/useCartItemLogic";
 
 export default function CartItem({ item }) {
+<<<<<<< HEAD
   console.log("item", item);
+=======
+>>>>>>> 09f9d3e93b71ea13f78e0f5427133a8dd3e1f9d4
   const {
     user, displayQty, unitPrice, title, image, localQty,
     handleAdd, handleRemove, handleRemoveCompletely,

@@ -35,7 +35,7 @@
 
 //   // מופע Axios מקומי
 //   const api = axios.create({
-//     baseURL: "http://localhost:8080",
+//     baseURL: "https://api.express48.com",
 //     withCredentials: true,
 //     timeout: 15000,
 //   });
@@ -250,7 +250,7 @@ export default function MarketplaceInfo() {
 
   const onSubmit = async (data) => {
     try {
-      await axios.post("http://localhost:8080/marketplace/sellers", data, {
+      await axios.post("https://api.express48.com/marketplace/sellers", data, {
         withCredentials: true,
       });
       alert("הבקשה נשלחה בהצלחה!");
