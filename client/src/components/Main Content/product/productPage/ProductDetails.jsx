@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import TopActions from "./TopActions";
+import { useNavigate } from "react-router-dom";
+
+
 
 export default function ProductDetails({
   product,
@@ -9,7 +12,14 @@ export default function ProductDetails({
   handleAddToCart,
   handleClick,
 }) {
+
+  const navigate = useNavigate();
   const [quantity, setQuantity] = useState(existing?.quantity || 1);
+  useEffect(() => {
+    if (existing?.quantity) {
+      setQuantity(existing.quantity);
+    }
+  }, [existing?.quantity]);
   const [showFullDescription, setShowFullDescription] = useState(false);
 
   const handleChangeQuantity = (val) => {
@@ -141,10 +151,18 @@ export default function ProductDetails({
       {/* כפתורים */}
       <div className="flex flex-col gap-4 w-full">
         <button
-          onClick={() => handleAddToCart(quantity)}
+          onClick={() => {
+            if (existing) {
+              // אם קיים בעגלה → לעדכן ולעבור לדף העגלה
+              navigate("/cart");
+            } else {
+              // אם לא קיים בעגלה → להוסיף כרגיל
+              handleAddToCart(quantity);
+            }
+          }}
           className="w-full h-[54px] rounded-2xl bg-[#141414] text-white text-[16px] font-bold hover:bg-black transition"
         >
-          הוסף לעגלת קניות
+          {existing ? "עדכון כמות" : "הוסף לעגלת קניות"}
         </button>
         <button
           onClick={handleClick}

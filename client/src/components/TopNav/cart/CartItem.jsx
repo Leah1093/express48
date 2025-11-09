@@ -230,30 +230,138 @@
 //   }
 // };
 
+// import { useCartItemLogic } from "../../../hooks/useCartItemLogic";
+
+// export default function CartItem({ item }) {
+// <<<<<<< HEAD
+//   console.log("item", item);
+// =======
+// >>>>>>> 09f9d3e93b71ea13f78e0f5427133a8dd3e1f9d4
+//   const {
+//     user, displayQty, unitPrice, title, image, localQty,
+//     handleAdd, handleRemove, handleRemoveCompletely,
+//     handleLocalChange, handleChangeGuest, commitIfValid,
+//     id, setLocalQty,
+//   } = useCartItemLogic(item);
+
+//   // --- ✨ לוגיקה להצגת פרטי וריאציה אם קיימת ✨ ---
+//   const variationTitle = item.snapshot?.attributes?.color || item.snapshot?.attributes?.size;
+//   const variationImage = item.snapshot?.images?.[0] || item.productId?.images?.[0];
+//   const variationPrice = item.snapshot?.price || item.productId?.price?.amount;
+
+//   return (
+//     <div className="relative flex flex-row-reverse items-center border-b py-4 px-4 gap-4 text-right">
+//       {/* כפתור מחיקה מוחלטת */}
+//       <button
+//         onClick={handleRemoveCompletely}
+//         className="absolute top-2 left-2 text-gray-500 hover:text-red-500 text-xl"
+//       >
+//         ×
+//       </button>
+
+//       {/* תמונה */}
+//       <img
+//         src={variationImage}
+//         alt={item.productId.title}
+//         className="w-20 h-20 object-contain"
+//       />
+
+//       {/* פרטים */}
+//       <div className="flex flex-col flex-1 text-black">
+//         <div>
+//           <h4 className="text-md font-semibold leading-snug">
+//             {item.productId.title}
+//           </h4>
+//           {/* שם הווריאציה אם קיימת */}
+//           {item.snapshot?.attributes && (
+//             <p className="text-sm text-gray-600">
+//               {" "}
+//               {Object.entries(item.snapshot?.attributes || {})
+//                 .map(([key, value]) => `${key}: ${value}`)
+//                 .join(", ")}
+//             </p>
+//           )}
+
+//         </div>
+
+//         <div className="flex items-center justify-start mt-3 gap-2">
+//           <button
+//             // type="button"
+//             // onMouseDown={e => e.preventDefault()}
+//             onClick={handleRemove}
+//             className="border rounded px-3 py-1 text-lg font-bold"
+//           >
+//             -
+//           </button>
+//           {/* <span className="text-md w-6 text-center">{item.quantity}</span> */}
+//           <input type="number" min="1"
+//             value={user ? localQty : item.quantity}
+//             onChange={user ? handleLocalChange : (e) => handleChangeGuest(id, e)}
+//             onBlur={user ? commitIfValid : undefined}
+//             onKeyDown={user ? (e) => {
+//               if (e.key === "Enter") {
+//                 e.preventDefault();
+//                 e.currentTarget.blur(); // יפעיל את onBlur => שולח ל-API
+//               }
+//             } : undefined}
+//             className="text-md w-6 text-center appearance-none [mozAppearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+//           <button
+//             // type="button"
+//             // onMouseDown={e => e.preventDefault()}
+//             onClick={handleAdd}
+//             className="border rounded px-3 py-1 text-lg font-bold"
+//           >
+//             +
+//           </button>
+//         </div>
+
+//         <p className="text-blue-700 font-semibold mt-3 text-md">
+//           {/* ₪{item.productId.price.amount} × {item.quantity} */}
+//           ₪{variationPrice} × {item.quantity}
+
+//         </p>
+//       </div>
+//     </div>
+//   );
+// };
+
+
+
+
+
+
+
+// src/components/TopNav/cart/CartItem.jsx
 import { useCartItemLogic } from "../../../hooks/useCartItemLogic";
 
 export default function CartItem({ item }) {
   const {
-    user, displayQty, unitPrice, title, image,localQty,
+    user, displayQty, unitPrice, title, image, localQty,
     handleAdd, handleRemove, handleRemoveCompletely,
     handleLocalChange, handleChangeGuest, commitIfValid,
-    id,setLocalQty,
+    id, setLocalQty,
   } = useCartItemLogic(item);
+
+  // פרטי וריאציה אם קיימת
+  const variationTitle = item.snapshot?.attributes?.color || item.snapshot?.attributes?.size;
+  const variationImage = item.snapshot?.images?.[0] || item.productId?.images?.[0];
+  const variationPrice = item.snapshot?.price || item.productId?.price?.amount;
 
   return (
     <div className="relative flex flex-row-reverse items-center border-b py-4 px-4 gap-4 text-right">
-      {/* כפתור מחיקה מוחלטת */}
+      {/* מחיקה מוחלטת */}
       <button
         onClick={handleRemoveCompletely}
         className="absolute top-2 left-2 text-gray-500 hover:text-red-500 text-xl"
+        aria-label="הסרת פריט"
       >
         ×
       </button>
 
       {/* תמונה */}
       <img
-        src={item.productId.images}
-        alt={item.productId.title}
+        src={variationImage}
+        alt={item.productId?.title || "מוצר"}
         className="w-20 h-20 object-contain"
       />
 
@@ -261,50 +369,63 @@ export default function CartItem({ item }) {
       <div className="flex flex-col flex-1 text-black">
         <div>
           <h4 className="text-md font-semibold leading-snug">
-            {item.productId.title}
+            {item.productId?.title}
           </h4>
+
+          {/* שם הווריאציה אם קיימת */}
+          {item.snapshot?.attributes && (
+            <p className="text-sm text-gray-600">
+              {Object.entries(item.snapshot.attributes)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join(", ")}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center justify-start mt-3 gap-2">
           <button
-            // type="button"
-            // onMouseDown={e => e.preventDefault()}
             onClick={handleRemove}
             className="border rounded px-3 py-1 text-lg font-bold"
+            aria-label="הפחת כמות"
           >
             -
           </button>
-          {/* <span className="text-md w-6 text-center">{item.quantity}</span> */}
-          <input type="number" min="1"
+
+          <input
+            type="number"
+            min="1"
             value={user ? localQty : item.quantity}
             onChange={user ? handleLocalChange : (e) => handleChangeGuest(id, e)}
             onBlur={user ? commitIfValid : undefined}
-            onKeyDown={user ? (e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                e.currentTarget.blur(); // יפעיל את onBlur => שולח ל-API
-              }
-            } : undefined}
-            className="text-md w-6 text-center appearance-none [mozAppearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+            onKeyDown={
+              user
+                ? (e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      e.currentTarget.blur(); // מפעיל onBlur ושולח ל־API
+                    }
+                  }
+                : undefined
+            }
+            className="text-md w-10 text-center appearance-none [mozAppearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            aria-label="כמות"
+          />
+
           <button
-            // type="button"
-            // onMouseDown={e => e.preventDefault()}
             onClick={handleAdd}
             className="border rounded px-3 py-1 text-lg font-bold"
+            aria-label="הגדל כמות"
           >
             +
           </button>
         </div>
 
         <p className="text-blue-700 font-semibold mt-3 text-md">
-          {/* ₪{item.productId.price.amount} × {item.quantity} */}
-          ₪{item.productId?.price?.amount ?? 0} × {item.quantity}
-
+          ₪{variationPrice} × {item.quantity}
         </p>
       </div>
     </div>
   );
-};
-
+}
 
 

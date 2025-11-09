@@ -19,6 +19,7 @@ import {
 const getId = (x) => x?.productId?._id ?? x?.productId ?? x?._id;
 
 export function useCartItemLogic(item) {
+
   const dispatch = useDispatch();
   const user = useSelector((s) => s.user.user);
 
@@ -48,14 +49,28 @@ const id =
 
 
   // 1) כמות מקור אמת מ-Redux
+  // const qtyFromRedux = useSelector((s) => {
+  //   const i = s.cart.find((it) => getId(it) === productId);
+  //   return i?.quantity ?? item?.quantity ?? 1;
+  // });
   const qtyFromRedux = useSelector((s) => {
-    const i = s.cart.find((it) => getId(it) === productId);
-    return i?.quantity ?? item?.quantity ?? 1;
-  });
+  const i = s.cart.find(
+    (it) =>
+      getId(it) === productId &&
+      (it.variationId ?? null) === (item.variationId ?? null)
+  );
+  return i?.quantity ?? item?.quantity ?? 1;
+});
 
   // 2) סטייט מקומי לשדה הקלט
+  // const [localQty, setLocalQty] = useState(String(qtyFromRedux));
+  // useEffect(() => { setLocalQty(String(qtyFromRedux)); }, [qtyFromRedux]);
   const [localQty, setLocalQty] = useState(String(qtyFromRedux));
-  useEffect(() => { setLocalQty(String(qtyFromRedux)); }, [qtyFromRedux]);
+
+// גם ב־useEffect נוסיף תלות ב־variationId
+useEffect(() => {
+  setLocalQty(String(qtyFromRedux));
+}, [qtyFromRedux, item?.variationId]);
 
   // מנגנון debounce לשליחה מרוכזת
   const FLUSH_MS = 300;
@@ -70,31 +85,59 @@ const id =
   };
 
   const flushQuantity = () => {
-    if (isRemovingRef.current) return;
-    if (pendingQtyRef.current == null) return;
-    if (pendingQtyRef.current <= 0) { pendingQtyRef.current = null; return; }
-    dispatch(updateItemQuantityThunk({ productId: idUser, quantity: pendingQtyRef.current }));
-    pendingQtyRef.current = null;
-  };
+  if (isRemovingRef.current) return;
+  if (!pendingQtyRef.current) return;
 
-  const bufferQuantityChange = (newQty) => {
-    pendingQtyRef.current = newQty;
+  const { quantity, variationId } = pendingQtyRef.current; // 👈 שולפים את שני הערכים
+  if (quantity <= 0) { 
+    pendingQtyRef.current = null; 
+    return; 
+  }
+
+  dispatch(updateItemQuantityThunk({ 
+    productId: idUser, 
+    variationId,     // 👈 שולחים גם את הוריאציה
+    quantity 
+  }));
+
+  pendingQtyRef.current = null;
+};
+
+
+  const bufferQuantityChange = (newQty,variationId = null) => {
+    pendingQtyRef.current = { quantity: newQty, variationId };
     clearTimeout(flushTimerRef.current);
     flushTimerRef.current = setTimeout(flushQuantity, FLUSH_MS);
   };
 
   // פעולות UI
+  // const handleRemoveCompletely = () => {
+  //   if (user) dispatch(removeProductCompletelyThunk(idUser));
+  //   else dispatch(removeGuestProductCompletely(id));
+  // };
   const handleRemoveCompletely = () => {
-    if (user) dispatch(removeProductCompletelyThunk(idUser));
-    else dispatch(removeGuestProductCompletely(id));
-  };
+  if (user) {
+    dispatch(removeProductCompletelyThunk({
+      productId: idUser,
+      variationId: item?.variationId ?? null   // ⬅️ שולחים גם וריאציה אם קיימת
+    }));
+  } else {
+    dispatch(removeGuestProductCompletely({
+      productId: id,
+      variationId: item?.variationId ?? null
+    }));
+  }
+};
+
 
   const handleLocalChange = (e) => setLocalQty(e.target.value);
+
+
 
   const handleChangeGuest = (productId, e) => {
     const n = Number(e.target.value);
     if (Number.isFinite(n) && n > 0) {
-      dispatch(setGuestItemQuantity({ productId: String(productId), quantity: n }));
+      dispatch(setGuestItemQuantity({ productId: String(productId),variationId: item?.variationId ?? null,  quantity: n }));
     }
   };
 
@@ -103,7 +146,7 @@ const id =
     cancelFlush();
     const qty = Number(localQty);
     if (qty > 0) {
-      dispatch(updateItemQuantityThunk({ productId: idUser, quantity: qty }));
+      dispatch(updateItemQuantityThunk({ productId: idUser,variationId: item?.variationId ?? null, quantity: qty }));
     }
   };
 
@@ -111,11 +154,15 @@ const id =
     if (user) {
       setLocalQty((prev) => {
         const updated = Number(prev) + 1;
-        bufferQuantityChange(updated);
+        console.log("variationId",item.variationId );
+        bufferQuantityChange(updated,item?.variationId ?? null);
         return updated;
       });
     } else {
-      dispatch(addGuestItem(item.productId || item));
+      dispatch(addGuestItem({
+        product:item.productId || item,
+        variationId: item?.variationId ?? null 
+      }));
     }
   };
 
@@ -126,15 +173,21 @@ const id =
         if (updated === 0) {
           isRemovingRef.current = true;
           cancelFlush();
-          dispatch(removeProductCompletelyThunk(idUser))
+          dispatch(removeProductCompletelyThunk({
+          productId: idUser, 
+          variationId: item?.variationId ?? null   
+        }))
             .finally(() => { isRemovingRef.current = false; });
           return 0;
         }
-        bufferQuantityChange(updated);
+        bufferQuantityChange(updated,item?.variationId ?? null);
         return updated;
       });
     } else {
-      dispatch(removeGuestItem(id));
+      dispatch(removeGuestItem({ 
+      productId: id, 
+      variationId: item?.variationId ?? null 
+    }));
     }
   };
 
