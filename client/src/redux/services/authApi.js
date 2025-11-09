@@ -63,9 +63,9 @@ export const authApi = createApi({
             }),
         }),
 
-        updatePassword: builder.mutation({
+        changePassword: builder.mutation({
             query: (body) => ({
-                url: "/password/update-password",
+                url: "/password/change-password",
                 method: "POST",
                 body,
             }),
@@ -91,5 +91,5 @@ export const {
     useForgotPasswordMutation,
     useResetPasswordMutation,
     useUpdateProfileMutation,
-    useUpdatePasswordMutation,
+    useChangePasswordMutation,
 } = authApi;

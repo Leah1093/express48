@@ -138,7 +138,7 @@ import { useMemo, useState } from "react";
 import {
   useGetAdminSellerApplicationsQuery,
   useUpdateAdminSellerApplicationStatusMutation,
-} from "../redux/services/adminApi"; // עדכני נתיב לפי הפרויקט שלך
+} from "../../redux/services/adminApi"; // עדכני נתיב לפי הפרויקט שלך
 import AdminApplicationsTable from "../../components/admin/AdminApplicationsTable.jsx";
 import AdminApplicationDetails from "../../components/admin/AdminApplicationDetails.jsx";
 

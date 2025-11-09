@@ -2,7 +2,7 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQueryWithReauth } from "./baseApi";
 
-export const couponsApi = createApi({
+export const couponApi = createApi({
   reducerPath: "couponsApi",
   baseQuery: baseQueryWithReauth,          // כולל credentials: "include" וריענון טוקן
   tagTypes: ["Coupon"],
@@ -37,4 +37,4 @@ export const {
   // useGetCouponsQuery,
   // useUpdateCouponMutation,
   // useDeleteCouponMutation,
-} = couponsApi;
+} = couponApi;

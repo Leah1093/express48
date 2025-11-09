@@ -133,7 +133,7 @@ import {
   useSaveMyStoreMutation,
   useUpdateMySlugMutation,
   usePublishMyStoreMutation,
-} from "../../redux/services/sellerStoreApi";
+} from "../../../redux/services/sellerStoreApi";
 
 // עזרי ניקוי לפני שמירה
 const isEmpty = (v) => v == null || v === "";

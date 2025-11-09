@@ -383,7 +383,8 @@ import SettingsTabs from "./SettingsTabs.jsx";
 import UploadMedia from "./UploadMedia.jsx";
 import UploadGallery from "./UploadGallery.jsx";
 import RichTextEditor from "./RichTextEditor.jsx";
-import { useUploadStoreMediaMutation } from "../../redux/services/sellerStoreApi";
+import { useUploadStoreMediaMutation } from "../../../redux/services/sellerStoreApi";
+
 
 // סכימות
 const mediaUrlSchema = z
