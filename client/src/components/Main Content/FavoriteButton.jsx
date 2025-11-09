@@ -141,20 +141,22 @@
 // export default FavoriteButton;
 
 
-
 import React from "react";
-import { useAddFavoriteMutation, useRemoveFavoriteMutation } from "../../redux/api/favoritesApi";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { useSelector, useDispatch } from "react-redux";
+import {
+  useAddFavoriteMutation,
+  useRemoveFavoriteMutation,
+} from "../../redux/api/favoritesApi";
 import { addGuest, removeGuest } from "../../redux/slices/guestFavoritesSlice";
 
 function FavoriteButton({
   productId,
   product,
   favorites = [],
-  asChild = false,        // אם הוא עטוף בכפתור חיצוני - תני true והוא יחזיר <span>
+  asChild = false, // אם הכפתור עטוף ע"י קומפוננטה חיצונית
   className = "",
-  onToggle,               // אופציונלי: קולבק חיצוני
+  onToggle, // אופציונלי: קולבק חיצוני
 }) {
   const user = useSelector((state) => state.user.user);
   const dispatch = useDispatch();
@@ -170,32 +172,40 @@ function FavoriteButton({
     return favId === productId;
   });
 
-  const doToggle = () => {
-    if (user) {
-      if (isFavorite) removeFavorite(productId);
-      else addFavorite(productId);
-    } else {
-      if (isFavorite) dispatch(removeGuest(productId));
-      else dispatch(addGuest(product));
+  const doToggle = async () => {
+    try {
+      if (user) {
+        if (isFavorite) {
+          await removeFavorite(productId);
+        } else {
+          await addFavorite(productId);
+        }
+      } else {
+        if (isFavorite) {
+          dispatch(removeGuest(productId));
+        } else {
+          // נדרשת ישות מוצר בסיסית כדי להוסיף כאורח
+          dispatch(addGuest(product));
+        }
+      }
+      onToggle?.(isFavorite);
+    } catch (e) {
+      // אפשר להוסיף כאן הודעת שגיאה גלובלית אם יש מנגנון לכך
+      console.error("Favorite toggle failed:", e);
     }
-    onToggle?.(isFavorite);
   };
 
-  // לא מפעיל את onClick של ההורה
+  // לא מפעיל onClick של ההורה
   const handleClick = (e) => {
     e.stopPropagation();
     e.preventDefault();
     doToggle();
   };
 
-  const content = (
-    <>
-      {isFavorite ? (
-        <AiFillHeart className="w-6 h-6 text-[#FF6500]" />
-      ) : (
-        <AiOutlineHeart className="w-6 h-6 text-[#FF6500]" />
-      )}
-    </>
+  const content = isFavorite ? (
+    <AiFillHeart className="w-6 h-6 text-[#FF6500]" />
+  ) : (
+    <AiOutlineHeart className="w-6 h-6 text-[#FF6500]" />
   );
 
   if (asChild) {
@@ -205,7 +215,9 @@ function FavoriteButton({
         onClick={handleClick}
         className={`flex items-center justify-center ${className}`}
         aria-label="הוסף למועדפים"
+        role="button"
         tabIndex={-1}
+        aria-pressed={isFavorite}
       >
         {content}
       </span>
@@ -217,7 +229,7 @@ function FavoriteButton({
     <button
       type="button"
       onClick={handleClick}
-      className={`flex flex-row items-center justify-center bg-[#FFF7F2] text-[#FF6500] rounded-[12px] h-[40px] w-[40px] transition hover:bg-[#ffe3d1] border-none p-0 ${className}`}
+      className={`flex items-center justify-center bg-[#FFF7F2] text-[#FF6500] rounded-[12px] h-[40px] w-[40px] transition hover:bg-[#ffe3d1] border-none p-0 ${className}`}
       tabIndex={-1}
       aria-label="הוסף למועדפים"
       aria-pressed={isFavorite}
