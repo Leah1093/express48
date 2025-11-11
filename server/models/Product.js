@@ -1,18 +1,16 @@
-// models/Product.js — גרסה משופרת ומוקשחת
 import mongoose from "mongoose";
-import { Counter } from "./counter.js"; // ← מונה אוטומטי ל-SKU
-import { getAllowedVariationKeysForCategory } from "../config/variationAttributes.js"; // ← מאפייני וריאציה מותרים לפי קטגוריה
+import { Counter } from "./counter.js"; 
+import { getAllowedVariationKeysForCategory } from "../config/variationAttributes.js";
 
-// ---------- Helpers ----------
 function slugifyEn(str = "") {
   return String(str)
     .trim()
     .toLowerCase()
-    .replace(/&/g, " and ")            // & → and
-    .replace(/[^a-z0-9\s-]/g, "")      // רק a-z0-9 רווחים ומקפים
-    .replace(/\s+/g, "-")              // רווחים → מקפים
-    .replace(/-+/g, "-")                // איחוד מקפים כפולים
-    .replace(/^-|-$/g, "")              // הסרת מקף בתחילה/סוף
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
     .slice(0, 100);
 }
 
@@ -25,12 +23,11 @@ function toMaxLen(s, n) {
   return s.length <= n ? s : s.slice(0, n - 1).trim() + "…";
 }
 
-// נירמול עברית לחיפוש: הסרת ניקוד/גרשיים, סופיות → רגילות, lowercase
 const FINAL_MAP = { "ך": "כ", "ם": "מ", "ן": "נ", "ף": "פ", "ץ": "צ" };
 function normalizeHebrew(str = "") {
   let s = String(str)
-    .replace(/[\u0591-\u05C7]/g, "")   // ניקוד
-    .replace(/[\u05F3\u05F4'\"]/g, "") // גרשיים עבריים/לועזיים
+    .replace(/[\u0591-\u05C7]/g, "")  
+    .replace(/[\u05F3\u05F4'"]/g, "") 
     .replace(/[^\u0590-\u05FF0-9A-Za-z\s-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -79,7 +76,6 @@ function applyDiscount(baseAmount, discount) {
   return { final: baseAmount, saved: 0 };
 }
 
-// ---------- Subschemas ----------
 const DiscountSchema = new mongoose.Schema({
   discountType: { type: String, enum: ["percent", "fixed"], required: true },
   discountValue: { type: Number, required: true, min: 0 },
@@ -100,10 +96,9 @@ const PriceSchema = new mongoose.Schema({
 
 const gtinValidator = (v) => {
   if (!v) return true;
-  return /^[0-9]{8,14}$/.test(v); // GTIN/UPC/EAN בסיסי
+  return /^[0-9]{8,14}$/.test(v); 
 };
 
-// ---------- Variation Schema ----------
 const variationSchema = new mongoose.Schema({
   _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
   sku: { type: String, index: true },
@@ -117,38 +112,20 @@ const variationSchema = new mongoose.Schema({
   images: { type: [String], default: [] },
 });
 
-// אימות שמפתחות attributes מותרים לפי קטגוריה של המוצר
-// variationSchema.path("attributes").validate({
-//   validator: function (val) {
-//     if (!val) return true;
-//     const keys = val instanceof Map ? Array.from(val.keys()) : Object.keys(val);
-//     if (!keys.length) return true;
-//     const parentDoc = typeof this.ownerDocument === "function" ? this.ownerDocument() : (typeof this.parent === "function" ? this.parent() : null);
-//     const category = parentDoc?.category;
-//     const allowed = new Set(getAllowedVariationKeysForCategory(category) || []);
-//     return keys.every(k => allowed.has(k));
-//   },
-//   message: () => `attributes מכיל מפתח וריאציה שאינו מותר עבור קטגוריה זו`,
-// });
-
-// ---------- Product Schema ----------
 const productSchema = new mongoose.Schema({
   supplier: { type: String },
   sellerId: { type: mongoose.Schema.Types.ObjectId, ref: "Seller", index: true, required: true },
   storeId: { type: mongoose.Schema.Types.ObjectId, ref: "Store", index: true, required: true },
 
-  // SEO
   slug: { type: String, minlength: 3, maxlength: 100, index: true },
   metaTitle: { type: String, default: "" },
   metaDescription: { type: String, default: "" },
 
-  // חיפוש עברית
-  title_he_plain: { type: String, index: true },
-  brand_he_plain: { type: String, index: true },
-  description_he_plain: { type: String, index: true },
-  model_he_plain: { type: String, index: true },
+  title_he_plain: { type: String },
+  brand_he_plain: { type: String },
+  description_he_plain: { type: String },
+  model_he_plain: { type: String },
 
-  // מידע מוצר
   title: { type: String, required: true },
   titleEn: { type: String, default: "" },
   description: { type: String, default: "" },
@@ -161,40 +138,33 @@ const productSchema = new mongoose.Schema({
     videos: { type: [String], default: [] },
   },
 
-  // מזהים
   gtin: { type: String, index: true, sparse: true, validate: [gtinValidator, "GTIN לא חוקי"] },
   sku: { type: String, index: true, minlength: 8, maxlength: 64 },
   sellerSku: { type: String, default: "" },
 
   model: { type: String, default: "" },
 
-  // תמחור
   currency: { type: String, default: "ILS" },
   price: { type: PriceSchema, required: true },
   discount: { type: DiscountSchema, required: false },
 
   defaultVariationId: {
     type: mongoose.Schema.Types.ObjectId,
-    required: false, // לא חובה, רק אם יש וריאציות
+    required: false, 
   },
-
-  // וריאציותש
+ 
   variations: [variationSchema],
 
-  // מלאי
   stock: { type: Number, default: 0 },
   inStock: { type: Boolean, default: false },
 
-  // אנליטיקות
   views: { type: Number, default: 0 },
   purchases: { type: Number, default: 0 },
 
-  // מפרט
   specs: { type: Map, of: String, default: {} },
   images: { type: [String], default: [] },
   video: { type: String, default: "" },
 
-  // דירוגים
   ratings: {
     sum: { type: Number, default: 0 },
     avg: { type: Number, default: 0 },
@@ -208,7 +178,6 @@ const productSchema = new mongoose.Schema({
     },
   },
 
-  // נראות
   status: { type: String, enum: ["draft", "published", "suspended"], default: "draft", index: true },
   publishedAt: { type: Date },
 
@@ -218,7 +187,6 @@ const productSchema = new mongoose.Schema({
 
   warranty: { type: String, default: "12 חודשים אחריות יבואן רשמי" },
 
-  // שילוח והובלה
   shipping: {
     dimensions: {
       length: { type: Number, default: 0, min: 0 },
@@ -240,21 +208,17 @@ const productSchema = new mongoose.Schema({
   restoredAt: { type: Date, default: null },
   restoredBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
-  // --- מסחור וחיפוש ---
-  tags: { type: [String], default: [], index: true },     // תגים חופשיים לפילטרים/קמפיינים
-  aliases: { type: [String], default: [], index: true },  // שמות חלופיים לחיפוש (S24U, וכו')
+  tags: { type: [String], default: [], index: true },
+  aliases: { type: [String], default: [], index: true },
 
-  // --- דגלונים להצגה ב-UI ---
   badges: {
-    // isNew: { type: Boolean, default: false },    // נקבע אוטומטית לפי זמן
-    isBestSeller: { type: Boolean, default: false },    // נקבע לפי purchases
-    isRecommended: { type: Boolean, default: false },    // נקבע לפי ratings
+    isBestSeller: { type: Boolean, default: false },
+    isRecommended: { type: Boolean, default: false },
   },
 
-  // --- מעורבות/מדדים ---
-  wishlistCount: { type: Number, default: 0, min: 0 },   // כמה שמרו למועדפים
+  wishlistCount: { type: Number, default: 0, min: 0 },
   lastPurchasedAt: { type: Date },
-  // תאימות ישנה
+
   legacyPrice: { type: Number },
   image: { type: String },
 
@@ -262,22 +226,21 @@ const productSchema = new mongoose.Schema({
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 }, { timestamps: true });
 
-
-
-// ---------- Indexes ----------
-productSchema.index({ storeId: 1, sku: 1 }, { unique: true, sparse: true });
+productSchema.index({ storeId: 1, sku: 1 },  { unique: true, sparse: true });
 productSchema.index({ storeId: 1, slug: 1 }, { unique: true, sparse: true });
 productSchema.index({ storeId: 1, gtin: 1 }, { unique: true, sparse: true });
+
 productSchema.index({ title: "text", brand: "text", model: "text", description: "text" });
 
-// חיפוש עברית — אינדקסים פשוטים
 productSchema.index({ title_he_plain: 1 });
 productSchema.index({ brand_he_plain: 1 });
-productSchema.index({ description_he_plain: 1 });
 productSchema.index({ model_he_plain: 1 });
+productSchema.index({ description_he_plain: 1 });
 
-// ---------- Middleware ----------
-// חישוב מלאי כולל + inStock
+productSchema.index({ aliases: 1 });
+
+productSchema.index({ isDeleted: 1, status: 1, visibility: 1, updatedAt: -1 });
+
 productSchema.pre("save", function (next) {
   if (Array.isArray(this.variations) && this.variations.length > 0) {
     this.stock = this.variations.reduce((sum, v) => sum + (v.stock || 0), 0);
@@ -287,7 +250,6 @@ productSchema.pre("save", function (next) {
   next();
 });
 
-// יצירת SKU אוטומטי למוצר
 productSchema.pre("save", async function (next) {
   if (this.sku && this.sku.trim()) return next();
   try {
@@ -306,14 +268,14 @@ productSchema.pre("save", async function (next) {
         { $inc: { seq: 1 } },
         { new: true, upsert: true, setDefaultsOnInsert: true }
       ).lean();
-      nextSeq = (doc && typeof doc.seq === "number") ? doc.seq : 1; // הגנה לברירת מחדל
+      nextSeq = (doc && typeof doc.seq === "number") ? doc.seq : 1;
     }
 
     const brandPart = norm(this.brand || "GEN");
     const categoryPart = norm(category || "CAT");
     const storePart = norm(storeId);
     const supplierPart = norm(supplier);
-    const seqPart = String(nextSeq).padStart(6, "0"); // מרחב גדול יותר
+    const seqPart = String(nextSeq).padStart(6, "0");
 
     this.sku = `${storePart}-${supplierPart}-${categoryPart}-${brandPart}-${seqPart}`;
     next();
@@ -322,7 +284,6 @@ productSchema.pre("save", async function (next) {
   }
 });
 
-// ולידציה של טווחי נראות
 productSchema.pre("validate", function (next) {
   if (this.scheduledAt && this.visibleUntil && this.visibleUntil < this.scheduledAt) {
     return next(new Error("visibleUntil must be after scheduledAt"));
@@ -330,20 +291,17 @@ productSchema.pre("validate", function (next) {
   next();
 });
 
-// productSchema middleware
 productSchema.pre("save", function (next) {
   if (this.isModified("status")) {
     if (this.status === "published" && !this.publishedAt) {
       this.publishedAt = new Date();
     } else if (this.status !== "published") {
-      this.publishedAt = undefined; // או להשאיר - תלוי בצורך העסקי
+      this.publishedAt = undefined;
     }
   }
   next();
 });
 
-
-// יצירת SKU אוטומטי לכל וריאציה
 productSchema.pre("save", function (next) {
   if (Array.isArray(this.variations)) {
     this.variations.forEach((v, idx) => {
@@ -355,20 +313,17 @@ productSchema.pre("save", function (next) {
   }
   next();
 });
+
 productSchema.pre("validate", function (next) {
-  // אם gtin ריק/לא תקין – אל תאחסן בכלל (ייתר את ההתנגשות באינדקס ה-sparse)
   if (typeof this.gtin === "string" && this.gtin.trim() === "") {
     this.gtin = undefined;
   }
-  // אם יש ערך אך לא עומד ברגקס – גם נסיר (או תחליט לזרוק שגיאה)
   if (this.gtin && !/^[0-9]{8,14}$/.test(this.gtin)) {
     this.invalidate("gtin", "GTIN לא חוקי");
-    // או: this.gtin = undefined;  // אם מעדיפים לאחסן בלי GTIN במקום לזרוק שגיאה
   }
   next();
 });
 
-// SEO אוטומטי
 productSchema.pre("save", function (next) {
   const hasManualTitle = this.isModified("metaTitle") && this.metaTitle && this.metaTitle.trim();
   const hasManualDesc = this.isModified("metaDescription") && this.metaDescription && this.metaDescription.trim();
@@ -387,13 +342,14 @@ productSchema.pre("save", function (next) {
   }
   next();
 });
+
 productSchema.path("images").validate(function (arr) {
   if (this.status === "published") {
     return Array.isArray(arr) && arr.length > 0;
   }
   return true;
 }, "מוצר מפורסם חייב לכלול לפחות תמונה אחת");
-// ולידציה של מחיר
+
 productSchema.pre("validate", function (next) {
   if (!this.price || !isNumFinite(this.price.amount)) {
     return next(new Error("price.amount של מוצר הוא שדה חובה ומספר תקין"));
@@ -410,7 +366,6 @@ productSchema.pre("validate", function (next) {
   next();
 });
 
-// שדות plain לעברית — עדכון בכל שמירה
 productSchema.pre("save", function (next) {
   this.title_he_plain = normalizeHebrew(this.title);
   this.brand_he_plain = normalizeHebrew(this.brand);
@@ -419,7 +374,6 @@ productSchema.pre("save", function (next) {
   next();
 });
 
-// Slug אוטומטי (אל תשנה אחרי פרסום אלא אם ערכו ידנית)
 productSchema.pre("validate", function (next) {
   const allowAuto = this.status !== "published" || !this.slug || this.isNew;
   if (!this.slug || (this.isModified("titleEn") && allowAuto)) {
@@ -431,7 +385,6 @@ productSchema.pre("validate", function (next) {
   next();
 });
 
-// פתרון התנגשויות slug פר-חנות
 productSchema.pre("save", async function (next) {
   if (!this.isModified("slug") && !this.isNew) return next();
   this.slug = slugifyEn(this.slug);
@@ -448,15 +401,13 @@ productSchema.pre("save", async function (next) {
 });
 
 productSchema.pre(/^find/, function (next) {
-  const { includeDeleted } = this.getOptions(); // ← קורא מאופציות, לא מהפילטר
+  const { includeDeleted } = this.getOptions();
   if (!includeDeleted) {
     this.where({ isDeleted: false });
   }
   next();
 });
 
-
-// שמירת עקביות דירוגים אם breakdown השתנה
 productSchema.pre("save", function (next) {
   if (this.isModified("ratings.breakdown")) {
     const b = this.ratings?.breakdown || {};
@@ -476,8 +427,6 @@ productSchema.pre("validate", function (next) {
   next();
 });
 
-
-// ---------- Methods ----------
 productSchema.methods.getEffectivePricing = function (variationId = null) {
   const currency = this.currency || "ILS";
   let baseAmount = this.price?.amount ?? 0;
