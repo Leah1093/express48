@@ -83,10 +83,6 @@
 //         </div>
 //       </div>
 
-
-
-
-
 //       {/* מוכר */}
 //       <div className="mt-12 rounded-2xl border-b border-[#EDEDED] p-3">
 //         <ProductSeller store={product.storeId} />
@@ -114,7 +110,6 @@
 //         ]}
 //       />
 
-
 //       {/* סקירה כללית */}
 //       {product.overview && (
 //         <ProductOverview overview={product.overview} />
@@ -138,9 +133,6 @@
 //     </div>
 //   );
 // }
-
-
-
 
 // // src/components/products/product-page/ProductPage.jsx
 // import { useState } from "react";
@@ -198,9 +190,6 @@
 //     String(it.productId?._id ?? it.productId) === String(product?._id) &&
 //     String(it.variationId ?? "") === String(selectedVariation?._id ?? "")
 // );
-
-
-
 
 //   const handleAddToCart = (quantity) => {
 // <<<<<<< HEAD
@@ -291,9 +280,6 @@
 //   );
 // }
 
-
-
-
 // src/components/products/product-page/ProductPage.jsx
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -312,6 +298,7 @@ import ProductReviews from "./ProductReviews.jsx";
 import ProductSeller from "./ProductSeller.jsx";
 import ProductOverview from "./ProductOverview.jsx";
 import RelatedProducts from "./RelatedProducts.jsx";
+import ProductTabs from "./ProductTabs.jsx";
 
 export default function ProductPage() {
   const { productSlug } = useParams();
@@ -319,7 +306,11 @@ export default function ProductPage() {
   const navigate = useNavigate();
 
   // שליפה דרך RTK Query לפי slug
-  const { data: product, isFetching, isError } = useGetProductBySlugQuery(productSlug);
+  const {
+    data: product,
+    isFetching,
+    isError,
+  } = useGetProductBySlugQuery(productSlug);
 
   const user = useSelector((state) => state.user.user);
   const cartItems = useSelector(selectCartItems);
@@ -359,41 +350,48 @@ export default function ProductPage() {
   const handleClick = () => navigate("/cart");
 
   if (isFetching) return <div className="text-center py-20">טוען...</div>;
-  if (isError || !product) return <div className="text-center py-20">מוצר לא נמצא</div>;
+  if (isError || !product)
+    return <div className="text-center py-20">מוצר לא נמצא</div>;
 
   return (
     <div className="font-heebo bg-white text-gray-900 max-w-[1440px] mx-auto px-4 md:px-8 lg:px-12 py-6 md:py-10">
-      {/* בלוק עליון - גלריה + פרטים */}
-      <div className="flex flex-col md:flex-row-reverse justify-end items-start gap-8 lg:gap-[100px] self-stretch">
-        {/* גלריה */}
-        <div className="md:flex md:justify-end w-full md:w-[55%]">
-          <div className="w-[100%] md:max-w-[600px]">
-            <ProductGallery product={product} selectedVariation={selectedVariation} />
-          </div>
+      {/* עטיפה של שתי העמודות */}
+      <div
+        className="w-full mx-auto px-4 md:px-6 lg:px-8
+                grid gap-[clamp(16px,2.5vw,36px)]
+                sm:grid-cols-1 md:[grid-template-columns:50%_50%]"
+      >
+        {/* פרטים */}
+
+        {/* להרחיב: להסיר w-auto/max-w קטן → לשים רוחב מלא ו־max של 639px */}
+        <div className="w-full ">
+          <ProductDetails
+            product={product}
+            existing={existing}
+            selectedVariation={selectedVariation}
+            setSelectedVariation={setSelectedVariation}
+            handleAddToCart={handleAddToCart}
+            handleClick={handleClick}
+          />
         </div>
 
-        {/* פרטים */}
-        <div className="md:flex md:justify-end w-full md:w-[45%]">
-          <div className="w-auto md:max-w-[400px]">
-            <ProductDetails
-              product={product}
-              existing={existing}
-              selectedVariation={selectedVariation}
-              setSelectedVariation={setSelectedVariation}
-              handleAddToCart={handleAddToCart}
-              handleClick={handleClick}
-            />
-          </div>
+        {/* גלריה */}
+
+        <div className="w-full">
+          <ProductGallery
+            product={product}
+            selectedVariation={selectedVariation}
+          />
         </div>
       </div>
 
       {/* מוכר */}
-      <div className="mt-12 rounded-2xl border-b border-[#EDEDED] p-3">
+      {/* <div className="mt-12 rounded-2xl border-b border-[#EDEDED] p-3">
         <ProductSeller store={product.storeId} />
-      </div>
+      </div> */}
 
       {/* משלוחים (דמו – כמו שהיה) */}
-      <ProductShipping
+      {/* <ProductShipping
         shippingOptions={[
           {
             id: "pickup",
@@ -412,19 +410,24 @@ export default function ProductPage() {
             isSelected: false,
           },
         ]}
+      /> */}
+      {/* טאבים לתוכן המוצר */}
+        <div className="flex flex-col items-start gap-[46px] py-[40px] bg-[#F9FAFB]">
+
+      <ProductTabs
+        overview={product.overview}
+        specs={product.specs}
+        reviews={product.reviews}
+        description={product.description}
+        warranty={product.warranty}
+        // qa={product.qa}
       />
-
-      {/* סקירה כללית */}
-      {product.overview && <ProductOverview overview={product.overview} />}
-
-      {/* מפרט טכני */}
-      {product.specs && <ProductSpecs specs={product.specs} />}
-
-      {/* ביקורות */}
-      {product.reviews?.length > 0 && <ProductReviews reviews={product.reviews} />}
+</div>
 
       {/* מוצרים קשורים */}
-      {product.related?.length > 0 && <RelatedProducts related={product.related} />}
+      {product.related?.length > 0 && (
+        <RelatedProducts related={product.related} />
+      )}
     </div>
   );
 }

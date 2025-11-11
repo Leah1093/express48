@@ -271,7 +271,7 @@ export default function Support() {
 
           <button
             type="submit"
-            className="bg-blue-900 text-white py-3 rounded w-full text-lg font-semibold hover:bg-blue-800 transition disabled:opacity-60"
+            className="bg-[#FF6500] text-white py-3 rounded w-full text-lg font-semibold hover:bg-blue-800 transition disabled:opacity-60"
             disabled={isLoading}
           >
             {isLoading ? "שולח..." : "שליחה"}

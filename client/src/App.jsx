@@ -260,7 +260,7 @@ useEffect(() => {
 
       </main>
 
-      {/* <Footer /> */}
+      <Footer />
     </div>
   );
 }
