@@ -194,6 +194,8 @@ function App() {
           <Route path="/store/:slug" element={<StorePage />} />
         </Routes>
       </main>
+
+      <Footer />
     </div>
   );
 }

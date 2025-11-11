@@ -44,14 +44,14 @@ export default function TopActions({ product }) {
 
     
     return (
-        <div className="flex gap-2">
+       <div className="absolute top-3 right-3 flex flex-col items-center gap-2">
             {/* כפתור שיתוף */}
-            <button
+            {/* <button
                 onClick={handleShare}
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-[#fff7f2] hover:bg-[#ffe8d9] transition"
             >
                 <IoShareSocialOutline className="w-6 h-6 text-[#ff6500]" />
-            </button>
+            </button> */}
             {/* כפתור מועדפים */}
             <FavoriteButton
                 productId={product._id} // 👈 חשוב לשים _id נכון
