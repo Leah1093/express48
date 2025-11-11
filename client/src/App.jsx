@@ -67,6 +67,7 @@ import SearchResultsPage from './components/Main Content/product/SearchResultsPa
 import ProductsPage from './components/Main Content/product/ProductsPage.jsx';
 import CheckoutSuccess from './components/checkouts/CheckoutSuccess.jsx';
 import CheckoutFaild from './components/checkouts/CheckoutFailed.jsx';
+import Footer from './components/footer/Footer.jsx';
 
 function App() {
   const location = useLocation();
