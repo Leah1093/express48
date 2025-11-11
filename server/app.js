@@ -20,6 +20,7 @@ import session from "express-session";
 import { apiLimiter } from "./middlewares/rateLimit.middleware.js";
 import './config/googleOAuth.config.js'
 import productRouter from "./router/product.router.js";
+import searchRouter from "./router/search.router.js";
 import { sellerProductsRouter } from "./router/seller.products.router.js";
 // import { sellerProfileRouter } from "./router/sellerProfile.router.js";
 import { marketplaceRouter } from "./router/marketplace.router.js";
@@ -35,8 +36,15 @@ import tranzilaRouter from "./router/tranzilaRouter.js";
 
 const app = express();
 
-// Middlewares
 connectDB();
+app.use(cors({
+  origin: ["http://localhost:5173", 'https://affirmatively-unparenthesised-brandon.ngrok-free.dev'],
+  credentials: true,
+  methods: ["GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
+
+// Middlewares
 app.use(express.json());
 app.set('trust proxy', 1);
 app.use(apiLimiter);
@@ -46,19 +54,13 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
 }));
-
+app.use("/api/search", searchRouter);
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(cors({
-  origin: ["http://localhost:5173", 'https://affirmatively-unparenthesised-brandon.ngrok-free.dev'],
-  credentials: true,
-  methods: ["GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
+
 app.get("/", (req, res) => {
   res.send("Express48 API is running 🚀");
 });
-
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
@@ -76,7 +78,6 @@ app.use('/cart', cartRouter);
 app.use('/products', productRouter);
 app.use("/favorites", favoritesRouter);
 app.use("/categories", categoryRoutes);
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/addresses", addressRoutes);
 app.use("/orders", orderRoutes);
 app.use("/coupons", couponsRoutes);
@@ -87,5 +88,4 @@ const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`start server port: ${PORT}`);
-
 });

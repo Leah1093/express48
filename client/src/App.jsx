@@ -8,7 +8,6 @@ import BestSellers from "./components/mainNav/BestSellers";
 import Careers from "./components/mainNav/Careers";
 import Coupons from "./components/mainNav/Coupons";
 import Guides from "./components/mainNav/Guides";
-// import MainNav from "./components/mainNav/MainNav";
 import AccountDashboard from './components/account/Dashboard';
 import Support from './components/mainNav/Support';
 import Login from './components/authentication/Login';
@@ -21,7 +20,6 @@ import Downloads from './components/account/Downloads';
 import Addresses from './components/account/Addresses';
 import Favorites from './components/account/Favorites';
 import Profile from './components/account/Profile';
-import Footer from './components/footer/Footer';
 import TermsOfUse from './components/footer/info/TermsOfUse';
 import CancellationPolicy from './components/footer/info/CancellationPolicy';
 import PrivacyPolicy from './components/footer/info/PrivacyPolicy';
@@ -42,9 +40,6 @@ import Reviews from './components/seller/Reviews';
 import Reports from './components/seller/Reports';
 import OrdersSeller from './components/seller/OrdersSeller';
 import StorePage from './components/store/StorePage';
-// import StoreProducts from './components/store/StoreProducts';
-// import StoreAbout from './components/store/StoreAbout';
-// import StoreReviews from './components/store/StoreReviews';
 import { useDispatch, useSelector } from "react-redux";
 import { setUser, clearUser } from "./redux/slices/userSlice";
 import { setIsMobile } from "./redux/slices/uiSlice";
@@ -58,15 +53,11 @@ import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
 import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx";
 import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
 import Layout from './components/Layout.jsx';
-
 import CouponForm from "./components/seller/Coupons.jsx"
 import ProductPage from "./components/Main Content/product/productPage/ProductPage.jsx"
-// import ProductCreateForm from './components/seller/products/ProductCreateForm.jsx';
 import ProductsList from './components/Main Content/product/ProductsList.jsx';
 import HomeNewProducts from './components/Main Content/home/HomeNewProducts.jsx';
 import AuthHeader from './components/authentication/AuthHeader.jsx';
-
-
 import ProductForm from './components/seller/products/forms/ProductForm.jsx';
 import SellerProductsPage from './components/seller/SellerProductsPage.jsx';
 import ProductDetailPage from './components/seller/ProductDetailPage.jsx';
@@ -77,7 +68,6 @@ import ProductsPage from './components/Main Content/product/ProductsPage.jsx';
 import CheckoutSuccess from './components/checkouts/CheckoutSuccess.jsx';
 import CheckoutFaild from './components/checkouts/CheckoutFailed.jsx';
 
-
 function App() {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -87,13 +77,12 @@ function App() {
   const { data: currentUser, isSuccess, isError } = useGetCurrentUserQuery(undefined, {
     skip: !!user,
   });
-useEffect(() => {
-  // ידפיס פעם אחת בפרודקשן
-  console.log("API_URL =", import.meta.env.VITE_API_URL);
-}, []);
 
   useEffect(() => {
-    // עדכון מצב מובייל ב-redux
+    console.log("API_URL =", import.meta.env.VITE_API_URL);
+  }, []);
+
+  useEffect(() => {
     const handleResize = () => {
       dispatch(setIsMobile(window.innerWidth <= 768));
     };
@@ -101,9 +90,6 @@ useEffect(() => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [dispatch]);
-
-
-  // אם אין משתמש, נפעיל את ה-query
 
   useEffect(() => {
     if (!user) {
@@ -115,38 +101,32 @@ useEffect(() => {
     }
   }, [isSuccess, isError, currentUser, user, dispatch]);
 
-
   useEffect(() => {
     if (user) {
       console.log("🔄 טוען עגלה ממונגו אחרי ריפרוש...");
       dispatch(loadCart());
     }
   }, [user, dispatch]);
+
   return (
     <div className="min-h-screen flex flex-col font-[Rubik]">
-      <Toaster position="top-center" toastOptions={{
-        style: {
-          marginTop: "70px", // מרווח כדי לא להיתקע מתחת ל־NavBar
-        },
-      }} reverseOrder={false} />
-
-      {/* <CategorySidebarMenu></CategorySidebarMenu> */}
+      <Toaster position="top-center" toastOptions={{ style: { marginTop: "70px" } }} reverseOrder={false} />
       {!hideMainHeader && <TopBar />}
-
-
-
-
-      {/* {!isMobile && <MainNav />} */}
 
       <main className="flex-grow">
         <Routes>
-
-
+          {/* חיפוש/חנות */}
+          <Route path="/" element={<ProductsPage />} />
           <Route path="products" element={<ProductsPage />} />
+          {/* עמוד מוצר לפי קטגוריה+סלאג */}
           <Route path="products/:storeSlug/:productSlug" element={<ProductPage />} />
+          {/* עמוד מוצר לפי מזהה/סלאג קצר (דף בית / חיפוש מהיר) */}
+          <Route path="/p/:idOrSlug" element={<StorefrontProduct />} />
+
           <Route path="/favorites" element={<FavoritesList />} />
           <Route path="/categories/manage" element={<CategoryManagementPage />} />
-          {/* Layout מיוחד לזרימת הקניות */}
+
+          {/* זרימת קנייה */}
           <Route element={<CartLayout />}>
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CartCheckout />} />
@@ -157,12 +137,7 @@ useEffect(() => {
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
           <Route path="/checkout/failed" element={<CheckoutFaild />} />
 
-
-
-          <Route path="/" element={<HomeNewProducts />} />
-          {/* <Route path="/unauthorized" element={<UnauthorizedPage />} /> */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          {/* סטטי/מידע */}
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/bestSellers" element={<BestSellers />} />
@@ -170,17 +145,6 @@ useEffect(() => {
           <Route path="/coupons" element={<Coupons />} />
           <Route path="/guides" element={<Guides />} />
           <Route path="/support" element={<Support />} />
-          <Route path="/account" element={<AccountDashboard />} />
-          <Route path="/account/orders" element={<Orders />} />
-          <Route path="/account/downloads" element={<Downloads />} />
-          <Route path="/account/addresses" element={<Addresses />} />
-          <Route path="/account/favorites" element={<Favorites />} />
-          <Route path="/account/profile" element={<Profile />} />
-          <Route path="forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path='/seller-dashboard' element={<SellerDashboard />} />
-
-
           <Route path="/marketplace" element={<MarketplaceInfo />} />
           <Route path="/terms-of-use" element={<TermsOfUse />} />
           <Route path="/cancellation-policy" element={<CancellationPolicy />} />
@@ -188,8 +152,20 @@ useEffect(() => {
           <Route path="/warranty-policy" element={<WarrantyPolicy />} />
           <Route path="/shipping-policy" element={<ShippingPolicy />} />
           <Route path="/returns-policy" element={<ReturnsPolicy />} />
-          <Route path="/" element={<StorefrontList />} />
-          <Route path="/p/:idOrSlug" element={<StorefrontProduct />} />
+
+          {/* חשבון/אימות */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/account" element={<AccountDashboard />} />
+          <Route path="/account/orders" element={<Orders />} />
+          <Route path="/account/downloads" element={<Downloads />} />
+          <Route path="/account/addresses" element={<Addresses />} />
+          <Route path="/account/favorites" element={<Favorites />} />
+          <Route path="/account/profile" element={<Profile />} />
+
+          {/* מוכר/אדמין */}
           <Route
             path="/admin/marketplace/applications"
             element={
@@ -199,69 +175,28 @@ useEffect(() => {
             }
           />
           <Route path="/admin/applications" element={<AdminApplicationsPage />} />
-
-
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-
-          <Route path="/account" element={<ProtectedRoute allow={["user", "seller", "admin"]}>< Layout /> </ProtectedRoute>}>
-            <Route index element={<AccountDashboard />} />
-
-            <Route path="profile" element={<Profile />} />
-            <Route path="orders" element={<Orders />} />
-            <Route path="addresses" element={<Addresses />} />
-            <Route path="favorites" element={<Favorites />} />
-            <Route path="downloads" element={<Downloads />} />
-          </Route>
-          {/* <Route path="/seller" element={<ProtectedRoute allow={["seller", "admin"]}><SellerLayout /></ProtectedRoute>}>
-            <Route index element={<SellerDashboard />} />
-            <Route path="settings" element={<StoreSettings />} />
-            <Route path="products" element={<Products />} />
-            <Route path="orders" element={<OrdersSeller />} />
-            <Route path="reviews" element={<Reviews />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="coupons" element={<CouponForm />} />
-
-          </Route> */}
-
           <Route path="/seller" element={<ProtectedRoute allow={["seller", "admin"]}><SellerLayout /></ProtectedRoute>}>
             <Route index element={<SellerDashboard />} />
             <Route path="settings" element={<StoreSettings />} />
-
-            {/* <Route path="products">
-              <Route index element={<SellerProductsPage />} />                 
-              <Route path="new" element={<ProductForm />} />         
-              <Route path=":id" element={<ProductDetailPage />} />           
-            </Route> */}
-
             <Route path="products">
-              <Route index element={<SellerProductsPage />} />            {/* רשימה */}
-              <Route path="new" element={<ProductCreate />} />  {/* הוספה */}
-              <Route path=":id/edit" element={<ProductEdit />} /> {/* עריכה */}
-              <Route path=":id" element={<ProductDetailPage />} />    {/* פרטים – אופציונלי */}
+              <Route index element={<SellerProductsPage />} />
+              <Route path="new" element={<ProductCreate />} />
+              <Route path=":id/edit" element={<ProductEdit />} />
+              <Route path=":id" element={<ProductDetailPage />} />
             </Route>
-
             <Route path="orders" element={<OrdersSeller />} />
             <Route path="reviews" element={<Reviews />} />
             <Route path="reports" element={<Reports />} />
             <Route path="coupons" element={<CouponForm />} />
-
           </Route>
 
-
-
-          <Route path="/store/:slug" element={<StorePage />}>
-            {/* <Route index element={<StoreProducts />} /> */}
-            {/* <Route path="about" element={<StoreAbout />} />
-            <Route path="reviews" element={<StoreReviews />} /> */}
-          </Route>
-
+          {/* חנות ספציפית */}
+          <Route path="/store/:slug" element={<StorePage />} />
         </Routes>
-
       </main>
 
       <Footer />
     </div>
   );
 }
-export default App
+export default App;
