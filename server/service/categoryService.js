@@ -301,4 +301,59 @@ export class CategoryService {
       throw new CustomError("Failed to upload icon", 500);
     }
   }
+    // -------- CHILDREN + hasChildren (למגה-פאנל) --------
+// -------- CHILDREN + hasChildren (למגה-פאנל) --------
+async getChildrenWithHasChildren(parentId) {
+  try {
+    if (!isValidObjectId(parentId)) {
+      throw new CustomError("Invalid parent id", 400);
+    }
+
+    // ילדים ישירים של ה-root (L2)
+    const children = await Category.find({
+      parent: parentId,
+      isActive: true,
+    })
+      .sort({ order: 1, name: 1 })
+      .lean();
+
+    if (!children.length) return [];
+
+    const childIds = children.map((c) => c._id);
+
+    // בודקים אם יש להם ילדים ישירים (L3) לפי parent
+    const directChildrenCounts = await Category.aggregate([
+      {
+        $match: {
+          parent: { $in: childIds },
+          isActive: true,
+        },
+      },
+      {
+        $group: {
+          _id: "$parent",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const countsMap = new Map(
+      directChildrenCounts.map((d) => [String(d._id), d.count])
+    );
+
+    // מחזירים את הילדים עם hasChildren לפי אם יש להם ילד ישיר
+    return children.map((cat) => ({
+      ...cat,
+      hasChildren: countsMap.has(String(cat._id)),
+    }));
+  } catch (err) {
+    if (err instanceof CustomError) throw err;
+    throw new CustomError(
+      err.message || "Failed to fetch children with hasChildren",
+      500
+    );
+  }
 }
+
+}
+

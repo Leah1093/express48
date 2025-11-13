@@ -103,18 +103,19 @@ export class CategoryController {
   }
 
   // ---------- ילדים ישירים ----------
+  // ---------- ילדים ישירים + hasChildren ----------
   async getChildren(req, res, next) {
     try {
       const { id } = req.params;
       assertObjectId(id);
-      const children = await Category.find({ parent: id })
-        .sort({ order: 1, name: 1 })
-        .lean();
+      // משתמשים בסרוויס החדש שמחשב hasChildren לפי ancestors
+      const children = await service.getChildrenWithHasChildren(id);
       res.json(children);
     } catch (e) {
       next(e);
     }
   }
+
 
   // ---------- לפי fullSlug ----------
 getByFullSlug = async (req, res, next) => {
