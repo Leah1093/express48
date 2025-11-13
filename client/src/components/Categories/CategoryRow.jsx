@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useGetRootCategoriesQuery /*, useGetCategoriesQuery*/ } from "../../redux/services/categoriesApi";
+import { useGetRootCategoriesQuery } from "../../redux/services/categoriesApi";
+
+const byCatUrl = (fullSlug, page = 1, limit = 24) =>
+  `/products/by-category/${fullSlug}?page=${page}&limit=${limit}`;
 
 function CategoryCard({ name, iconUrl, onClick }) {
   return (
@@ -41,27 +44,41 @@ function CategoryCard({ name, iconUrl, onClick }) {
 export default function CategoryRowMarquee() {
   const navigate = useNavigate();
 
-  // 1) מביא רק שורשים
+  // מביא רק שורשים
   const { data: rootsData = [], isFetching } = useGetRootCategoriesQuery();
 
-  // אם מסיבה כלשהי אין לך /roots אפשר לגבות כך:
-  // const { data: all = [] } = useGetCategoriesQuery({ parent: null });
-  // const rootsData = all;
+  const BASE_URL =
+    import.meta.env.VITE_API_URL || "https://api.express48.com";
 
-  const BASE_URL = import.meta.env.VITE_API_URL || "https://api.express48.com";
-
+  // אם icon הוא Cloudinary (URL מלא) – משתמשים בו כמו שהוא
+  // אם icon הוא נתיב יחסי (למשל /uploads/icons/...) – מחברים ל-BASE_URL
   const roots = useMemo(
     () =>
-      (rootsData || []).map((c) => ({
-        _id: c._id,
-        name: c.name,
-        iconUrl: c.icon ? `${BASE_URL}${c.icon}` : "",
-        fullSlug: c.fullSlug,
-      })),
+      (rootsData || []).map((c) => {
+        let iconUrl = "";
+        if (c.icon) {
+          if (
+            typeof c.icon === "string" &&
+            (c.icon.startsWith("http://") ||
+              c.icon.startsWith("https://"))
+          ) {
+            iconUrl = c.icon; // Cloudinary / CDN
+          } else {
+            iconUrl = `${BASE_URL}${c.icon}`; // קובץ מהשרת
+          }
+        }
+
+        return {
+          _id: c._id,
+          name: c.name,
+          iconUrl,
+          fullSlug: c.fullSlug,
+        };
+      }),
     [rootsData, BASE_URL]
   );
 
-  // 2) לוגיקת מרקיזה — רק אם יש overflow ורק אחרי שהשורה מלאה על המסך
+  // לוגיקת מרקיזה — רק אם יש overflow ורק אחרי שהשורה מלאה על המסך
   const wrapRef = useRef(null);
   const trackRef = useRef(null);
   const [needMarquee, setNeedMarquee] = useState(false);
@@ -77,13 +94,14 @@ export default function CategoryRowMarquee() {
 
       if (overflow) {
         setStartMarquee(false);
-        requestAnimationFrame(() => setTimeout(() => setStartMarquee(true), 400));
+        requestAnimationFrame(() =>
+          setTimeout(() => setStartMarquee(true), 400)
+        );
       } else {
         setStartMarquee(false);
       }
     };
 
-    // מודדים אחרי הרנדר כדי להבטיח "מלא מסך" לפני החלטה
     requestAnimationFrame(measure);
 
     const ro = new ResizeObserver(() => requestAnimationFrame(measure));
@@ -93,8 +111,13 @@ export default function CategoryRowMarquee() {
   }, [roots.length]);
 
   const onClickCat = (cat) => {
-    const url = cat?.fullSlug ? `/products/${cat.fullSlug}` : `/products/${cat._id}`;
-    navigate(url);
+    if (cat.fullSlug) {
+      // כמו במגה־פאנל
+      navigate(byCatUrl(cat.fullSlug));
+    } else {
+      // fallback
+      navigate(`/products/${cat._id}`);
+    }
   };
 
   if (isFetching) {
@@ -114,8 +137,8 @@ export default function CategoryRowMarquee() {
           style={
             needMarquee && startMarquee
               ? {
-                  ["--speed"]: "28s",
-                  animation: "marquee-slide var(--speed) linear infinite reverse",
+                  animation:
+                    "marquee-slide 28s linear infinite reverse",
                 }
               : undefined
           }
@@ -136,7 +159,6 @@ export default function CategoryRowMarquee() {
             0%   { transform: translateX(0); }
             100% { transform: translateX(-50%); }
           }
-          /* pause on hover */
           [dir="rtl"] .w-full.bg-white.py-4.px-4 > div:hover > div {
             animation-play-state: paused;
           }
