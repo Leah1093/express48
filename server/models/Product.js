@@ -224,7 +224,21 @@ const productSchema = new mongoose.Schema({
 
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+    // --- קישור מלא לעץ קטגוריות ---
+  primaryCategoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+  categoryPathIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
+  categoryFullSlug: { type: String, index: true }, // <<<< חשוב בשביל /by-category
+  breadcrumbs: [{
+    id: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
+    name: { type: String, required: true },
+    slug: { type: String, required: true },
+    fullSlug: { type: String, required: true },
+    depth: { type: Number, required: true },
+  }],
+
 }, { timestamps: true });
+
 
 productSchema.index({ storeId: 1, sku: 1 },  { unique: true, sparse: true });
 productSchema.index({ storeId: 1, slug: 1 }, { unique: true, sparse: true });
@@ -240,6 +254,11 @@ productSchema.index({ description_he_plain: 1 });
 productSchema.index({ aliases: 1 });
 
 productSchema.index({ isDeleted: 1, status: 1, visibility: 1, updatedAt: -1 });
+
+productSchema.index({ primaryCategoryId: 1 });
+productSchema.index({ categoryPathIds: 1 });
+productSchema.index({ categoryFullSlug: 1 }); // לשאילתת by-category
+
 
 productSchema.pre("save", function (next) {
   if (Array.isArray(this.variations) && this.variations.length > 0) {

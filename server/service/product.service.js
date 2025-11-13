@@ -2,6 +2,8 @@ import { Product } from "../models/Product.js";
 import { CustomError } from "../utils/CustomError.js";
 
 import { SearchLog } from "../models/SearchLog.js";
+import CategoryModel, { Category } from "../models/category.js"; // לפי הנתיב שלך
+
 
 // פונקציית עזר
 function isNewProduct(publishedAt) {
@@ -65,17 +67,47 @@ class ProductService {
     }
   };
 
-  getProductBySlugService = async (slug) => {
-    if (!slug) throw new CustomError("Slug is required", 400);
+  async getProductBySlugService(slug) {
+    return Product.findOne({ slug, isDeleted: false, status: "published" }).lean();
+  }
 
-    try {
-      const product = await Product.findOne({ slug }).populate("storeId");
-      if (!product) throw new CustomError(`Product with slug '${slug}' not found`, 404);
-      return product;
-    } catch (err) {
-      throw new CustomError(err.message || "Error fetching product by slug", err.status || 500);
-    }
+async getByFullSlugService({ fullSlug, page = 1, limit = 24, sort }) {
+  const p = Math.max(1, Number(page) || 1);
+  const l = Math.min(100, Math.max(1, Number(limit) || 24));
+  const skip = (p - 1) * l;
+
+  const base = String(fullSlug || "").trim();
+  const escaped = base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // בריחה לרג׳קס
+  const filter = {
+    isDeleted: false,
+    status: "published",
+    $or: [
+      { categoryFullSlug: base },
+      { categoryFullSlug: { $regex: `^${escaped}/` } }, // כל תתי־הענפים
+    ],
   };
+
+  const sortStage = sort || { updatedAt: -1 };
+
+  const [items, total] = await Promise.all([
+    Product.find(filter)
+      .sort(sortStage)
+      .skip(skip)
+      .limit(l)
+      .select({ description: 0 })
+      .lean(),
+    Product.countDocuments(filter),
+  ]);
+
+  return {
+    items,
+    page: p,
+    limit: l,
+    total,
+    hasMore: skip + items.length < total,
+  };
+}
+
 
 
   searchProductsService = async ({ search, page = 1, limit = 20 }) => {
