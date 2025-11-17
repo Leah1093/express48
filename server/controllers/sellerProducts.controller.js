@@ -1,4 +1,4 @@
-import { SellerProductsService } from "../service/sellerProducts.service.js";
+import { SellerProductsService } from "../services/sellerProducts.service.js";
 import { listQuerySchema, updateStatusSchema, idParamSchema } from "../validations/sellerProductsSchemas.js";
 const service = new SellerProductsService();
 function pickAllowedUpdate(body = {}) {

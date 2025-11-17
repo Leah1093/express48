@@ -34,6 +34,7 @@ import orderRoutes from "./router/orderRoutes.js";
 import couponsRoutes from "./router/couponsRoutes.js";
 import tranzilaRouter from "./router/tranzilaRouter.js";
 
+
 const app = express();
 
 connectDB();
@@ -81,9 +82,9 @@ app.use("/categories", categoryRoutes);
 app.use("/addresses", addressRoutes);
 app.use("/orders", orderRoutes);
 app.use("/coupons", couponsRoutes);
-app.use('/payments', tranzilaRouter);
-
+app.use('/payments/tranzila', tranzilaRouter);
 app.use(errorHandler);
+
 const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, "0.0.0.0", () => {

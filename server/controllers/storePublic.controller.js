@@ -38,7 +38,7 @@
 
 
 
-import { StorePublicService } from "../service/storePublic.service.js";
+import { StorePublicService } from "../services/storePublic.service.js";
 
 export class StorePublicController {
   constructor() {

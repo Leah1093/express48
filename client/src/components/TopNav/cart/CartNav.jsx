@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 
 export default function CartNav() {
   return (
-    <div className="bg-[#0E3556] text-white">
+    <div className="hidden lg:block bg-[#ED6A23] text-white">
       <div className="mx-auto max-w-7xl px-4 py-6">
         <nav className="flex items-center gap-3 text-lg">
           <NavLink

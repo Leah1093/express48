@@ -1,4 +1,4 @@
-import { OrderService } from "../service/orderService.js";
+import { OrderService } from "../services/orderService.js";
 import { CustomError } from "../utils/CustomError.js";
 
 const orderService = new OrderService();

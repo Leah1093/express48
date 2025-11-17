@@ -1,4 +1,4 @@
-import { AddressService } from "../service/addressService.js";
+import { AddressService } from "../services/addressService.js";
 
 export const service = new AddressService();
 

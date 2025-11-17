@@ -9,6 +9,7 @@ export const createOrderSchema = z.object({
         productId: z.string().min(1, "נדרש מזהה מוצר"),
         quantity: z.number().min(1, "כמות חייבת להיות לפחות 1"),
         price: z.number().min(0, "מחיר חייב להיות חיובי"),
+        priceAfterDiscount: z.number().min(0).optional(),
       })
     )
     .min(1, "חייב להיות לפחות מוצר אחד"),

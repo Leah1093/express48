@@ -250,7 +250,7 @@ export default function MarketplaceInfo() {
 
   const onSubmit = async (data) => {
     try {
-      await axios.post("https://api.express48.com/marketplace/sellers", data, {
+      await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:8080"}/marketplace/sellers`, data, {
         withCredentials: true,
       });
       alert("הבקשה נשלחה בהצלחה!");

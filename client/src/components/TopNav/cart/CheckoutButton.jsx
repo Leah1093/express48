@@ -99,7 +99,7 @@ export default function CheckoutButton() {
       type="button"
       onClick={handleCheckoutClick}
       disabled={(userLoading && !initialized) || addrLoading}
-      className="mt-4 w-full rounded-lg bg-[#0E3556] px-4 py-3 font-semibold text-white hover:brightness-110 active:brightness-95 disabled:opacity-50"
+      className="mt-4 w-full rounded-lg bg-[#ED6A23] px-4 py-3 font-semibold text-white hover:brightness-110 active:brightness-95 disabled:opacity-50"
     >
       מעבר לתשלום
     </button>
