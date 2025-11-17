@@ -1,4 +1,4 @@
-import { couponService } from "../service/couponService.js";
+import { couponService } from "../services/couponService.js";
 
 class CouponController {
   async create(req, res, next) {

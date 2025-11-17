@@ -28,7 +28,7 @@ const cartItemSchema = new mongoose.Schema({
   },
   selected: {
     type: Boolean,
-    default: false
+    default: true  // ✅ כל מוצר חדש נבחר אוטומטית
   } // חדש: נבחר לתשלום או לא
 
 });

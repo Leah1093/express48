@@ -1,11 +1,13 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 // --- Thunks (שליפות מהשרת) ---
 
 // שליפת כל הכתובות של המשתמש
 export const fetchAddresses = createAsyncThunk("addresses/fetchAll", async () => {
-  const res = await axios.get("https://api.express48.com/addresses", {
+  const res = await axios.get(`${API_BASE}/addresses`, {
     withCredentials: true,
   });
   return res.data; // מחזיר מערך כתובות
@@ -13,7 +15,7 @@ export const fetchAddresses = createAsyncThunk("addresses/fetchAll", async () =>
 
 // הוספת כתובת חדשה
 export const addAddress = createAsyncThunk("addresses/add", async (addressData) => {
-  const res = await axios.post("https://api.express48.com/addresses", addressData, {
+  const res = await axios.post(`${API_BASE}/addresses`, addressData, {
     withCredentials: true,
   });
   return res.data; // הכתובת החדשה שנשמרה
@@ -21,7 +23,7 @@ export const addAddress = createAsyncThunk("addresses/add", async (addressData) 
 
 // עדכון כתובת קיימת
 export const updateAddress = createAsyncThunk("addresses/update", async ({ id, data }) => {
-  const res = await axios.put(`https://api.express48.com/addresses/${id}`, data, {
+  const res = await axios.put(`${API_BASE}/addresses/${id}`, data, {
     withCredentials: true,
   });
   return res.data; // הכתובת המעודכנת
@@ -29,7 +31,7 @@ export const updateAddress = createAsyncThunk("addresses/update", async ({ id, d
 
 // מחיקת כתובת
 export const deleteAddress = createAsyncThunk("addresses/delete", async (id) => {
-  await axios.delete(`https://api.express48.com/addresses/${id}`, {
+  await axios.delete(`${API_BASE}/addresses/${id}`, {
     withCredentials: true,
   });
   return id; // נחזיר רק את ה־id שנמחק
@@ -37,7 +39,7 @@ export const deleteAddress = createAsyncThunk("addresses/delete", async (id) => 
 
 // שינוי כתובת לברירת מחדל
 export const setDefaultAddress = createAsyncThunk("addresses/setDefault", async (id) => {
-  const res = await axios.patch(`https://api.express48.com/addresses/${id}/default`, {}, {
+  const res = await axios.patch(`${API_BASE}/addresses/${id}/default`, {}, {
     withCredentials: true,
   });
   return res.data; // מחזיר את הכתובת שעכשיו היא ברירת מחדל

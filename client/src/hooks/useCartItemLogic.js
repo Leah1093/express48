@@ -2,14 +2,10 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import {
-  addItemAsync,
-  removeItemAsync,
-  clearCartAsync,
   removeProductCompletelyThunk,
   updateItemQuantityThunk,
 } from "../redux/thunks/cartThunks";
 import {
-  clearGuestCart,
   removeGuestItem,
   addGuestItem,
   removeGuestProductCompletely,

@@ -1,11 +1,11 @@
-import { CartService } from '../service/cartService.js';
+import { CartService } from '../services/cartService.js';
 const cartService = new CartService();
 
 export const getCart = async (req, res, next) => {
   try {
     const userId = req.user.userId;
     const cart = await cartService.getCart(userId);
-    res.json(cart);
+    res.json({ items: cart.items || [] });
   } catch (err) {
     next(err);
   }
@@ -28,7 +28,7 @@ export const removeFromCart = async (req, res, next) => {
     const userId = req.user.userId;
     const { productId } = req.body;
     const cart = await cartService.removeFromCart(userId, productId);
-    res.json(cart);
+    res.json({ items: cart.items || [] });
   } catch (err) {
     next(err);
   }
@@ -50,7 +50,7 @@ export const clearCart = async (req, res, next) => {
   try {
     const userId = req.user.userId;
     const cart = await cartService.clearCart(userId);
-    res.json(cart);
+    res.json({ items: cart.items || [] });
   } catch (err) {
     next(err);
   }
@@ -63,7 +63,7 @@ export const mergeLocalCart = async (req, res, next) => {
     const localItems = req.body.items; // [{ productId, quantity }]
     console.log("📥 קיבלנו בקשה למיזוג עגלה:", req.body);
     const mergedCart = await cartService.mergeLocalCart(userId, localItems);
-    res.json(mergedCart);
+    res.json({ items: mergedCart.items || [] });
   } catch (err) {
     next(err);
   }
@@ -86,7 +86,7 @@ export const toggleSelected = async (req, res, next) => {
     const { itemId } = req.params;
     const { selected } = req.body; // true/false
     const cart = await cartService.toggleItemSelected(req.user.userId, itemId, selected);
-    res.json(cart);
+    res.json({ items: cart.items || [] });
   } catch (err) {
     next(err);
   }
@@ -96,7 +96,7 @@ export const toggleSelecteAll = async (req, res, next) => {
   try {
     const { selected } = req.body; // true/false
     const cart = await cartService.toggleSelectAll(req.user.userId, selected);
-    res.json(cart);
+    res.json({ items: cart.items || [] });
   } catch (err) {
     next(err);
   }

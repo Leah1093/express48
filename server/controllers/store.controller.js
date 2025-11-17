@@ -1,4 +1,4 @@
-import StoreService from "../service/store.service.js";
+import StoreService from "../services/store.service.js";
 const storeService = new StoreService();
 
 export default class StoreController {

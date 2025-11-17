@@ -1,8 +1,8 @@
 // controllers/entrance.controller.js
-import { EntranceService } from "../service/entrance.service.js";
+import { EntranceService } from "../services/entrance.service.js";
 import { registerSchema } from "../validations/registerSchema.js";
 import { loginSchema } from "../validations/loginSchema.js";
-import { loginFlow, refreshFlow, logoutFlow } from "../service/auth.service.js";
+import { loginFlow, refreshFlow, logoutFlow } from "../services/auth.service.js";
 import { User } from "../models/user.js";
 import { cookieNames } from "../utils/cookies.js";
 

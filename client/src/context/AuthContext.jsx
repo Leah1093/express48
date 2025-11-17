@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 // יצירת הקונטקסט
 const AuthContext = createContext();
 
@@ -18,7 +20,7 @@ export function AuthProvider({ children }) {
         // בדיקת התחברות ראשונית כשנכנסים לאתר
         const checkAuth = async () => {
             try {
-                const res = await axios.get("https://api.express48.com/entrance/me", { withCredentials: true });
+                const res = await axios.get(`${API_BASE}/entrance/me`, { withCredentials: true });
                 setUser(res.data.user);
             } catch (err) {
                 setUser(null);
@@ -35,7 +37,7 @@ export function AuthProvider({ children }) {
     };
 
     const logout = async () => {
-        await axios.post("https://api.express48.com/entrance/logout", {}, { withCredentials: true });
+        await axios.post(`${API_BASE}/entrance/logout`, {}, { withCredentials: true });
 
         setUser(null);
     };

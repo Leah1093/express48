@@ -66,7 +66,7 @@ export default function MobileDrawerContent({ categories, onClose }) {
                                     </span>
                                     <div className="w-[58px] h-[58px] rounded-full border border-[#EDEDED] bg-gray-100 overflow-hidden flex items-center justify-center">
                                         <img
-                                            src={`https://api.express48.com${cat.icon}`}
+                                            src={`${import.meta.env.VITE_API_URL || "http://localhost:8080"}${cat.icon}`}
                                             alt={cat.name}
                                             className="w-full h-full object-cover"
                                         />

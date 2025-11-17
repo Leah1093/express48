@@ -1,4 +1,4 @@
-import { MarketplaceService } from "../service/marketplace.service.js";
+import { MarketplaceService } from "../services/marketplace.service.js";
 import { CustomError } from "../utils/CustomError.js";
 
 export default class MarketplaceController {

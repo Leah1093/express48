@@ -1,4 +1,4 @@
-import { UserService } from '../service/user.service.js';
+import { UserService } from '../services/user.service.js';
 
 export class UserController {
   async updateProfile(req, res, next) {

@@ -25,7 +25,7 @@ export default function SubmitOrderButton({ chosenItems, addressId, notes }) {
       };
 
       // שליחת ההזמנה לשרת
-      const res = await axios.post("https://api.express48.com/orders", payload, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:8080"}/orders`, payload, {
         withCredentials: true, // כדי לשלוח cookies (JWT)
       });
 
@@ -42,7 +42,7 @@ export default function SubmitOrderButton({ chosenItems, addressId, notes }) {
   return (
     <button
       onClick={handleSubmitOrder}
-      className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow"
+      className="w-full lg:w-auto bg-[#ED6A23] hover:brightness-110 text-white font-bold py-3 lg:py-4 px-6 lg:px-8 rounded-xl shadow-lg transition-all cursor-pointer"
     >
       שליחת הזמנה
     </button>
