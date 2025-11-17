@@ -2,7 +2,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { selectCartItems } from "../../../redux/slices/cartSelectors";
+// import { selectCartItems } from "../../../redux/slices/cartSelectors";
 import { fetchAddresses } from "../../../redux/thunks/addressThunks";
 import axios from "axios";
 
@@ -13,7 +13,7 @@ export default function OrderSummary({ selectedItems }) {
   const [discount, setDiscount] = useState(0);
 
   const { user, loading: userLoading, initialized } = useSelector((state) => state.user);
-  const { list: addresses, loading: addrLoading } = useSelector((state) => state.addresses);
+  const { loading: addrLoading } = useSelector((state) => state.addresses);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 

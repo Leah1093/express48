@@ -1,4 +1,4 @@
-import { PasswordService } from "../service/pwd.service.js";
+import { PasswordService } from "../services/pwd.service.js";
 import { CustomError } from "../utils/CustomError.js";
 
 export default class PasswordController {

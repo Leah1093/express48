@@ -1,4 +1,4 @@
-import { searchService } from "../service/search.service.js";
+import { searchService } from "../services/search.service.js";
 
 export class SearchController {
   static async suggest(req, res, next) {

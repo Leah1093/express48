@@ -1,4 +1,4 @@
-import { CategoryService } from "../service/categoryService.js";
+import { CategoryService } from "../services/categoryService.js";
 import { CustomError } from "../utils/CustomError.js";
 
 export const service = new CategoryService();

@@ -6,7 +6,7 @@ import { startPaymentSchema, tranzilaWebhookSchema } from '../validations/paymen
 
 const paymentsRouter = Router();
 
-paymentsRouter.post('/tranzila/iframe-url', validate(startPaymentSchema), TranzilaController.startIframe);
-paymentsRouter.post('/tranzila/webhook', bodyParser.urlencoded({ extended: false }), validate(tranzilaWebhookSchema), TranzilaController.webhook);
+paymentsRouter.post('/iframe-url', validate(startPaymentSchema), TranzilaController.startIframe);
+paymentsRouter.post('/webhook', bodyParser.urlencoded({ extended: false }), validate(tranzilaWebhookSchema), TranzilaController.webhook);
 
 export default paymentsRouter;

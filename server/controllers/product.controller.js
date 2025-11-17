@@ -1,4 +1,4 @@
-import { productService } from "../service/product.service.js";
+import { productService } from "../services/product.service.js";
 import { CustomError } from "../utils/CustomError.js";
 
 export class ProductController {

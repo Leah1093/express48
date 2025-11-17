@@ -51,6 +51,8 @@ import CategoryManagementPage from "./components/Categories/CategoryManagementPa
 import CartLayout from "./components/TopNav/cart/CartLayout.jsx";
 import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
 import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx";
+import PaymentSuccess from "./components/TopNav/cart/PaymentSuccess.jsx";
+import PaymentFailed from "./components/TopNav/cart/PaymentFailed.jsx";
 import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
 import Layout from './components/Layout.jsx';
 import CouponForm from "./components/seller/Coupons.jsx"
@@ -67,7 +69,12 @@ import SearchResultsPage from './components/Main Content/product/SearchResultsPa
 import ProductsPage from './components/Main Content/product/ProductsPage.jsx';
 import CheckoutSuccess from './components/checkouts/CheckoutSuccess.jsx';
 import CheckoutFaild from './components/checkouts/CheckoutFailed.jsx';
-
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import Checkout from "./components/payments/pages/Checkout";
+import ThankYou from "./components/payments/pages/ThankYou";
+import Cancelled from "./components/payments/pages/Cancelled";
+// עמוד דמה של תשלום – ניצור אותו בסעיף הבא
+import MockPay from "./components/payments/pages/MockPay";
 function App() {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -102,11 +109,11 @@ function App() {
   }, [isSuccess, isError, currentUser, user, dispatch]);
 
   useEffect(() => {
-    if (user) {
+    if (user?._id) {
       console.log("🔄 טוען עגלה ממונגו אחרי ריפרוש...");
       dispatch(loadCart());
     }
-  }, [user, dispatch]);
+  }, [user?._id, dispatch]); // ✅ תלוי רק ב-_id, לא בכל ה-object
 
   return (
     <div className="min-h-screen flex flex-col font-[Rubik]">
@@ -134,8 +141,8 @@ function App() {
             <Route path="/order/success/:id" element={<OrderSuccessPage />} />
           </Route>
 
-          <Route path="/checkout/success" element={<CheckoutSuccess />} />
-          <Route path="/checkout/failed" element={<CheckoutFaild />} />
+          <Route path="/checkout/success" element={<PaymentSuccess />} />
+          <Route path="/checkout/failed" element={<PaymentFailed />} />
 
           {/* סטטי/מידע */}
           <Route path="/about" element={<About />} />
@@ -189,13 +196,17 @@ function App() {
             <Route path="reports" element={<Reports />} />
             <Route path="coupons" element={<CouponForm />} />
           </Route>
-
+          <Route path='/payment' element={<PaymentPage />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/pay/success" element={<ThankYou />} />
+          <Route path="/pay/cancel" element={<Cancelled />} />
+          <Route path="/mock/pay" element={<MockPay />} />
           {/* חנות ספציפית */}
           <Route path="/store/:slug" element={<StorePage />} />
         </Routes>
       </main>
 
-      <Footer />
+      <footer />
     </div>
   );
 }

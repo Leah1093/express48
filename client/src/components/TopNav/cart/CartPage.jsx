@@ -15,7 +15,6 @@ export default function CartPage() {
   const user = useSelector((state) => state.user.user);
   const rawItems = useSelector(selectCartItems);
   const navigate = useNavigate();
-  console.log("rawItems מה־redux:", rawItems);
 
   const dispatch = useDispatch();
 
@@ -40,10 +39,10 @@ export default function CartPage() {
   }, [rawItems]);
 
 
-  const [coupon, setCoupon] = useState("");
-  const [couponApplied, setCouponApplied] = useState(null);
+  // const [coupon, setCoupon] = useState("");
+  const [_couponApplied, _setCouponApplied] = useState(null);
 
-  const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
+  const discount = _couponApplied ? Math.round(subtotal * 0.1) : 0;
   const shipping = (subtotal - discount <= 0 || subtotal - discount >= 300) ? 0 : 25;
   const grandTotal = Math.max(subtotal - discount + shipping, 0);
 
@@ -64,7 +63,7 @@ export default function CartPage() {
 
   const allSelected = rawItems.length > 0 && rawItems.every((it) => it.selected);
 
-  const toggleSelectAll = () => {
+  const _toggleSelectAll = () => {
     if (user) {
       dispatch(toggleSelectAllThunk(!allSelected));
     } else {

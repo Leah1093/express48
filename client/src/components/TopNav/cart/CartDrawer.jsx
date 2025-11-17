@@ -125,7 +125,7 @@
 
 
 // src/components/TopNav/cart/CartDrawer.jsx
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
@@ -139,13 +139,15 @@ import {
 
 export default function CartDrawer({ isOpen, onClose }) {
   const navigate = useNavigate();
-  const cartItems = useSelector(selectCartItems) || [];
+  const rawCartItems = useSelector(selectCartItems);
+  const cartItems = useMemo(() => rawCartItems || [], [rawCartItems]);
   const totalSubtotal = useSelector(selectCartSubtotal) || 0;
   
   const [selectedSubtotal, setSelectedSubtotal] = useState(totalSubtotal);
 
   // פונקציה לחישוב המחיר של המוצרים שנבחרו
   const handleSelectedItemsChange = useCallback((selectedIds, selectionMap) => {
+    if (!cartItems) return;
     const selected = cartItems.reduce((sum, item) => {
       const itemId = item._id || item.productId?._id || item.productId;
       if (selectionMap[itemId]) {

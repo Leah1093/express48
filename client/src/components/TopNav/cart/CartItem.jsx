@@ -601,11 +601,6 @@ export default function CartItem({ item, onSelectionChange }) {
     }
   }, [isSelected, item._id, id, onSelectionChange]);
 
-  const variationTitle =
-    item.snapshot?.attributes?.color ||
-    item.snapshot?.attributes?.size ||
-    undefined;
-
   const variationImage =
     item.snapshot?.images?.[0] ||
     item.productId?.images?.[0] ||

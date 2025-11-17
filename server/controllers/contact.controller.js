@@ -1,4 +1,4 @@
-import { ContactService } from "../service/contact.service.js";
+import { ContactService } from "../services/contact.service.js";
 
 export default class ContactController {
   async sendMessage(req, res, next) {
