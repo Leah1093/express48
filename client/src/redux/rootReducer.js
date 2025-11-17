@@ -3,7 +3,6 @@ import { combineReducers } from '@reduxjs/toolkit';
 import cartReducer from './slices/cartSlice';
 import userReducer from './slices/userSlice';
 import guestCartReducer from './slices/guestCartSlice';
-import { favoritesApi } from './api/favoritesApi';
 import guestFavoritesReducer from "./slices/guestFavoritesSlice";
 import addressReducer from "./slices/addressSlice";
 import uiReducer from './slices/uiSlice';
@@ -17,6 +16,9 @@ import { categoriesApi } from './services/categoriesApi';
 import { contactApi } from "./services/contactApi";
 import { sellerStoreApi } from "./services/sellerStoreApi";
 import { couponApi } from './services/couponApi';
+import { orderApi } from './services/orderApi';
+import { favoritesApi } from './services/favoritesApi';
+import { addressApi } from './services/addressApi';
 
 export default combineReducers({
   cart: cartReducer,
@@ -28,7 +30,6 @@ export default combineReducers({
   categories: categoriesReducer,
   [userApi.reducerPath]: userApi.reducer,
   [categoriesApi.reducerPath]: categoriesApi.reducer,
-  [favoritesApi.reducerPath]: favoritesApi.reducer,
    [sellerStoreApi.reducerPath]: sellerStoreApi.reducer,
   [sellerProductsApi.reducerPath]: sellerProductsApi.reducer,
   [authApi.reducerPath]: authApi.reducer,
@@ -36,5 +37,9 @@ export default combineReducers({
   [adminApi.reducerPath]: adminApi.reducer,
    [contactApi.reducerPath]: contactApi.reducer,
    [couponApi.reducerPath]: couponApi.reducer,
+   [orderApi.reducerPath]: orderApi.reducer,
+[favoritesApi.reducerPath]: favoritesApi.reducer,
+[addressApi.reducerPath]: addressApi.reducer,
+
 
 });

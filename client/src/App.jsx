@@ -70,6 +70,10 @@ import CheckoutFaild from "./components/checkouts/CheckoutFailed.jsx";
 import Footer from "./components/footer/Footer.jsx";
 import { CategoriesBar } from "./components/Categories";
 import ProductsByCategoryPage from "./components/Main Content/product/ProductsByCategoryPage.jsx";
+import AccountLayout from "./components/account/AccountLayout.jsx";
+import Payments from "./components/account/Payments.jsx";
+import PolicySecurity from "./components/account/PolicySecurity.jsx";
+import CustomerService from "./components/account/CustomerService.jsx";
 
 function App() {
   const location = useLocation();
@@ -132,8 +136,11 @@ function App() {
           <Route path="/" element={<ProductsPage />} />
           <Route path="products" element={<ProductsPage />} />
           {/* עמוד מוצר לפי קטגוריה+סלאג */}
-          
-          <Route path="/products/by-category/*" element={<ProductsByCategoryPage />} />
+
+          <Route
+            path="/products/by-category/*"
+            element={<ProductsByCategoryPage />}
+          />
           <Route
             path="products/:storeSlug/:productSlug"
             element={<ProductPage />}
@@ -180,12 +187,23 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/account" element={<AccountDashboard />} />
-          <Route path="/account/orders" element={<Orders />} />
-          <Route path="/account/downloads" element={<Downloads />} />
-          <Route path="/account/addresses" element={<Addresses />} />
-          <Route path="/account/favorites" element={<Favorites />} />
-          <Route path="/account/profile" element={<Profile />} />
+          <Route path="/account" element={<AccountLayout />}>
+            {/* ברירת מחדל – הפרופיל שלי */}
+            <Route index element={<Profile />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="downloads" element={<Downloads />} />
+            <Route path="addresses" element={<Addresses />} />
+            <Route path="favorites" element={<Favorites />} />
+            <Route path="payments" element={<Payments />} />
+            <Route path="customerService" element={<CustomerService />} />
+            <Route path="policy-security" element={<PolicySecurity />} />
+
+            {/* אם תרצי עמוד נפרד לדאשבורד: */}
+            {/* <Route path="dashboard" element={<Dashboard />} /> */}
+            {/* אם תרצי עמוד לוגאאוט נפרד: */}
+            {/* <Route path="logout" element={<Logout />} /> */}
+          </Route>
 
           {/* מוכר/אדמין */}
           <Route
