@@ -69,7 +69,7 @@ const guestCartSlice = createSlice({
       quantity,
       unitPrice: snapshot.price,
       snapshot,
-      selected: false
+      selected: true  // ✅ ברירת מחדל - מוצר חדש נבחר
     });
   }
 

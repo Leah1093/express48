@@ -14,13 +14,13 @@ export default function QuantityInput({ item }) {
   } = useCartItemLogic(item);
 
   return (
-    <div className="col-span-2 flex items-center justify-center gap-2">
+    <div className="flex items-center gap-1.5 lg:gap-2 bg-white border border-gray-300 rounded-lg px-1.5 lg:px-2 py-1">
       <button
-        onClick={handleRemove}
-        className="h-9 w-9 rounded-md border bg-white text-lg leading-none hover:bg-gray-50"
-        title="הפחת"
+        onClick={handleAdd}
+        className="w-6 h-6 lg:w-7 lg:h-7 flex items-center justify-center text-gray-700 hover:bg-gray-100 transition-colors rounded"
+        title="הוסף"
       >
-        −
+        <span className="text-base lg:text-lg font-medium">+</span>
       </button>
 
       <input
@@ -39,15 +39,15 @@ export default function QuantityInput({ item }) {
               }
             : undefined
         }
-        className="text-md w-6 text-center appearance-none [mozAppearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className="w-7 lg:w-8 text-center text-sm lg:text-base font-medium appearance-none bg-transparent border-0 focus:outline-none [mozAppearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       />
 
       <button
-        onClick={handleAdd}
-        className="h-9 w-9 rounded-md border bg-white text-lg leading-none hover:bg-gray-50"
-        title="הוסף"
+        onClick={handleRemove}
+        className="w-6 h-6 lg:w-7 lg:h-7 flex items-center justify-center text-gray-700 hover:bg-gray-100 transition-colors rounded"
+        title="הפחת"
       >
-        +
+        <span className="text-base lg:text-lg font-medium">−</span>
       </button>
     </div>
   );

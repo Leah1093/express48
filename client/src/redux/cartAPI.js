@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'https://api.express48.com/cart',
+  baseURL: `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/cart`,
   withCredentials: true, // חשוב כדי להעביר את ה-cookie עם הטוקן
 });
 

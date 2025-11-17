@@ -1,3 +1,4 @@
+import { useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import CartItem from "./CartItem";
 import {selectCartItems} from "../../../redux/slices/cartSelectors"
@@ -13,21 +14,44 @@ const getKey = (item) => {
 };
 
 
-export default function CartItemsTable({ itemComponent: Item = CartItem}) {
-const items = useSelector(selectCartItems);
+export default function CartItemsTable({ itemComponent: Item = CartItem, onSelectedItemsChange }) {
+  const items = useSelector(selectCartItems);
+  const [selectedItems, setSelectedItems] = useState(() => {
+    // אתחול - כל המוצרים מסומנים בברירת מחדל
+    const initial = {};
+    items.forEach(item => {
+      const itemId = item._id || item.productId?._id || item.productId;
+      initial[itemId] = true;
+    });
+    return initial;
+  });
+
+  const handleSelectionChange = useCallback((itemId, isSelected) => {
+    setSelectedItems(prev => {
+      const newSelected = { ...prev, [itemId]: isSelected };
+      
+      // עדכון ההורה
+      if (onSelectedItemsChange) {
+        const selectedIds = Object.keys(newSelected).filter(id => newSelected[id]);
+        onSelectedItemsChange(selectedIds, newSelected);
+      }
+      
+      return newSelected;
+    });
+  }, [onSelectedItemsChange]);
 
   if (!items.length) {
-    return (
-      <div className="rounded-xl border bg-white p-6 text-center text-gray-500">
-        העגלה ריקה
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="rounded-xl border bg-white shadow-sm overflow-y-auto">
+    <div>
       {items.map((item) => (
-        <Item key={getKey(item)} item={item} />
+        <Item 
+          key={getKey(item)} 
+          item={item} 
+          onSelectionChange={handleSelectionChange}
+        />
       ))}
     </div>
   );
