@@ -65,6 +65,7 @@ export default function ProductForm({ initial, onSaved }) {
   };
 
   const onSubmit = async (e) => {
+    debugger
     e.preventDefault();
     try {
       setBusy(true);
@@ -85,6 +86,7 @@ export default function ProductForm({ initial, onSaved }) {
       if (initial?._id) {
         await api.put(`/seller/products/${initial._id}`, payload);
       } else {
+        debugger
         await api.post(`/seller/products`, payload);
       }
 

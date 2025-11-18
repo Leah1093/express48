@@ -12,6 +12,8 @@ import { sellerStoreApi } from "./services/sellerStoreApi";
 import { couponApi } from "./services/couponApi";
 import { orderApi } from "./services/orderApi";
 import { addressApi } from "./services/addressApi";
+import { uploadApi } from "./services/uploadApi";
+
 export const store = configureStore({
   reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
@@ -27,8 +29,8 @@ export const store = configureStore({
       sellerStoreApi.middleware,
       couponApi.middleware,
       orderApi.middleware,
-      addressApi.middleware
+      addressApi.middleware,
+      uploadApi.middleware
     ),
   devTools: process.env.NODE_ENV !== "production",
 });
-

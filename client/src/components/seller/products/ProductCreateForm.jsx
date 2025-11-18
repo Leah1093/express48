@@ -4,7 +4,7 @@ import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateProductMutation } from "../../../redux/services/productsApi";
-// אם יש לך redux עם userSlice: 
+// אם יש לך redux עם userSlice:
 // import { useSelector } from "react-redux";
 // import { selectUser } from "../../redux/slices/userSelectors";
 
@@ -136,6 +136,12 @@ export default function ProductCreateForm({
       discountType: undefined,
       discountValue: undefined,
       discountExpiresAt: "",
+      overview: {
+        text: "",
+        images: [],
+        videos: [],
+        blocks: [],
+      },
     },
     mode: "onSubmit",
   });
@@ -210,8 +216,12 @@ export default function ProductCreateForm({
 
       status: values.status,
       visibility: values.visibility,
-      scheduledAt: values.scheduledAt ? new Date(values.scheduledAt) : undefined,
-      visibleUntil: values.visibleUntil ? new Date(values.visibleUntil) : undefined,
+      scheduledAt: values.scheduledAt
+        ? new Date(values.scheduledAt)
+        : undefined,
+      visibleUntil: values.visibleUntil
+        ? new Date(values.visibleUntil)
+        : undefined,
 
       warranty: values.warranty || "12 חודשים אחריות יבואן רשמי",
       shipping: {
@@ -254,7 +264,10 @@ export default function ProductCreateForm({
   };
 
   return (
-    <div dir="rtl" className="max-w-5xl mx-auto p-6 bg-white rounded-2xl shadow">
+    <div
+      dir="rtl"
+      className="max-w-5xl mx-auto p-6 bg-white rounded-2xl shadow"
+    >
       <h1 className="text-2xl font-bold mb-4">הוספת מוצר</h1>
 
       {serverError && (
@@ -268,16 +281,30 @@ export default function ProductCreateForm({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block mb-1">ספק</label>
-            <input className="input" {...register("supplier")} placeholder="למשל HAMILTON" />
-            {errors.supplier && <p className="err">{errors.supplier.message}</p>}
+            <input
+              className="input"
+              {...register("supplier")}
+              placeholder="למשל HAMILTON"
+            />
+            {errors.supplier && (
+              <p className="err">{errors.supplier.message}</p>
+            )}
           </div>
           <div>
             <label className="block mb-1">מזהה מוכר</label>
-            <input className="input" {...register("sellerId")} placeholder="seller-123" />
+            <input
+              className="input"
+              {...register("sellerId")}
+              placeholder="seller-123"
+            />
           </div>
           <div>
             <label className="block mb-1">מזהה חנות</label>
-            <input className="input" {...register("storeId")} placeholder="EXPRESS48" />
+            <input
+              className="input"
+              {...register("storeId")}
+              placeholder="EXPRESS48"
+            />
           </div>
         </div>
 
@@ -285,36 +312,68 @@ export default function ProductCreateForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block mb-1">שם מוצר (עברית) *</label>
-            <input className="input" {...register("title")} placeholder="טלפון XYZ 128GB" />
+            <input
+              className="input"
+              {...register("title")}
+              placeholder="טלפון XYZ 128GB"
+            />
             {errors.title && <p className="err">{errors.title.message}</p>}
           </div>
           <div>
             <label className="block mb-1">שם מוצר (אנגלית)</label>
-            <input className="input" {...register("titleEn")} placeholder="Phone XYZ 128GB" />
+            <input
+              className="input"
+              {...register("titleEn")}
+              placeholder="Phone XYZ 128GB"
+            />
           </div>
           <div>
             <label className="block mb-1">מותג</label>
-            <input className="input" {...register("brand")} placeholder="SAMSUNG / APPLE" />
+            <input
+              className="input"
+              {...register("brand")}
+              placeholder="SAMSUNG / APPLE"
+            />
           </div>
           <div>
             <label className="block mb-1">דגם</label>
-            <input className="input" {...register("model")} placeholder="SM-A556" />
+            <input
+              className="input"
+              {...register("model")}
+              placeholder="SM-A556"
+            />
           </div>
           <div>
             <label className="block mb-1">קטגוריה</label>
-            <input className="input" {...register("category")} placeholder="טלפונים" />
+            <input
+              className="input"
+              {...register("category")}
+              placeholder="טלפונים"
+            />
           </div>
           <div>
             <label className="block mb-1">תת קטגוריה</label>
-            <input className="input" {...register("subCategory")} placeholder="סמארטפונים" />
+            <input
+              className="input"
+              {...register("subCategory")}
+              placeholder="סמארטפונים"
+            />
           </div>
           <div>
             <label className="block mb-1">ברקוד GTIN</label>
-            <input className="input" {...register("gtin")} placeholder="880609xxxxxxx" />
+            <input
+              className="input"
+              {...register("gtin")}
+              placeholder="880609xxxxxxx"
+            />
           </div>
           <div className="md:col-span-2">
             <label className="block mb-1">תיאור</label>
-            <textarea className="input min-h-28" {...register("description")} placeholder="תיאור מלא..." />
+            <textarea
+              className="input min-h-28"
+              {...register("description")}
+              placeholder="תיאור מלא..."
+            />
           </div>
         </div>
 
@@ -322,20 +381,42 @@ export default function ProductCreateForm({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block mb-1">מחיר (₪) *</label>
-            <input className="input" type="number" step="0.01" {...register("price.amount")} placeholder="0" />
-            {errors.price?.amount && <p className="err">{errors.price.amount.message}</p>}
+            <input
+              className="input"
+              type="number"
+              step="0.01"
+              {...register("price.amount")}
+              placeholder="0"
+            />
+            {errors.price?.amount && (
+              <p className="err">{errors.price.amount.message}</p>
+            )}
           </div>
           <div>
             <label className="block mb-1">מטבע</label>
-            <input className="input" {...register("price.currency")} placeholder="ILS" />
+            <input
+              className="input"
+              {...register("price.currency")}
+              placeholder="ILS"
+            />
           </div>
           <div>
             <label className="block mb-1">מחיר קודם (להצגת מבצע)</label>
-            <input className="input" type="number" step="0.01" {...register("originalPrice")} placeholder="למשל 1999" />
+            <input
+              className="input"
+              type="number"
+              step="0.01"
+              {...register("originalPrice")}
+              placeholder="למשל 1999"
+            />
           </div>
           <div className="md:col-span-3">
             <label className="block mb-1">תמונות מוצר (CSV)</label>
-            <input className="input" {...register("imagesCsv")} placeholder="https://a.jpg, https://b.jpg" />
+            <input
+              className="input"
+              {...register("imagesCsv")}
+              placeholder="https://a.jpg, https://b.jpg"
+            />
           </div>
         </div>
 
@@ -343,7 +424,12 @@ export default function ProductCreateForm({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block mb-1">מלאי כללי</label>
-            <input className="input" type="number" {...register("stock")} placeholder="0" />
+            <input
+              className="input"
+              type="number"
+              {...register("stock")}
+              placeholder="0"
+            />
           </div>
           <div>
             <label className="block mb-1">סטטוס</label>
@@ -363,11 +449,19 @@ export default function ProductCreateForm({
           </div>
           <div>
             <label className="block mb-1">תזמון פרסום (אופציונלי)</label>
-            <input className="input" type="datetime-local" {...register("scheduledAt")} />
+            <input
+              className="input"
+              type="datetime-local"
+              {...register("scheduledAt")}
+            />
           </div>
           <div>
             <label className="block mb-1">סיום הצגה (אופציונלי)</label>
-            <input className="input" type="datetime-local" {...register("visibleUntil")} />
+            <input
+              className="input"
+              type="datetime-local"
+              {...register("visibleUntil")}
+            />
           </div>
         </div>
 
@@ -375,33 +469,62 @@ export default function ProductCreateForm({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block mb-1">מידות אריזה</label>
-            <input className="input" {...register("shipping.dimensions")} placeholder='למשל "100x50x30cm"' />
+            <input
+              className="input"
+              {...register("shipping.dimensions")}
+              placeholder='למשל "100x50x30cm"'
+            />
           </div>
           <div>
             <label className="block mb-1">משקל</label>
-            <input className="input" {...register("shipping.weight")} placeholder="למשל 1.2kg" />
+            <input
+              className="input"
+              {...register("shipping.weight")}
+              placeholder="למשל 1.2kg"
+            />
           </div>
           <div>
             <label className="block mb-1">מדינת מקור</label>
-            <input className="input" {...register("shipping.from")} placeholder="IL" />
+            <input
+              className="input"
+              {...register("shipping.from")}
+              placeholder="IL"
+            />
           </div>
           <div>
             <label className="block mb-1">אחריות</label>
-            <input className="input" {...register("warranty")} placeholder="12 חודשים אחריות יבואן רשמי" />
+            <input
+              className="input"
+              {...register("warranty")}
+              placeholder="12 חודשים אחריות יבואן רשמי"
+            />
           </div>
           <div className="md:col-span-2">
             <label className="inline-flex items-center gap-2">
-              <input type="checkbox" {...register("delivery.requiresDelivery")} />
+              <input
+                type="checkbox"
+                {...register("delivery.requiresDelivery")}
+              />
               דורש הובלה מיוחדת
             </label>
           </div>
           <div>
             <label className="block mb-1">עלות הובלה</label>
-            <input className="input" type="number" step="0.01" {...register("delivery.cost")} placeholder="0" />
+            <input
+              className="input"
+              type="number"
+              step="0.01"
+              {...register("delivery.cost")}
+              placeholder="0"
+            />
           </div>
           <div className="md:col-span-2">
             <label className="block mb-1">הערות הובלה</label>
-            <input className="input" {...register("delivery.notes")} placeholder='למשל "כולל התקנה"' />
+            <input
+              className="input"
+              {...register("delivery.notes")}
+              placeholder='למשל "כולל התקנה"'
+            />
           </div>
         </div>
 
@@ -409,15 +532,27 @@ export default function ProductCreateForm({
         <div className="grid grid-cols-1 gap-4">
           <div>
             <label className="block mb-1">סקירה - טקסט</label>
-            <textarea className="input min-h-24" {...register("overviewText")} placeholder="סקירה/ Highlights" />
+            <textarea
+              className="input min-h-24"
+              {...register("overviewText")}
+              placeholder="סקירה/ Highlights"
+            />
           </div>
           <div>
             <label className="block mb-1">סקירה - תמונות (CSV)</label>
-            <input className="input" {...register("overviewImagesCsv")} placeholder="https://x.jpg, https://y.jpg" />
+            <input
+              className="input"
+              {...register("overviewImagesCsv")}
+              placeholder="https://x.jpg, https://y.jpg"
+            />
           </div>
           <div>
             <label className="block mb-1">סקירה - וידאו (CSV)</label>
-            <input className="input" {...register("overviewVideosCsv")} placeholder="https://youtu.be/..., https://vimeo.com/..." />
+            <input
+              className="input"
+              {...register("overviewVideosCsv")}
+              placeholder="https://youtu.be/..., https://vimeo.com/..."
+            />
           </div>
         </div>
 
@@ -433,11 +568,21 @@ export default function ProductCreateForm({
           </div>
           <div>
             <label className="block mb-1">ערך הנחה</label>
-            <input className="input" type="number" step="0.01" {...register("discountValue")} placeholder="למשל 10 או 100" />
+            <input
+              className="input"
+              type="number"
+              step="0.01"
+              {...register("discountValue")}
+              placeholder="למשל 10 או 100"
+            />
           </div>
           <div>
             <label className="block mb-1">תפוגת הנחה</label>
-            <input className="input" type="datetime-local" {...register("discountExpiresAt")} />
+            <input
+              className="input"
+              type="datetime-local"
+              {...register("discountExpiresAt")}
+            />
           </div>
         </div>
 
@@ -463,41 +608,79 @@ export default function ProductCreateForm({
           </div>
 
           {variationFields.length === 0 && (
-            <p className="text-sm opacity-70">אין וריאציות כרגע. אפשר להוסיף לפי הצורך.</p>
+            <p className="text-sm opacity-70">
+              אין וריאציות כרגע. אפשר להוסיף לפי הצורך.
+            </p>
           )}
 
           {variationFields.map((field, idx) => (
-            <div key={field.id} className="rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-6 gap-3">
+            <div
+              key={field.id}
+              className="rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-6 gap-3"
+            >
               <div className="md:col-span-2">
                 <label className="block mb-1">SKU וריאציה</label>
-                <input className="input" {...register(`variations.${idx}.sku`)} placeholder="לא חובה - יווצר SKU כללי" />
+                <input
+                  className="input"
+                  {...register(`variations.${idx}.sku`)}
+                  placeholder="לא חובה - יווצר SKU כללי"
+                />
               </div>
               <div>
                 <label className="block mb-1">צבע</label>
-                <input className="input" {...register(`variations.${idx}.attributes.color`)} placeholder="Black" />
+                <input
+                  className="input"
+                  {...register(`variations.${idx}.attributes.color`)}
+                  placeholder="Black"
+                />
               </div>
               <div>
                 <label className="block mb-1">מידה</label>
-                <input className="input" {...register(`variations.${idx}.attributes.size`)} placeholder="XL / 43 / 6.7”" />
+                <input
+                  className="input"
+                  {...register(`variations.${idx}.attributes.size`)}
+                  placeholder="XL / 43 / 6.7”"
+                />
               </div>
               <div>
                 <label className="block mb-1">אחסון</label>
-                <input className="input" {...register(`variations.${idx}.attributes.storage`)} placeholder="128GB" />
+                <input
+                  className="input"
+                  {...register(`variations.${idx}.attributes.storage`)}
+                  placeholder="128GB"
+                />
               </div>
               <div>
                 <label className="block mb-1">מחיר וריאציה</label>
-                <input className="input" type="number" step="0.01" {...register(`variations.${idx}.price.amount`)} placeholder="0" />
+                <input
+                  className="input"
+                  type="number"
+                  step="0.01"
+                  {...register(`variations.${idx}.price.amount`)}
+                  placeholder="0"
+                />
                 {errors.variations?.[idx]?.price?.amount && (
-                  <p className="err">{errors.variations[idx].price.amount.message}</p>
+                  <p className="err">
+                    {errors.variations[idx].price.amount.message}
+                  </p>
                 )}
               </div>
               <div>
                 <label className="block mb-1">מטבע</label>
-                <input className="input" {...register(`variations.${idx}.price.currency`)} placeholder="ILS" />
+                <input
+                  className="input"
+                  {...register(`variations.${idx}.price.currency`)}
+                  placeholder="ILS"
+                />
               </div>
               <div>
                 <label className="block mb-1">מלאי וריאציה</label>
-                <input className="input" type="number" {...register(`variations.${idx}.stock`)} placeholder="0" />
+                <input
+                  className="input"
+                  type="number"
+                  {...register(`variations.${idx}.stock`)}
+                  placeholder="0"
+                />
               </div>
               <div className="md:col-span-3">
                 <label className="block mb-1">תמונות וריאציה (CSV)</label>
