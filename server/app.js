@@ -49,7 +49,7 @@ app.use(cors({
   origin: ["http://localhost:5173", 'https://affirmatively-unparenthesised-brandon.ngrok-free.dev'],
   credentials: true,
   methods: ["GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type","Authorization","X-Requested-With"],
 }));
 
 // Middlewares

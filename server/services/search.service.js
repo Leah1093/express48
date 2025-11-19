@@ -17,6 +17,8 @@ const buildOr = (term) => {
   ];
 };
 
+
+
 class SearchService {
   async suggest({ q, limit = 8, storeId, strict = false }) {
     const term = (q || "").trim();
@@ -60,6 +62,14 @@ class SearchService {
       price: p?.price?.amount ?? p?.price ?? 0,
       image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
     }));
+  }
+
+  async combinedSearch({ q, quickLimit = 4, storeId, strict = false }) {
+    const [suggestions, quickItems] = await Promise.all([
+      this.suggest({ q,  storeId, strict }),
+      this.quick({ q, limit: quickLimit, storeId, strict }),
+    ]);
+    return { suggestions, quickItems };
   }
 
   async results({ q, page = 1, limit = 24, storeId, strict = false }) {
