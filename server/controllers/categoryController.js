@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import { CategoryService } from "../services/categoryService.js";
 import { CustomError } from "../utils/CustomError.js";
+import cloudinary from "../config/cloudinary.js";
+
 
 // נסה לייבא גם default וגם named כדי להיות עמיד לשתי הצורות:
 import CategoryDefault, { Category as CategoryNamed } from "../models/category.js";
@@ -46,38 +48,108 @@ async function buildTree(rootId, maxDepth = 3) {
 
 export class CategoryController {
   // ---------- יצירה ----------
-  async create(req, res, next) {
-    try {
-      const {
-        name,
-        slug,
-        parent = null,
-        order = 0,
-        isActive = true,
-        imageUrl = "",
-        description = "",
-      } = req.body;
+  // async create(req, res, next) {
+  //   try {
+  //     const {
+  //       name,
+  //       slug,
+  //       parent = null,
+  //       order = 0,
+  //       isActive = true,
+  //       imageUrl = "",
+  //       description = "",
+  //     } = req.body;
 
-      const icon = req.file
-        ? `/uploads/icons/${req.file.filename}`
-        : req.body.icon ?? "";
+  //     const icon = req.file
+  //       ? `/uploads/icons/${req.file.filename}`
+  //       : req.body.icon ?? "";
 
-      const category = await service.create({
-        name,
-        slug,
-        parent,
-        order,
-        isActive,
-        icon,
-        imageUrl,
-        description,
+  //     const category = await service.create({
+  //       name,
+  //       slug,
+  //       parent,
+  //       order,
+  //       isActive,
+  //       icon,
+  //       imageUrl,
+  //       description,
+  //     });
+
+  //     res.status(201).json(category);
+  //   } catch (e) {
+  //     next(e);
+  //   }
+  // }
+async create(req, res, next) {
+  try {
+    const {
+      name,
+      slug,
+      order = 0,
+      isActive = true,
+      imageUrl: imageUrlFromBody = "",
+      description = "",
+    } = req.body;
+
+    if (!name || !slug) {
+      throw new CustomError("name and slug are required", 400);
+    }
+
+    // כרגע: תמיד קטגוריית שורש
+    const parent = null;
+
+    let finalImageUrl = imageUrlFromBody || "";
+    let icon = "";
+
+    if (req.file) {
+      const uploadResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "express48/categories",
+            resource_type: "image",
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+
+        stream.end(req.file.buffer);
       });
 
-      res.status(201).json(category);
-    } catch (e) {
-      next(e);
+      finalImageUrl = uploadResult.secure_url;
+      icon = uploadResult.secure_url;
+    } else if (req.body.icon) {
+      icon = req.body.icon;
+      if (!finalImageUrl) {
+        finalImageUrl = req.body.icon;
+      }
     }
+
+    // 🔴 כאן עושים את החובה לתמונה לקטגוריה ראשית
+    if (!parent && !icon && !finalImageUrl) {
+      throw new CustomError(
+        "לכל קטגוריה ראשית חייבת להיות תמונה (קובץ או קישור)",
+        400
+      );
+    }
+
+    const category = await service.create({
+      name,
+      slug,
+      parent, // תמיד שורש כרגע
+      order,
+      isActive,
+      icon,
+      imageUrl: finalImageUrl,
+      description,
+    });
+
+    res.status(201).json(category);
+  } catch (e) {
+    next(e);
   }
+}
 
   // ---------- רשימה ----------
   async list(req, res, next) {

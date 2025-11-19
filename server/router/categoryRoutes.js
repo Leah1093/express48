@@ -3,6 +3,8 @@ import { CategoryController } from "../controllers/categoryController.js";
 import { validate } from "../middlewares/validate.js";
 import { createCategorySchema, updateCategorySchema } from "../validations/categorySchemas.js";
 import { upload } from "../middlewares/upload.js";
+import { uploadCategoryIcon } from "../middlewares/uploadImage.middleware.js";
+
 
 const router = express.Router();
 const controller = new CategoryController();
@@ -24,11 +26,7 @@ router.get("/", h(controller.list));
 // --- יצירה (עם העלאת אייקון + ולידציה) ---
 router.post(
   "/",
-  upload.single("icon"),
-  (req, _res, next) => {
-    if (req.file) req.body.icon = `/uploads/icons/${req.file.filename}`;
-    next();
-  },
+  uploadCategoryIcon,
   validate(createCategorySchema),
   h(controller.create)
 );
@@ -37,11 +35,8 @@ router.post(
 router.get("/:id", h(controller.get));
 router.put(
   "/:id",
-  upload.single("icon"),
-  (req, _res, next) => {
-    if (req.file) req.body.icon = `/uploads/icons/${req.file.filename}`;
-    next();
-  },
+  uploadCategoryIcon
+  ,
   validate(updateCategorySchema),
   h(controller.update)
 );

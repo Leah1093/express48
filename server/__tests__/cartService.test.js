@@ -39,7 +39,7 @@ jest.unstable_mockModule("../mongoQueries/cartQueries.js", () => ({
 
 const { CartService } = await import("../service/cartService.js");
 const { Cart } = await import("../models/cart.js");
-const { Product } = await import("../models/Product.js");
+const { Product } = await import("../models/product.js");
 const { cartQueries } = await import("../mongoQueries/cartQueries.js");
 
 function chainableMock(resolvedValue) {

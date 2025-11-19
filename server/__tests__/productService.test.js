@@ -10,7 +10,7 @@ jest.unstable_mockModule("../models/Product.js", () => ({
 }));
 
 const { productService } = await import("../service/product.service.js");
-const { Product } = await import("../models/Product.js");
+const { Product } = await import("../models/product.js");
 
 describe("ProductService", () => {
   afterEach(() => {

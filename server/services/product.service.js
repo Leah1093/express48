@@ -1,4 +1,4 @@
-import { Product } from "../models/Product.js";
+import { Product } from "../models/product.js";
 import { CustomError } from "../utils/CustomError.js";
 
 import { SearchLog } from "../models/SearchLog.js";

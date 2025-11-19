@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Category from "../models/category.js";
 import { CustomError } from "../utils/CustomError.js";
+import { Product } from "../models/product.js";
 
 function isValidObjectId(id) {
   return typeof id === "string" && mongoose.Types.ObjectId.isValid(id);
@@ -114,7 +115,7 @@ export class CategoryService {
     }
   }
 
-  // -------- UPDATE --------
+ // -------- UPDATE --------
   async update(id, data) {
     try {
       if (!isValidObjectId(id)) throw new CustomError("Invalid id", 400);
@@ -258,18 +259,46 @@ export class CategoryService {
   async remove(id, { cascade = false } = {}) {
     try {
       if (!isValidObjectId(id)) throw new CustomError("Invalid id", 400);
+
       const current = await Category.findById(id);
       if (!current) throw new CustomError("Category not found", 404);
 
+      // 1) מביאים את כל הקטגוריות בתת־העץ (הקטגוריה + כל תתי־הקטגוריות שלה)
+      const subtreeCategories = await Category.find({
+        fullSlug: { $regex: `^${current.fullSlug}(/|$)` },
+      })
+        .select("_id")
+        .lean();
+
+      const categoryIds = subtreeCategories.map((c) => c._id);
+
+      // 2) בודקים האם יש מוצרים שמשויכים לאחת מהקטגוריות בתת־העץ
+      //    לפי primaryCategoryId או categoryPathIds
+      const linkedProductsCount = await Product.countDocuments({
+        $or: [
+          { primaryCategoryId: { $in: categoryIds } },
+          { categoryPathIds: { $in: categoryIds } },
+        ],
+      });
+
+      if (linkedProductsCount > 0) {
+        throw new CustomError(
+          "לא ניתן למחוק קטגוריה שיש אליה מוצרים משויכים (כולל תתי־קטגוריות)",
+          400
+        );
+      }
+
+      // 3) אם אין מוצרים, אפשר להמשיך לפי מצב cascade
+
       if (cascade) {
-        // מוחק את כל תת-העץ (כולל השורש)
+        // מוחק את כל תת־העץ (כולל השורש)
         await Category.deleteMany({
-          fullSlug: { $regex: `^${current.fullSlug}(/|$)` },
+          _id: { $in: categoryIds },
         });
         return;
       }
 
-      // בלי cascade: לא מאפשרים מחיקה אם יש ילדים
+      // בלי cascade: לא מאפשרים מחיקה אם יש ילדים ישירים
       const childrenCount = await Category.countDocuments({ parent: id });
       if (childrenCount > 0) {
         throw new CustomError(

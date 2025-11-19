@@ -17,3 +17,7 @@ export const uploadSingleImage = multer({
   limits: { fileSize: MAX_FILE_SIZE },
   fileFilter,
 }).single("image"); // השם של השדה ב-FormData
+
+export const uploadCategoryIcon = multer({ storage, fileFilter }).single(
+  "icon"
+);
