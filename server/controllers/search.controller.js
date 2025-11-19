@@ -25,7 +25,22 @@ export class SearchController {
         storeId,
         strict,
       });
-      res.json(items); 
+      res.json(items);
+    } catch (e) { next(e); }
+  }
+
+  static async combinedSearch(req, res, next) {
+    try {
+      const { q = "", quickLimit, suggestLimit, storeId, mode } = req.query;
+      const strict = mode === "strict";
+      const data = await searchService.combinedSearch({
+        q,
+        quickLimit: Number(quickLimit) || 4,
+        suggestLimit: Number(suggestLimit) || 8,
+        storeId,
+        strict,
+      });
+      res.json(data);
     } catch (e) { next(e); }
   }
 
@@ -40,7 +55,7 @@ export class SearchController {
         storeId,
         strict,
       });
-      res.json(data); 
+      res.json(data);
     } catch (e) { next(e); }
   }
 }
