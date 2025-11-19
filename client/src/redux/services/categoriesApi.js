@@ -1,8 +1,6 @@
-// src/redux/services/categoriesApi.js
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQueryWithReauth } from "./baseApi";
 
-// בונה query string נקי
 const qs = (obj = {}) =>
   Object.entries(obj)
     .filter(([, v]) => v !== undefined && v !== null && v !== "")
@@ -22,7 +20,9 @@ export const categoriesApi = createApi({
       },
       providesTags: (result) => [
         "Categories",
-        ...(Array.isArray(result) ? result.map((c) => ({ type: "Category", id: c._id })) : []),
+        ...(Array.isArray(result)
+          ? result.map((c) => ({ type: "Category", id: c._id }))
+          : []),
       ],
       keepUnusedDataFor: 60,
     }),
@@ -32,7 +32,9 @@ export const categoriesApi = createApi({
       query: () => ({ url: "/categories/roots", method: "GET" }),
       providesTags: (result) => [
         "Categories",
-        ...(Array.isArray(result) ? result.map((c) => ({ type: "Category", id: c._id })) : []),
+        ...(Array.isArray(result)
+          ? result.map((c) => ({ type: "Category", id: c._id }))
+          : []),
       ],
       keepUnusedDataFor: 60,
     }),
@@ -43,34 +45,42 @@ export const categoriesApi = createApi({
         url: `/categories/by/fullSlug/${encodeURIComponent(fullSlug)}`,
         method: "GET",
       }),
-      providesTags: (res) => (res?._id ? [{ type: "Category", id: res._id }] : ["Categories"]),
+      providesTags: (res) =>
+        res?._id ? [{ type: "Category", id: res._id }] : ["Categories"],
     }),
 
-    // -------- ילדים ישירים --------
+    // -------- ילדים --------
     getCategoryChildren: builder.query({
       query: (id) => ({ url: `/categories/${id}/children`, method: "GET" }),
       providesTags: (result, _err, id) => [
         { type: "Category", id },
-        ...(Array.isArray(result) ? result.map((c) => ({ type: "Category", id: c._id })) : []),
+        ...(Array.isArray(result)
+          ? result.map((c) => ({ type: "Category", id: c._id }))
+          : []),
       ],
       keepUnusedDataFor: 60,
     }),
 
-    // -------- עץ מקונן מה־id (שם אנדפוינט שמתאים להוק שהקומפוננטה מצפה לו) --------
+    // -------- עץ --------
     getCategoryTreeFrom: builder.query({
       query: ({ id, maxDepth = 2 } = {}) => {
         const query = qs({ maxDepth });
-        return { url: `/categories/${id}/tree${query ? `?${query}` : ""}`, method: "GET" };
+        return {
+          url: `/categories/${id}/tree${query ? `?${query}` : ""}`,
+          method: "GET",
+        };
       },
       providesTags: (res, _err, { id }) => [{ type: "Tree", id }],
       keepUnusedDataFor: 60,
     }),
 
-    // (נשאיר גם ורסיה בשם כללי למקרה שיש שימושים אחרים בקוד)
     getCategoryTree: builder.query({
       query: ({ id, maxDepth = 2 } = {}) => {
         const query = qs({ maxDepth });
-        return { url: `/categories/${id}/tree${query ? `?${query}` : ""}`, method: "GET" };
+        return {
+          url: `/categories/${id}/tree${query ? `?${query}` : ""}`,
+          method: "GET",
+        };
       },
       providesTags: (res, _err, { id }) => [{ type: "Tree", id }],
       keepUnusedDataFor: 60,
@@ -117,7 +127,7 @@ export const categoriesApi = createApi({
         id,
         name,
         slug,
-        parent, // undefined=לא לשנות, null=שורש, או ObjectId
+        parent,
         order,
         isActive,
         imageUrl,
@@ -127,7 +137,8 @@ export const categoriesApi = createApi({
         const fd = new FormData();
         if (name !== undefined) fd.append("name", String(name));
         if (slug !== undefined) fd.append("slug", String(slug).toLowerCase());
-        if (parent !== undefined) fd.append("parent", parent === null ? "null" : String(parent));
+        if (parent !== undefined)
+          fd.append("parent", parent === null ? "null" : String(parent));
         if (order !== undefined) fd.append("order", String(order));
         if (isActive !== undefined) fd.append("isActive", String(!!isActive));
         if (imageUrl !== undefined) fd.append("imageUrl", imageUrl);
@@ -175,9 +186,8 @@ export const {
   useGetCategoryByIdQuery,
   useGetCategoryByFullSlugQuery,
   useGetCategoryChildrenQuery,
-  useGetCategoryTreeFromQuery, // ← זה ההוק שהקומפוננטה צריכה
-  useGetCategoryTreeQuery,      // ← נשאר גם בשם הכללי למקרה שצריך
-
+  useGetCategoryTreeFromQuery,
+  useGetCategoryTreeQuery,
   // Mutations
   useCreateCategoryMutation,
   useUpdateCategoryMutation,

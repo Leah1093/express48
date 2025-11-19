@@ -74,6 +74,7 @@ import AccountLayout from "./components/account/AccountLayout.jsx";
 import Payments from "./components/account/Payments.jsx";
 import PolicySecurity from "./components/account/PolicySecurity.jsx";
 import CustomerService from "./components/account/CustomerService.jsx";
+import ManageRootCategories from "./components/Categories/ManageRootCategories.jsx";
 
 function App() {
   const location = useLocation();
@@ -154,6 +155,9 @@ function App() {
             path="/categories/manage"
             element={<CategoryManagementPage />}
           />
+
+          <Route path="/categories/ManagmentCategory" element={<ManageRootCategories />} />
+
 
           {/* זרימת קנייה */}
           <Route element={<CartLayout />}>
