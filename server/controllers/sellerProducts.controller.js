@@ -1,4 +1,4 @@
-import { SellerProductsService } from "../service/sellerProducts.service.js";
+import { SellerProductsService } from "../services/sellerProducts.service.js";
 import { listQuerySchema, updateStatusSchema, idParamSchema } from "../validations/sellerProductsSchemas.js";
 const service = new SellerProductsService();
 function pickAllowedUpdate(body = {}) {
@@ -158,7 +158,7 @@ export default class SellerProductsController {
                     e.status = 403;
                     throw e;
                 }
-
+                console.log("user", user)
                 const cleaned = stripSellerControlledFields(req.body);// סלר לא שולט על שדות רגישים
                 const data = { ...cleaned, sellerId: String(user.sellerId), storeId: String(user.storeId), status: "draft", visibility: "private", };
                 validateSchedulingFields(data); // בדיקות תזמון (למרות שסלר לא יכול לשלוח כרגע - שמירה לעתיד)

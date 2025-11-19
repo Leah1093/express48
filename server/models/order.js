@@ -3,6 +3,7 @@ import mongoose from "mongoose";
   productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
   quantity: { type: Number, required: true, min: 1 },
   price: { type: Number, required: true }, // מחיר ליחידה או סכום כולל
+  priceAfterDiscount: { type: Number, default: null }, // מחיר אחרי הנחה
 });
 
 const orderSchema = new mongoose.Schema(
@@ -25,9 +26,25 @@ const orderSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["pending", "approved", "canceled", "returned", "completed"],
+      enum: ["pending", "approved", "canceled", "returned", "completed", "paid"],
       default: "pending",
     },
+
+    payment: {
+      status: { type: String, enum: ["pending", "paid", "failed", "refunded"], default: "pending" },
+      gateway: { type: String, default: "tranzila" },
+      transactionId: { type: String, default: null },
+      paidAt: { type: Date, default: null },
+      details: { type: mongoose.Schema.Types.Mixed, default: null }
+    },
+
+    gatewayLog: [{
+      timestamp: { type: Date, default: Date.now },
+      gateway: String,
+      event: String,
+      payload: mongoose.Schema.Types.Mixed,
+      verification: mongoose.Schema.Types.Mixed
+    }],
 
     orderDate: { type: Date, default: Date.now }, // תאריך ביצוע ההזמנה
     estimatedDelivery: { type: Date },  // מועד מסירה משוער

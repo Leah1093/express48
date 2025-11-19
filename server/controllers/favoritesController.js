@@ -1,5 +1,5 @@
 
-import { favoritesService } from "../service/favoritesService.js";
+import { favoritesService } from "../services/favoritesService.js";
 import httpError from "http-errors";
 
 export class FavoritesController {

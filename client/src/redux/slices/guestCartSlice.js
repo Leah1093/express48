@@ -69,7 +69,7 @@ const guestCartSlice = createSlice({
       quantity,
       unitPrice: snapshot.price,
       snapshot,
-      selected: false
+      selected: true  // ✅ ברירת מחדל - מוצר חדש נבחר
     });
   }
 
@@ -111,7 +111,7 @@ const guestCartSlice = createSlice({
       return updatedCart;
     },
 
-    clearGuestCart: (state) => {
+    clearGuestCart: () => {
       clearStorage();
       return [];
     },
@@ -139,7 +139,7 @@ const guestCartSlice = createSlice({
       saveLocalCart(state);
     },
 
-    loadGuestCart: (state) => {
+    loadGuestCart: () => {
       return getLocalCart();
     },
 

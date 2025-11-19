@@ -50,8 +50,8 @@
 
 
 import { OAuth2Client } from "google-auth-library";
-import { EntranceService } from "../service/entrance.service.js";
-import { loginFlow } from "../service/auth.service.js";
+import { EntranceService } from "../services/entrance.service.js";
+import { loginFlow } from "../services/auth.service.js";
 
 const client = new OAuth2Client({
   clientId: process.env.GOOGLE_CLIENT_ID,

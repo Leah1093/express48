@@ -5,10 +5,10 @@ import { Store } from "../models/store.js"; // ודא שהשם/נתיב המוד
 
 export async function authMiddleware(req, res, next) {
     try {
-        console.log("authMiddleware")
+        // console.log("authMiddleware") // ❌ מבוטל - רעש מיותר
 
         const token = req.cookies?.[cookieNames.access];
-        console.log("token",token)
+        // console.log("token",token) // ❌ מבוטל - רעש מיותר
 
         if (!token) return res.status(401).json({ error: "לא מחובר" });
 
@@ -49,8 +49,8 @@ export async function authMiddleware(req, res, next) {
             req.user.storeId = String(store._id);
         }
 
-        console.log("user", req.user)
-        console.log("auth", req.auth)
+        // console.log("user", req.user) // ❌ מבוטל - רעש מיותר
+        // console.log("auth", req.auth) // ❌ מבוטל - רעש מיותר
         next();
     } catch (e) {
         return res.status(401).json({ error: "טוקן לא תקין או פג" });

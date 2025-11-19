@@ -33,6 +33,14 @@ import addressRoutes from "./router/addressRoutes.js"
 import orderRoutes from "./router/orderRoutes.js";
 import couponsRoutes from "./router/couponsRoutes.js";
 import tranzilaRouter from "./router/tranzilaRouter.js";
+import uploadRoutes from "./router/upload.routes.js";
+
+
+import dotenv from 'dotenv';
+
+
+
+
 
 const app = express();
 
@@ -81,10 +89,14 @@ app.use("/categories", categoryRoutes);
 app.use("/addresses", addressRoutes);
 app.use("/orders", orderRoutes);
 app.use("/coupons", couponsRoutes);
-app.use('/payments', tranzilaRouter);
+app.use('/payments/tranzila', tranzilaRouter);
 
+app.use("/uploads", uploadRoutes);
 app.use(errorHandler);
+
+
 const PORT = process.env.PORT || 8080;
+dotenv.config();
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`start server port: ${PORT}`);

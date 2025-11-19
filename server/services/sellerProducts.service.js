@@ -155,20 +155,31 @@ export class SellerProductsService {
   }
 
   async getOne({ id, sellerId, storeId, role }) {
-    assertObjectId(id, "product id");
+  assertObjectId(id, "product id");
 
-    const product = await Product.findById(id).setOptions({ includeDeleted: true }).lean();
-    if (!product) throw new CustomError("Product not found", 404);
+  const productDoc = await Product.findById(id)
+    .setOptions({ includeDeleted: true })
+    .lean();
 
-    if (role !== "admin") {
-      const sameSeller = product.sellerId && String(product.sellerId) === String(sellerId);
-      const sameStore = product.storeId && String(product.storeId) === String(storeId);
-      if (!sameSeller || !sameStore) { throw new CustomError("Forbidden: product is not yours", 403); }
+  if (!productDoc) throw new CustomError("Product not found", 404);
+
+  if (role !== "admin") {
+    const sameSeller = productDoc.sellerId && String(productDoc.sellerId) === String(sellerId);
+    const sameStore = productDoc.storeId && String(productDoc.storeId) === String(storeId);
+    if (!sameSeller || !sameStore) {
+      throw new CustomError("Forbidden: product is not yours", 403);
     }
-
-    const etag = generateETag(product);
-    return { product, etag };
   }
+
+  // >>> כאן מוסיפים את ה-blocks תמיד לפני ההחזרה
+  if (productDoc.overview) {
+    productDoc.overview.blocks = Product.buildOverviewBlocksFromLegacy(productDoc.overview);
+  }
+
+  const etag = generateETag(productDoc);
+  return { product: productDoc, etag };
+}
+
 
   async update({ id, sellerId, storeId, role, data, ifMatch }) {
     assertObjectId(id, "product id");
@@ -192,20 +203,54 @@ export class SellerProductsService {
   }
 
   async createProduct({ data, actor }) {
-    try {
-      const payload = { ...data, createdBy: actor?.id, updatedBy: actor?.id };
-      const doc = new Product(payload);
-      const saved = await doc.save();
-      return saved;
-    } catch (err) {
-      if (err?.code === 11000) {
-        const field = Object.keys(err.keyValue || err.keyPattern || {})[0] || "uniqueField";
-        throw new CustomError(`Duplicate ${field}`, 409);
-      }
-      if (err?.name === "ValidationError") { throw new CustomError(err.message || "Validation error", 400); }
-      throw err; // unknown
+  try {
+    const payload = {
+      ...data,
+      createdBy: actor?.id,
+      updatedBy: actor?.id,
+    };
+
+    const doc = new Product(payload);
+    const saved = await doc.save();
+    return saved;
+  } catch (err) {
+    // 🔍 לוג מפורט לשרת – לראות בדיוק על מה נופל
+    if (err?.code === 11000) {
+      console.error("🔥 DUPLICATE KEY ERROR in createProduct:", {
+        code: err.code,
+        keyPattern: err.keyPattern, // למשל { storeId: 1, sku: 1 }
+        keyValue: err.keyValue,     // למשל { storeId: ObjectId("..."), sku: "ABC-123" }
+        message: err.message,
+      });
+
+      const pattern = err.keyPattern || {};
+      const value = err.keyValue || {};
+      const keys = Object.keys(pattern);
+
+      // שם האינדקס – למשל "storeId+sku" / "storeId+slug"
+      const field = keys.length ? keys.join("+") : "unknown";
+
+      // פירוט הערכים – למשל "storeId=656b... , sku=EXP-123..."
+      const details = keys
+        .map((k) => `${k}=${value[k]}`)
+        .join(", ");
+
+      // מה שיגיע ללקוח (ל־RTK Query / פוסטמן)
+      const msg = details
+        ? `Duplicate ${field} (${details})`
+        : `Duplicate ${field}`;
+
+      throw new CustomError(msg, 409);
     }
+
+    if (err?.name === "ValidationError") {
+      throw new CustomError(err.message || "Validation error", 400);
+    }
+
+    throw err; // שגיאה לא מוכרת – תעבור ל-errorHandler
   }
+}
+
 
   async softDelete(productId, userId) {
     assertObjectId(productId, "product id");

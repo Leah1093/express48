@@ -23,7 +23,7 @@ const UserMenu = () => {
       <div className="absolute right-0 mt-2 w-44 bg-white border rounded-md shadow-lg text-sm  invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
         {user ? (
           <>
-            <HoverLink to="/account" label="חשבון" />
+            <HoverLink to="/account/profile" label="חשבון" />
             <HoverLink to="/account/profile" label="פרופיל" />
             <HoverLink to="/account/orders" label="הזמנות" />
             <HoverLink to="/account/favorites" label="מועדפים" />

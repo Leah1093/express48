@@ -75,6 +75,36 @@ function applyDiscount(baseAmount, discount) {
   }
   return { final: baseAmount, saved: 0 };
 }
+// ממש בתחילת הקובץ, אחרי האימפורטים והפונקציות העוזרות:
+
+const OverviewBlockSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: ["text", "image", "video"],
+      required: true,
+    },
+
+    // ---- TEXT ----
+    html: { type: String }, // טקסט בפורמט HTML
+
+    // ---- IMAGE ----
+    url: { type: String }, // קישור לתמונה
+    alt: { type: String },
+    sourceType: {
+      type: String,
+      enum: ["upload", "url"],
+      default: "url",
+    },
+    publicId: { type: String }, // אם נשמר ב-cloudinary
+
+    // ---- VIDEO ----
+    videoUrl: { type: String },
+    provider: { type: String }, // "youtube" / "vimeo" / "file" וכו'
+  },
+  { _id: true, timestamps: false }
+);
+
 
 const DiscountSchema = new mongoose.Schema({
   discountType: { type: String, enum: ["percent", "fixed"], required: true },
@@ -136,6 +166,7 @@ const productSchema = new mongoose.Schema({
     text: { type: String, default: "" },
     images: { type: [String], default: [] },
     videos: { type: [String], default: [] },
+     blocks: { type: [OverviewBlockSchema], default: [] },
   },
 
   gtin: { type: String, index: true, sparse: true, validate: [gtinValidator, "GTIN לא חוקי"] },
@@ -226,16 +257,16 @@ const productSchema = new mongoose.Schema({
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
     // --- קישור מלא לעץ קטגוריות ---
-  primaryCategoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
-  categoryPathIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
-  categoryFullSlug: { type: String, index: true }, // <<<< חשוב בשביל /by-category
-  breadcrumbs: [{
-    id: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
-    name: { type: String, required: true },
-    slug: { type: String, required: true },
-    fullSlug: { type: String, required: true },
-    depth: { type: Number, required: true },
-  }],
+  // primaryCategoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+  // categoryPathIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
+  // categoryFullSlug: { type: String, index: true }, // <<<< חשוב בשביל /by-category
+  // breadcrumbs: [{
+  //   id: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
+  //   name: { type: String, required: true },
+  //   slug: { type: String, required: true },
+  //   fullSlug: { type: String, required: true },
+  //   depth: { type: Number, required: true },
+  // }],
 
 }, { timestamps: true });
 
@@ -478,5 +509,54 @@ productSchema.methods.getEffectivePricing = function (variationId = null) {
     discountSource,
   };
 };
+function buildOverviewBlocksFromLegacy(overview = {}) {
+  if (!overview) return [];
+
+  // אם כבר יש blocks עם תוכן – לא נוגעים
+  if (Array.isArray(overview.blocks) && overview.blocks.length > 0) {
+    return overview.blocks;
+  }
+
+  const blocks = [];
+
+  if (overview.text) {
+    blocks.push({
+      _id: new mongoose.Types.ObjectId(),
+      type: "text",
+      html: overview.text,
+    });
+  }
+
+  if (Array.isArray(overview.images)) {
+    overview.images
+      .filter(Boolean)
+      .forEach((url) => {
+        blocks.push({
+          _id: new mongoose.Types.ObjectId(),
+          type: "image",
+          url,
+          sourceType: "url",
+        });
+      });
+  }
+
+  if (Array.isArray(overview.videos)) {
+    overview.videos
+      .filter(Boolean)
+      .forEach((videoUrl) => {
+        blocks.push({
+          _id: new mongoose.Types.ObjectId(),
+          type: "video",
+          videoUrl,
+        });
+      });
+  }
+
+  return blocks;
+}
+
+// סטטיק על המודל למקרה שתרצי להשתמש בשירותים שונים
+productSchema.statics.buildOverviewBlocksFromLegacy = buildOverviewBlocksFromLegacy;
+
 
 export const Product = mongoose.models.Product || mongoose.model("Product", productSchema);

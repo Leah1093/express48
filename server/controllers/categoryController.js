@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { CategoryService } from "../service/categoryService.js";
+import { CategoryService } from "../services/categoryService.js";
 import { CustomError } from "../utils/CustomError.js";
 
 // נסה לייבא גם default וגם named כדי להיות עמיד לשתי הצורות:

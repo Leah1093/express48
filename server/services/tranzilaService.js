@@ -17,15 +17,15 @@ export class TranzilaService {
     }, 0));
   }
 
-  static buildIframeUrl({ orderId, items, baseUrl, terminal }) {
+  static buildIframeUrl({ orderId, items, baseUrl, terminal, customerInfo }) {
     if (!orderId) throw new CustomError('Missing orderId', 400);
 
     // הגנות בסיסיות
     if (!terminal || /@/.test(terminal)) {
       throw new CustomError('Invalid TRANZILA_TERMINAL (must be terminal name, not email)', 500);
     }
-    if (!baseUrl || !/^https:\/\//i.test(baseUrl)) {
-      throw new CustomError('BASE_URL must be HTTPS', 500);
+    if (!baseUrl || !/^https?:\/\//i.test(baseUrl)) {
+      throw new CustomError('BASE_URL must be HTTP/HTTPS', 500);
     }
 
     const total = this.calcTotal(items);
@@ -35,14 +35,13 @@ export class TranzilaService {
     const safeOrderId = String(orderId).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
 
     const url = new URL(`https://direct.tranzila.com/${terminal}/iframe.php`);
-    url.searchParams.set('lang', 'heb');
-    url.searchParams.set('currency', '1'); // ILS
+    
+    // ✅ רק המינימום! ללא URLs שיחסמו אותנו
     url.searchParams.set('sum', String(total));
-    url.searchParams.set('orderid', safeOrderId);
-    url.searchParams.set('success_url', `${baseUrl}/checkout/success?order=${safeOrderId}`); // <- מועבר ל-UI
-    url.searchParams.set('error_url',   `${baseUrl}/checkout/failed?order=${safeOrderId}`);
-    url.searchParams.set('notify_url',  `${baseUrl}/api/payments/tranzila/webhook`);
-
+    url.searchParams.set('currency', '1');
+    url.searchParams.set('cred_type', '1');
+    url.searchParams.set('lang', 'il');
+    
     console.log('[TRZ] terminal=', terminal, 'sum=', total, 'url=', url.toString());
     return { iframeUrl: url.toString(), amount: total };
   }
