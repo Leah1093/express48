@@ -2,6 +2,7 @@ import crypto from "crypto";
 import mongoose from "mongoose";
 import { CustomError } from "../utils/CustomError.js";
 import { Product } from "../models/Product.js";
+import { Category } from "../models/category.js";
 
 // ---------- helpers ----------
 const sortMap = {
@@ -180,62 +181,94 @@ export class SellerProductsService {
   return { product: productDoc, etag };
 }
 
+async update({ id, sellerId, storeId, role, data, ifMatch }) {
+  assertObjectId(id, "product id");
 
-  async update({ id, sellerId, storeId, role, data, ifMatch }) {
-    assertObjectId(id, "product id");
+  const doc = await Product.findById(id);
+  if (!doc) throw new CustomError("Product not found", 404);
 
-    const doc = await Product.findById(id);
-    if (!doc) throw new CustomError("Product not found", 404);
-
-    if (role === "seller") {
-      if (!storeId || String(doc.storeId) !== String(storeId)) { throw new CustomError("Forbidden: product is not yours", 403); }
+  if (role === "seller") {
+    if (!storeId || String(doc.storeId) !== String(storeId)) {
+      throw new CustomError("Forbidden: product is not yours", 403);
     }
-
-    const currentETag = makeETag(doc);
-    if (ifMatch && ifMatch !== currentETag) { throw new CustomError("Precondition Failed", 412); }
-
-    Object.assign(doc, data);
-
-    await doc.save();
-    const etag = makeETag(doc);
-    const updated = doc.toObject({ virtuals: true });
-    return { updated, etag };
   }
 
-  async createProduct({ data, actor }) {
+  const currentETag = makeETag(doc);
+  if (ifMatch && ifMatch !== currentETag) {
+    throw new CustomError("Precondition Failed", 412);
+  }
+
+  const { categoryId, ...rest } = data || {};
+  let payload = { ...rest };
+  let patch = { ...rest };
+
+  // אם שולחים categoryId חדש, נעדכן ממנו את כל שדות הקטגוריה
+  if (categoryId) {
+     const merged = {
+      ...doc.toObject(),
+      ...rest,
+    };
+        const withCategory = await this.applyCategoryToProductPayload(
+      merged,
+      categoryId
+    );
+
+    // נשמור רק את השדות שעברו שינוי לעדכון
+    patch = {
+      ...patch,
+      primaryCategoryId: withCategory.primaryCategoryId,
+      categoryFullSlug: withCategory.categoryFullSlug,
+      categoryPathIds: withCategory.categoryPathIds,
+      breadcrumbs: withCategory.breadcrumbs,
+      category: withCategory.category,
+      subCategory: withCategory.subCategory,
+    };
+  }
+
+  Object.assign(doc, patch);
+
+  await doc.save();
+  const etag = makeETag(doc);
+  const updated = doc.toObject({ virtuals: true });
+  return { updated, etag };
+}
+async createProduct({ data, actor }) {
   try {
-    const payload = {
-      ...data,
+    const { categoryId, ...rest } = data;
+
+    let payload = {
+      ...rest,
       createdBy: actor?.id,
       updatedBy: actor?.id,
     };
 
+    if (categoryId) {
+      payload = await this.applyCategoryToProductPayload(payload, categoryId);
+    }
+
+    // לא לשמור categoryId במודל עצמו
     const doc = new Product(payload);
     const saved = await doc.save();
     return saved;
   } catch (err) {
-    // 🔍 לוג מפורט לשרת – לראות בדיוק על מה נופל
-    if (err?.code === 11000) {
+   if (err?.code === 11000) {
+      // נשאיר את הטיפול בדופליקייט כמו שכתבת
       console.error("🔥 DUPLICATE KEY ERROR in createProduct:", {
         code: err.code,
-        keyPattern: err.keyPattern, // למשל { storeId: 1, sku: 1 }
-        keyValue: err.keyValue,     // למשל { storeId: ObjectId("..."), sku: "ABC-123" }
+        keyPattern: err.keyPattern,
+        keyValue: err.keyValue,
         message: err.message,
       });
 
       const pattern = err.keyPattern || {};
       const value = err.keyValue || {};
       const keys = Object.keys(pattern);
-
-      // שם האינדקס – למשל "storeId+sku" / "storeId+slug"
       const field = keys.length ? keys.join("+") : "unknown";
 
-      // פירוט הערכים – למשל "storeId=656b... , sku=EXP-123..."
       const details = keys
         .map((k) => `${k}=${value[k]}`)
         .join(", ");
 
-      // מה שיגיע ללקוח (ל־RTK Query / פוסטמן)
       const msg = details
         ? `Duplicate ${field} (${details})`
         : `Duplicate ${field}`;
@@ -247,7 +280,7 @@ export class SellerProductsService {
       throw new CustomError(err.message || "Validation error", 400);
     }
 
-    throw err; // שגיאה לא מוכרת – תעבור ל-errorHandler
+    throw err;
   }
 }
 
@@ -297,6 +330,49 @@ export class SellerProductsService {
     await product.save();
     return product.toObject();
   }
+    async applyCategoryToProductPayload(payload, categoryId) {
+    if (!categoryId) {
+      return payload;
+    }
+
+    const category = await Category.findById(categoryId).lean();
+    if (!category) {
+      throw new CustomError("Category not found", 400);
+    }
+
+    // מסלול ה־ObjectId מקטגורית שורש עד הקטגוריה שנבחרה
+    const pathIds = [...(category.ancestors || []), category._id];
+
+    const pathCategories = await Category.find({ _id: { $in: pathIds } })
+      .sort({ depth: 1, order: 1, name: 1 })
+      .lean();
+
+    const root = pathCategories[0];
+    const sub = pathCategories[1];
+
+    return {
+      ...payload,
+
+      // קישור חזק לעץ הקטגוריות
+      primaryCategoryId: category._id,
+      categoryFullSlug: category.fullSlug,
+      categoryPathIds: pathIds,
+
+      // לשימוש פשוט בפרונט / פילטרים
+      category: root?.name || "",
+      subCategory: sub?.name || "",
+
+      // פירורי לחם מסודרים
+      breadcrumbs: pathCategories.map((c) => ({
+        id: c._id,
+        name: c.name,
+        slug: c.slug,
+        fullSlug: c.fullSlug,
+        depth: c.depth,
+      })),
+    };
+  }
+
 }
 
 // ---------- test hooks ----------
