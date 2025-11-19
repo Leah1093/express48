@@ -131,7 +131,7 @@ function App() {
       />
       {!hideMainHeader && <TopBar />}
       {!hideMainHeader && <CategoriesBar />}
-      <main className="flex-grow">
+      <main className="flex-grow pb-[90px] md:pb-0">
         <Routes>
           {/* חיפוש/חנות */}
           <Route path="/" element={<ProductsPage />} />
