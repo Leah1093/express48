@@ -37,6 +37,7 @@ import uploadRoutes from "./router/upload.routes.js";
 
 
 import dotenv from 'dotenv';
+import { productImportRouter } from "./router/productImport.router.js";
 
 
 
@@ -80,7 +81,8 @@ app.use("/auth", googleAuthRouter);
 app.use("/marketplace", marketplaceRouter)
 app.use("/seller-store", storeRouter)
 app.use("/public/stores", storePublicRouter)
-app.use("/seller/products", sellerProductsRouter)
+app.use("/seller/products", productImportRouter); // 👈 מוסיפים את זה
+
 app.use('/cart', cartRouter);
 // app.use('/products', productRoutes);
 app.use('/products', productRouter);
@@ -92,6 +94,8 @@ app.use("/coupons", couponsRoutes);
 app.use('/payments/tranzila', tranzilaRouter);
 
 app.use("/uploads", uploadRoutes);
+app.use("/seller/products", sellerProductsRouter);
+
 app.use(errorHandler);
 
 

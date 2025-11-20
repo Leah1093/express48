@@ -248,6 +248,7 @@ const productSchema = new mongoose.Schema({
   },
 
   wishlistCount: { type: Number, default: 0, min: 0 },
+    _importSkipPriceValidation: { type: Boolean, default: false, select: false },
   lastPurchasedAt: { type: Date },
 
   legacyPrice: { type: Number },
@@ -400,21 +401,6 @@ productSchema.path("images").validate(function (arr) {
   return true;
 }, "מוצר מפורסם חייב לכלול לפחות תמונה אחת");
 
-productSchema.pre("validate", function (next) {
-  if (!this.price || !isNumFinite(this.price.amount)) {
-    return next(new Error("price.amount של מוצר הוא שדה חובה ומספר תקין"));
-  }
-  if (this.price.amount < 0) {
-    return next(new Error("price.amount של מוצר לא יכול להיות שלילי"));
-  }
-  for (const v of this.variations || []) {
-    if (v?.price?.amount != null) {
-      if (!isNumFinite(v.price.amount)) return next(new Error("price.amount של וריאציה חייב להיות מספר תקין"));
-      if (v.price.amount < 0) return next(new Error("price.amount של וריאציה לא יכול להיות שלילי"));
-    }
-  }
-  next();
-});
 
 productSchema.pre("save", function (next) {
   this.title_he_plain = normalizeHebrew(this.title);
