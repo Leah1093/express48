@@ -14,6 +14,7 @@ import ProductSeoSection from "./ProductSeoSection";
 import ProductVisibilitySection from "./ProductVisibilitySection";
 import ProductAdminSection from "./ProductAdminSection";
 import ProductVariationsSection from "./ProductVariationsSection";
+import ProductImportFromCsv from "./ProductImportFromCsv";
 
 // Redux API
 import {
@@ -222,7 +223,108 @@ const PANELS = [
     Component: ProductDescriptionSection,
   },
 ];
+const CSV_DELIMITER = ",";
 
+const CSV_TEMPLATE_HEADERS = [
+  "supplier",
+  "metaTitle",
+  "metaDescription",
+  "title",
+  "titleEn",
+  "descriptionHtml",
+  "overviewHtml",
+  "brand",
+  "gtin",
+  "sellerSku",
+  "model",
+  "currency",
+  "price",
+  "stock",
+  "images",
+  "video",
+  "categoryFullSlug",
+  "warranty",
+  "deliveryCost",
+  "deliveryNotes",
+  "shippingFrom",
+  "length",
+  "width",
+  "height",
+  "weightKg",
+];
+
+const CSV_TEMPLATE_EXAMPLE_ROW = [
+  "ראלקו",
+  "מקרר 4 דלתות מקפיא תחתון אינוורטר - Sharp SJ-8420-SL",
+  "מקרר 4 דלתות חסכוני ושקט, מתאים למשפחות",
+  "מקרר 4 דלתות מקפיא תחתון אינוורטר",
+  "Sharp SJ-8420-SL",
+  '<p style="text-align:right;"><strong>תיאור קצר של המוצר...</strong></p>',
+  '<p style="text-align:right;"><strong>סקירה מלאה של המוצר...</strong><br/>אפשר לשים כאן HTML מסודר.</p>',
+  "Sharp",
+  "7290012345678",
+  "1728021728",
+  "SJ-8420-SL",
+  "ILS",
+  "3609",
+  "25",
+  "https://example.com/img1.jpg,https://example.com/img2.jpg",
+  "",
+  "kitchen/refrigerators/four-doors",
+  "שנה אחריות מלאה על ידי היבואן הרשמי",
+  "60",
+  'מעל קומה שלישית - 60 ש"ח נוספים לכל קומה (משולם למובילים)',
+  "IL",
+  "85",
+  "80",
+  "180",
+  "75",
+];
+
+// פונקציה שמכינה ערך כתקין ל-CSV
+function csvEscape(value) {
+  if (value == null) return "";
+  const text = String(value);
+
+  const mustQuote =
+    text.includes(CSV_DELIMITER) ||
+    text.includes('"') ||
+    text.includes("\n") ||
+    text.includes("\r");
+
+  let result = text.replace(/"/g, '""'); // להחליף " ב-""
+
+  if (mustQuote) {
+    result = `"${result}"`;
+  }
+
+  return result;
+}
+function downloadCsvTemplate() {
+  const headerLine = CSV_TEMPLATE_HEADERS.join(CSV_DELIMITER);
+
+  const exampleLine =
+    CSV_TEMPLATE_EXAMPLE_ROW.map(csvEscape).join(CSV_DELIMITER);
+
+  const BOM = "\uFEFF"; // כדי שאקסל יבין עברית
+
+  const csvContent = `${BOM}${headerLine}\r\n${exampleLine}\r\n`;
+
+  const blob = new Blob([csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "product-import-template.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// 🔹 בניית והורדת קובץ ה־CSV בטופס (בצד לקוח בלבד)
 export default function ProductForm({
   mode = "create",
   initialData = null,
@@ -231,6 +333,7 @@ export default function ProductForm({
   const [serverError, setServerError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [active, setActive] = useState("media"); // רק אחד פתוח
+  const [showImportCsv, setShowImportCsv] = useState(false); // ✅ חדש
 
   const [createSellerProduct] = useCreateSellerProductMutation();
   const [updateSellerProduct] = useUpdateSellerProductMutation();
@@ -264,94 +367,101 @@ export default function ProductForm({
     shouldUnregister: false,
   });
 
-const onSubmit = async (values) => {
-      console.log("🧪 values.overview:", values.overview);
-  console.log("🧪 values.overview.blocks:", values.overview?.blocks);
+  const onSubmit = async (values) => {
+    console.log("🧪 values.overview:", values.overview);
+    console.log("🧪 values.overview.blocks:", values.overview?.blocks);
 
-  setServerError(null);
-  setSubmitting(true);
-  try {
-    const payload = { ...values };
+    setServerError(null);
+    setSubmitting(true);
+    try {
+      const payload = { ...values };
 
-    // --- סקירה: פיצול מ־blocks לשדות text/images/videos ---
-    const blocks = values.overview?.blocks || [];
-    const { text, images, videos } = splitOverviewFromBlocks(
-      blocks,
-      values.overview || {}
-    );
+      // --- סקירה: פיצול מ־blocks לשדות text/images/videos ---
+      const blocks = values.overview?.blocks || [];
+      const { text, images, videos } = splitOverviewFromBlocks(
+        blocks,
+        values.overview || {}
+      );
 
-    payload.overview = {
-      text,
-      images,
-      videos,
-      blocks
-    };
-console.log("🧪 payload.overview שנשלח לשרת:", payload.overview);
-    // --- המשך כמו שהיה לך קודם ---
-    payload.specs = pairsToMap(values.specsPairs);
-    delete payload.specsPairs;
+      payload.overview = {
+        text,
+        images,
+        videos,
+        blocks,
+      };
+      console.log("🧪 payload.overview שנשלח לשרת:", payload.overview);
+      // --- המשך כמו שהיה לך קודם ---
+      payload.specs = pairsToMap(values.specsPairs);
+      delete payload.specsPairs;
 
-    payload.discount = payload.discount || {};
-    payload.discount.startsAt = toISOorNull(values.discount?.startsAt || "");
-    payload.discount.expiresAt = toISOorNull(values.discount?.expiresAt || "");
-    const hasType = payload.discount?.discountType?.trim?.();
-    const hasVal =
-      typeof payload.discount?.discountValue === "number" &&
-      !Number.isNaN(payload.discount.discountValue);
-    if (!hasType || !hasVal) delete payload.discount;
+      payload.discount = payload.discount || {};
+      payload.discount.startsAt = toISOorNull(values.discount?.startsAt || "");
+      payload.discount.expiresAt = toISOorNull(
+        values.discount?.expiresAt || ""
+      );
+      const hasType = payload.discount?.discountType?.trim?.();
+      const hasVal =
+        typeof payload.discount?.discountValue === "number" &&
+        !Number.isNaN(payload.discount.discountValue);
+      if (!hasType || !hasVal) delete payload.discount;
 
-    payload.scheduledAt = toISOorNull(values.scheduledAt || "");
-    payload.visibleUntil = toISOorNull(values.visibleUntil || "");
+      payload.scheduledAt = toISOorNull(values.scheduledAt || "");
+      payload.visibleUntil = toISOorNull(values.visibleUntil || "");
 
-    payload.variations = (values.variations || []).map((v) => ({
-      ...v,
-      discount: v.discount
-        ? {
-            ...v.discount,
-            startsAt: toISOorNull(v.discount.startsAt || ""),
-            expiresAt: toISOorNull(v.discount.expiresAt || ""),
-          }
-        : undefined,
-      price:
-        v?.price && typeof v.price.amount === "number" && !Number.isNaN(v.price.amount)
-          ? v.price
+      payload.variations = (values.variations || []).map((v) => ({
+        ...v,
+        discount: v.discount
+          ? {
+              ...v.discount,
+              startsAt: toISOorNull(v.discount.startsAt || ""),
+              expiresAt: toISOorNull(v.discount.expiresAt || ""),
+            }
           : undefined,
-    }));
+        price:
+          v?.price &&
+          typeof v.price.amount === "number" &&
+          !Number.isNaN(v.price.amount)
+            ? v.price
+            : undefined,
+      }));
 
-    const statusMap = { "טיוטא": "draft", "מפורסם": "published", "מושהה": "suspended" };
-    payload.status = statusMap[payload.status] || payload.status;
+      const statusMap = {
+        טיוטא: "draft",
+        מפורסם: "published",
+        מושהה: "suspended",
+      };
+      payload.status = statusMap[payload.status] || payload.status;
 
-    if (!payload.metaTitle?.trim()) {
-      const parts = [];
-      if (payload.title) parts.push(payload.title);
-      const bm = [payload.brand, payload.model].filter(Boolean).join(" ");
-      if (bm && !String(payload.title || "").includes(bm)) parts.push(bm);
-      parts.push("משלוח מהיר 48 שעות", "EXPRESS48");
-      payload.metaTitle = parts.filter(Boolean).join(" - ").slice(0, 60);
+      if (!payload.metaTitle?.trim()) {
+        const parts = [];
+        if (payload.title) parts.push(payload.title);
+        const bm = [payload.brand, payload.model].filter(Boolean).join(" ");
+        if (bm && !String(payload.title || "").includes(bm)) parts.push(bm);
+        parts.push("משלוח מהיר 48 שעות", "EXPRESS48");
+        payload.metaTitle = parts.filter(Boolean).join(" - ").slice(0, 60);
+      }
+
+      delete payload.variationsConfig;
+
+      const cleaned = clean(payload);
+
+      let result;
+      if (mode === "edit" && initialData?._id) {
+        result = await updateSellerProduct({
+          id: initialData._id,
+          ...cleaned,
+        }).unwrap();
+      } else {
+        result = await createSellerProduct(cleaned).unwrap();
+      }
+
+      onSuccess?.(result);
+    } catch (err) {
+      setServerError(err?.data?.error || err?.message || "שגיאת שרת לא ידועה");
+    } finally {
+      setSubmitting(false);
     }
-
-    delete payload.variationsConfig;
-
-    const cleaned = clean(payload);
-
-    let result;
-    if (mode === "edit" && initialData?._id) {
-      result = await updateSellerProduct({
-        id: initialData._id,
-        ...cleaned,
-      }).unwrap();
-    } else {
-      result = await createSellerProduct(cleaned).unwrap();
-    }
-
-    onSuccess?.(result);
-  } catch (err) {
-    setServerError(err?.data?.error || err?.message || "שגיאת שרת לא ידועה");
-  } finally {
-    setSubmitting(false);
-  }
-};
-
+  };
 
   const ActiveComponent =
     PANELS.find((p) => p.id === active)?.Component ?? null;
@@ -365,6 +475,22 @@ console.log("🧪 payload.overview שנשלח לשרת:", payload.overview);
             {mode === "edit" ? "עריכת מוצר" : "הוספת מוצר חדש"}
           </h1>
           <div className="flex gap-2">
+            {/* כפתור הורדת טמפלייט CSV ✅ */}
+            <button
+              type="button"
+              onClick={downloadCsvTemplate}
+              className="px-4 py-2 rounded-xl border border-slate-400 text-sm hover:bg-slate-50"
+            >
+              הורדת קובץ יבוא לדוגמה
+            </button>
+            {/* כפתור ייבוא מ-CSV */}
+            <button
+              type="button"
+              onClick={() => setShowImportCsv((prev) => !prev)}
+              className="px-4 py-2 rounded-xl border border-dashed border-slate-400 text-sm hover:bg-slate-50"
+            >
+              {showImportCsv ? "סגירת ייבוא CSV" : "ייבוא מוצר מקובץ CSV"}
+            </button>
             <button
               type="button"
               className="px-4 py-2 rounded-xl border"
@@ -385,6 +511,12 @@ console.log("🧪 payload.overview שנשלח לשרת:", payload.overview);
             </button>
           </div>
         </div>
+        {/* אזור ייבוא CSV – נפתח רק כשצריך */}
+        {showImportCsv && (
+          <div className="mb-6">
+            <ProductImportFromCsv onClose={() => setShowImportCsv(false)} />
+          </div>
+        )}
 
         {/* מידע כללי תמיד למעלה */}
         <div className="mb-6">
