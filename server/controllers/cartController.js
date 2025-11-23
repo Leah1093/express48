@@ -1,3 +1,4 @@
+// import { CartService } from '../service/cartService.js';
 // const cartService = new CartService();
 
 // export const getCart = async (req, res, next) => {
@@ -103,12 +104,7 @@
 
 
 
-
-
-
-
-// src/controllers/cart.controller.js
-import { CartService } from "../service/cartService.js";
+import { CartService } from "../services/cartService.js";
 
 const cartService = new CartService();
 
