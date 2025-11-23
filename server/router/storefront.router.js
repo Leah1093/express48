@@ -1,4 +1,3 @@
-// routes/storefront.routes.js
 import express from "express";
 import { StorefrontController } from "../controllers/storefront.controller.js";
 import { validate } from "../middlewares/validate.js";

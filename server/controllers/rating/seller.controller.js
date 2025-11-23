@@ -1,4 +1,3 @@
-// controllers/rating/seller.controller.js
 import {RatingSellerService} from "../../service/rating/seller.service.js"
 export class RatingSellerController {
     static async listSellerRatings(req, res, next) {

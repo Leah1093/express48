@@ -1,4 +1,3 @@
-// מוולידציה ייעודית ל-Zod בלבד, לא נוגעת בשאר הלוגיקה הקיימת
 export const validateZod =
   ({ body, query, params } = {}) =>
   (req, res, next) => {

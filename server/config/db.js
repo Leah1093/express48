@@ -1,4 +1,3 @@
-// server/config/db.js
 import mongoose from "mongoose";
 
 // מסתיר יוזר/סיסמה בלוג

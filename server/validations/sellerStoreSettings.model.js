@@ -1,4 +1,3 @@
-// models/sellerStoreSettings.model.js
 import mongoose from "mongoose";
 
 const sellerStoreSettingsSchema = new mongoose.Schema({

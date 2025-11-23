@@ -4,7 +4,6 @@ import PasswordController from "../controllers/pwd.controller.js";
 import { recaptchaV2Middleware } from "../middlewares/recaptchaV2.js";
 import { authMiddleware } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
-// import { resetPasswordLimiter,changePasswordLimiter } from "../middlewares/limitPassword.js";
 import { resetPasswordLimiter ,changePasswordLimiter} from "../middlewares/rateLimit.middleware.js";
 const passwordRouter = express.Router();
 const pwdController = new PasswordController();

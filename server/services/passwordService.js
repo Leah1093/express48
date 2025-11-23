@@ -1,8 +1,6 @@
 import { User } from '../models/user.js';
-// import { UserPassword } from '../models/userPassword.js';
 import { Password } from '../models/password.js';
 import { userQueries } from '../mongoQueries/user.queries.js';
-// import { sendResetEmail } from "../utils/sendEmail.js";
 import { sendResetEmail } from '../utils/email/sendResetEmail.js';
 import { PasswordResetToken } from '../models/passwordResetToken.js';
 

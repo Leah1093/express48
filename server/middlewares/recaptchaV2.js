@@ -16,8 +16,8 @@ export const recaptchaV2Middleware = async (req, res, next) => {
       return res.status(400).json({ message: 'אימות reCAPTCHA נכשל – נא לנסות שוב' });
     }
 
-    next(); // הכל תקין – ממשיכים לקונטרולר
-
+    next();
+    
   } catch (err) {
      console.log("000")
     console.error("שגיאה באימות reCAPTCHA:", err.message);

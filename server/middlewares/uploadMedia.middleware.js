@@ -62,12 +62,12 @@ export async function processStoreMedia(req, _res, next) {
   try {
     const files = req.files || {};
     const out = {
-      logo: null,                   // { kind, url }
-      storeBanner: null,            // { kind, url }
-      mobileBanner: null,           // { kind, url }
-      listBanner: null,             // { kind, url }
-      slider: [],                   // [url,url,...] — תמונות בלבד
-      _newUrls: [],                 // לניקוי במקרה של כשל
+      logo: null,                   
+      storeBanner: null,            
+      mobileBanner: null,           
+      listBanner: null,             
+      slider: [],                   
+      _newUrls: [],                
     };
 
     const handleSingle = async (field) => {
@@ -107,9 +107,6 @@ export async function processStoreMedia(req, _res, next) {
     out.listBanner = await handleSingle("listBanner");
     out.slider = await handleManyImages("slider");
 
-    // סוגי באנרים מגיעים כשדות טקסט של הטופס (multer שומר גם אותם)
-    // bannerTypeStore: "static" | "video" | "slider"
-    // bannerTypeList:  "static" | "video"
     const { bannerTypeStore, bannerTypeList, replaceSlider } = req.body || {};
     req.processedMedia = {
       ...out,

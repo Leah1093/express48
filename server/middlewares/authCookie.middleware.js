@@ -1,29 +1,3 @@
-// import jwt from "jsonwebtoken";
-
-// export function authCookieMiddleware(req, res, next) {
-//   const token = req.cookies.token;
-//   console.log("hi coo")
-//   if (!token) {
-//     return res.status(401).json({ error: "Missing authentication token" });
-//   }
-
-//   try {
-//     console.log("token")
-
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//     req.user = { userId: decoded.userId , role: decoded.role, roles: decoded.roles};
-//     console.log("Decoded token:", decoded);
-//     console.log("Decoded token:", decoded.role);
-
-//     next();
-//   } catch (err) {
-//     return res.status(403).json({ error: "Invalid or expired token" });
-//   }
-// }
-
-
-
-// middlewares/authCookie.middleware.js
 import jwt from "jsonwebtoken";
 import { Seller } from "../models/seller.js"; // למילוי sellerId אם חסר
 

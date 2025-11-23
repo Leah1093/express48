@@ -183,11 +183,6 @@ export default class StoreService {
   async _uniqueSlug(base, ignoreId) {
     let candidate = base;
     let i = 2;
-    // בדיקת קיום עד למציאת ייחודי
-    // ניתן לשקול collation במודל לשוויון case-insensitive אם צריך
-    // { collation: { locale: "en", strength: 2 } }
-    // אבל כאן נשאר לוגיקה פשוטה
-    // eslint-disable-next-line no-constant-condition
     while (await Store.exists({ slug: candidate, _id: { $ne: ignoreId } })) {
       candidate = `${base}-${i++}`;
     }

@@ -41,16 +41,6 @@ class CouponService {
       throw new Error("הקופון לא זמין עבורך");
     }
 
-    // בדיקת מוכרים
-    // if (coupon.allowedSellers.length > 0) {
-    //   const sellerIds = sellers.map((s) => s.toString());
-    //   const intersection = coupon.allowedSellers.filter((s) =>
-    //     sellerIds.includes(s.toString())
-    //   );
-    //   if (intersection.length === 0)
-    //     throw new Error("הקופון לא תקף למוצרים שבחרת");
-    // }
-
     if (coupon.restrictionType === "specificUsers") {
       if (!coupon.allowedUsers.includes(userId)) {
         throw new Error("הקופון לא תקף עבורך");

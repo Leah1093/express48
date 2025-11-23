@@ -1,32 +1,3 @@
-// import { Favorite } from "../models/Favorite.js";
-
-// export class FavoritesService {
-//   async add(userId, productId) {
-//     const filter  = { userId, productId };
-//     const update  = { $setOnInsert: { userId, productId, addedAt: new Date() } };
-//     const options = { upsert: true, new: true, setDefaultsOnInsert: true };
-//     return Favorite.findOneAndUpdate(filter, update, options);
-//   }
-
-//   async remove(userId, productId) {
-//     const { deletedCount } = await Favorite.deleteOne({ userId, productId });
-//     return { ok: true, deleted: deletedCount === 1 };
-//   }
-
-//   async list(userId, { limit = 200, skip = 0 } = {}) {
-//     return Favorite.find({ userId })
-//       .sort({ createdAt: -1 })
-//       .limit(limit)
-//       .skip(skip)
-//       .lean();
-//   }
-
-//   async exists(userId, productId) {
-//     return Boolean(await Favorite.exists({ userId, productId }));
-//   }
-// }
-
-// export const favoritesService = new FavoritesService();
 import { Favorite } from "../models/favorite.js";
 import { favoriteQueries } from "../mongoQueries/favoriteQueries.js";
 

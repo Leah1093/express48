@@ -1,4 +1,3 @@
-// service/auth.service.js
 import crypto from "crypto";
 import { signAccessToken } from "../utils/jwt.js";
 import {

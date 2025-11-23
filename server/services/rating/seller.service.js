@@ -1,4 +1,3 @@
-// services/rating/seller.service.js
 import mongoose from "mongoose";
 import { Rating } from "../../models/rating.js";
 

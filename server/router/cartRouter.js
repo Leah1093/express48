@@ -21,7 +21,6 @@ router.delete('/clear', authMiddleware, clearCart);
 router.delete('/remove-completely', authMiddleware, removeProductCompletely);
 router.post('/merge',authMiddleware, mergeLocalCart);
 router.put("/update-quantity", authMiddleware, updateItemQuantity);
-// ✅ נתיב לסימון פריט כ־selected
 router.patch("/item/:itemId/selected",authMiddleware, toggleSelected);
 router.patch("/select-all",authMiddleware,toggleSelecteAll);
 

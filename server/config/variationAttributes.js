@@ -1,24 +1,20 @@
-// server/config/variationAttributes.js
-
-// מפתחות וריאציה מותרות כלליות (ניתן להרחיב/לצמצם)
 export const allowedVariationAttributes = [
-  "color",       // צבע
-  "size",        // מידה
-  "storage",     // אחסון (128GB...)
-  "material",    // חומר (כותנה, אלומיניום)
-  "style",       // סגנון/דגם עיצובי
-  "edition",     // מהדורה/גרסה
-  "capacity",    // קיבולת (ליטר, mAh)
-  "pack",        // גודל אריזה/כמות בחבילה
-  "flavor",      // טעם
-  "voltage",     // מתח/גרסה חשמלית
-  "compatibility",// תאימות (דגמים נתמכים)
+  "color",       
+  "size",        
+  "storage",     
+  "material",    
+  "style",       
+  "edition",    
+  "capacity",    
+  "pack",       
+  "flavor",     
+  "voltage",   
+  "compatibility",
   "mo",
   "sizee"
 
 ];
 
-// מיפוי לפי קטגוריה (אופציונלי). אם לקטגוריה אין ערך כאן – נופלים לרשימה הכללית.
 export const categoryVariationMap = {
   "ביגוד": ["size", "color", "material", "style"],
   "נעליים": ["size", "color", "style"],

@@ -238,6 +238,12 @@ export default function CategorySelector() {
 
   const selectedCategoryId = watch("categoryId");
 
+   useEffect(() => {
+    if (selectedCategoryId && !rootId) {
+      setRootId(selectedCategoryId);
+    }
+  }, [selectedCategoryId, rootId]);
+
   const Err = ({ e }) =>
     e ? <p className="text-red-600 text-xs mt-1">{e.message}</p> : null;
 

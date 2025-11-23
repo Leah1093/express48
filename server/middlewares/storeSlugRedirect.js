@@ -1,10 +1,7 @@
 import { Store } from "../models/store.js";
 import { StoreSlugAlias } from "../models/storeSlugAlias.js";
 
-/**
- * משמש לפני ראוט ציבורי: GET /stores/:slug
- * אם אין חנות עם slug כזה – בודק Alias ומפנה ב-301 ל-toSlug אם קיים/פעיל.
- */
+
 export async function storeSlugRedirect(req, res, next) {
   try {
     const { slug } = req.params;

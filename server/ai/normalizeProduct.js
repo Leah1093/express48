@@ -1,4 +1,3 @@
-// server/ai/normalizeProduct.js
 import OpenAI from "openai";
 import Ajv from "ajv";
 
@@ -33,50 +32,7 @@ export const productSchema = {
 const ajv = new Ajv({ allErrors: true, strict: false });
 const validate = ajv.compile(productSchema);
 
-// פונקציית Normalize
-// export async function normalizeWithAI(partialProduct) {
-//   const system = `
-// את/ה ממיין/ת נתוני מוצר וממלא/ת רק שדות חסרים לפי הסכימה.
-// כל מה שלא מופיע במידע שסופק - השאר null וכתבו confidence=0.
-// אל תמציא/י נתונים, ואל תשנה/י ערכים קיימים.
-// `;
 
-//   const response = await openai.responses.create({
-//     model: "gpt-4o-mini", // אפשר גם gpt-5, אבל זה זול ומהיר יותר
-//     input: [
-//       { role: "system", content: system },
-//       { role: "user", content: `סכימה: ${JSON.stringify(productSchema)}` },
-//       { role: "user", content: `מוצר חלקי מהספק: ${JSON.stringify(partialProduct)}` }
-//     ],
-//     response_format: {
-//       type: "json_schema",
-//       json_schema: {
-//         name: "Product",
-//         schema: productSchema,
-//         strict: true
-//       }
-//     },
-//     temperature: 0
-//   });
-
-//   // הפלט של המודל
-//   const normalized = JSON.parse(response.output_text);
-
-//   // ולידציה נוספת
-//   if (!validate(normalized)) {
-//     throw new Error("Invalid product JSON: " + ajv.errorsText(validate.errors));
-//   }
-
-//   // מיזוג: נותן עדיפות לשדות שהגיעו מהספק
-//   return {
-//     ...normalized,
-//     ...partialProduct,
-//     specs: { ...(normalized.specs || {}), ...(partialProduct.specs || {}) }
-//   };
-// }
-
-
-// mock/openaiMock.js
 export async function mockNormalizeWithAI(partialProduct) {
   // נניח שהמודל "מילא" רק את מה שחסר
   const normalized = {

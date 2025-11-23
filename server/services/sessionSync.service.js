@@ -1,12 +1,7 @@
-// services/sessionSync.service.js
 import { Session } from "../models/session.js";
 import { User } from "../models/user.js";
 import { Store } from "../models/store.js";
 
-/**
- * מסנכרן את כל הסשנים הפעילים של המשתמש מול ההרשאות האחרונות.
- * מושך role/roles מ-User, ו-sellerId/storeId מ-Store.
- */
 export async function syncUserSessions(userId) {
   const user = await User.findById(userId).select("role roles");
   if (!user) throw new Error("User not found");

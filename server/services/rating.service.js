@@ -1,7 +1,6 @@
-// service/rating.service.js
 import { Rating } from "../models/rating.js";
 import { RatingLike } from "../models/rating.js";
-import { Product } from "../models/Product.js";
+import { Product } from "../models/product.js";
 import { Seller } from "../models/seller.js";
 import { CustomError } from "../utils/CustomError.js";
 

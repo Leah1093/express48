@@ -1,4 +1,3 @@
-// services/marketplace.service.js
 import { Seller } from "../models/seller.js";
 import { User } from "../models/user.js";
 import { Store } from "../models/store.js";

@@ -1,4 +1,4 @@
-import { Product } from "../models/Product.js";
+import { Product } from "../models/product.js";
 
 const esc = (s = "") => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 

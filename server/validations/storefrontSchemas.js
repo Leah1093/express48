@@ -1,4 +1,3 @@
-// validation/storefrontSchemas.js
 import { z } from "zod";
 
 export const listPublicSchema = z.object({
