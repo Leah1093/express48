@@ -1,6 +1,6 @@
-import { productService } from "../services/product.service.js";
+import { productService } from "../service/product.service.js";
 import { CustomError } from "../utils/CustomError.js";
-import { Product } from "../models/product.js";
+import { Product } from "../models/Product.js";
 
 export class ProductController {
   async getNewProducts(req, res, next) {
@@ -13,14 +13,28 @@ export class ProductController {
     }
   }
 
+
   getAllProducts = async (req, res, next) => {
     try {
-      const products = await productService.getAllProductsService();
-      res.json({ items: products });
+      const { page = 1, limit = 24, sort } = req.query;
+
+      const result = await productService.getAllProductsService({
+        page: Number(page) || 1,
+        limit: Number(limit) || 24,
+        sort,
+      });
+
+      res.json(result);
     } catch (err) {
-      next(new CustomError("שגיאה בשליפת מוצרים", 500));
+      next(
+        err instanceof CustomError
+          ? err
+          : new CustomError("שגיאה בשליפת מוצרים", 500)
+      );
     }
   };
+
+
 
   searchProducts = async (req, res, next) => {
     try {
@@ -48,6 +62,7 @@ export class ProductController {
   getByCategory = async (req, res, next) => {
 
     try {
+      console.log("cate ❤️❤️")
       const fullSlug = decodeURIComponent(req.params[0] || "").trim();
       if (!fullSlug) {
         return res.status(400).json({ error: "fullSlug is required" });
@@ -110,16 +125,23 @@ export class ProductController {
   };
 
   getByFullSlug = async (req, res, next) => {
-    console.log('getByFullSlug fullSlug =', req.query.fullSlug);
     try {
-      const { fullSlug = "", page = 1, limit = 24, sort } = req.query;
-      if (!fullSlug) return next(new CustomError("fullSlug חובה", 400));
+      console.log("cate ❤️❤️")
+
+      const { fullSlug } = req.params;       // /products/by-category/:fullSlug
+      const { page = 1, limit = 24, sort } = req.query;
+
+      if (!fullSlug) {
+        return next(new CustomError("fullSlug חובה", 400));
+      }
+
       const result = await productService.getByFullSlugService({
         fullSlug,
         page: Number(page) || 1,
         limit: Number(limit) || 24,
         sort,
       });
+
       res.json(result);
     } catch (err) {
       next(
@@ -129,5 +151,6 @@ export class ProductController {
       );
     }
   };
+
 
 }

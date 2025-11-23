@@ -1,14 +1,39 @@
-import { AddressService } from "../services/addressService.js";
+// server/controllers/addressController.js
+import { AddressService } from "../service/addressService.js";
 
 export const service = new AddressService();
 
 export class AddressController {
   async create(req, res, next) {
     try {
+      const {
+        fullName,
+        phone,
+        country,
+        city,
+        street,
+        houseNumber,
+        apartment,
+        zip,
+        zipCode,
+        isDefault,
+        notes,
+      } = req.body || {};
+
       const address = await service.createAddress({
-        ...req.body,
-        userId: req.user.userId,
+        userId: req.user.userId, // מגיע מה-middleware של auth
+        fullName,
+        phone,
+        country,
+        city,
+        street,
+        houseNumber,
+        apartment,
+        zip: zipCode ?? zip, // תמיכה בשני שמות
+        isDefault,
+        notes,
       });
+
       res.status(201).json(address);
     } catch (e) {
       next(e);
@@ -26,7 +51,10 @@ export class AddressController {
 
   async get(req, res, next) {
     try {
-      const address = await service.getAddressById(req.params.id);
+      const address = await service.getAddressById(
+        req.params.id,
+        req.user.userId
+      );
       res.json(address);
     } catch (e) {
       next(e);
@@ -35,11 +63,37 @@ export class AddressController {
 
   async update(req, res, next) {
     try {
+      const {
+        fullName,
+        phone,
+        country,
+        city,
+        street,
+        houseNumber,
+        apartment,
+        zip,
+        zipCode,
+        isDefault,
+        notes,
+      } = req.body || {};
+
       const updated = await service.updateAddress(
         req.params.id,
         req.user.userId,
-        req.body
+        {
+          fullName,
+          phone,
+          country,
+          city,
+          street,
+          houseNumber,
+          apartment,
+          zip: zipCode ?? zip,
+          isDefault,
+          notes,
+        }
       );
+
       res.json(updated);
     } catch (e) {
       next(e);
@@ -48,7 +102,7 @@ export class AddressController {
 
   async remove(req, res, next) {
     try {
-      await service.deleteAddress(req.params.id);
+      await service.deleteAddress(req.params.id, req.user.userId);
       res.json({ message: "Deleted successfully" });
     } catch (e) {
       next(e);

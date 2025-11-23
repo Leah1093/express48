@@ -1,4 +1,4 @@
-import { Product } from "../models/product.js";
+import { Product } from "../models/Product.js";
 import { CustomError } from "../utils/CustomError.js";
 
 import { SearchLog } from "../models/SearchLog.js";
@@ -13,7 +13,7 @@ function isNewProduct(publishedAt) {
 }
 
 class ProductService {
-  async listNewProducts(limit = 12) {
+  async listNewProducts(limit = 24) {
     if (typeof limit !== "number" || limit <= 0) {
       throw new CustomError("Limit must be a positive number", 400);
     }
@@ -57,56 +57,124 @@ class ProductService {
     }
   }
 
-  getAllProductsService = async () => {
-    try {
-      const products = await Product.find({}).populate("storeId");
-      if (!products) throw new CustomError("No products found", 404);
-      return products;
-    } catch (err) {
-      throw new CustomError(err.message || "Error fetching products", err.status || 500);
-    }
-  };
+  async getByFullSlugService({ fullSlug, page = 1, limit = 24, sort }) {
+    const p = Math.max(1, Number(page) || 1);
+    const l = Math.min(100, Math.max(1, Number(limit) || 24));
+    const skip = (p - 1) * l;
+
+    const base = String(fullSlug || "").trim();
+    const escaped = base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const filter = {
+      isDeleted: false,
+      status: "published",
+      $or: [
+        { categoryFullSlug: base },
+        { categoryFullSlug: { $regex: `^${escaped}/` } },
+      ],
+    };
+
+    const sortStage = sort || { updatedAt: -1 };
+
+    const [items, total] = await Promise.all([
+    Product.find(filter)
+      .sort(sortStage)
+      .skip(skip)
+      .limit(l)
+      .select({
+        _id: 1,
+        slug: 1,
+        title: 1,
+        storeId: 1,
+        images: 1,
+        currency: 1,
+        price: 1,
+        discount: 1,
+        description: 1,
+      })
+      .populate("storeId", "slug") // נקבל storeId.slug
+      .lean(),
+    Product.countDocuments(filter),
+  ]);
+
+
+    const pages = Math.ceil(total / l) || 1;
+
+    return {
+      items,
+      meta: {
+        page: p,
+        pages,
+        total,
+        limit: l,
+      },
+    };
+  }
+
 
   async getProductBySlugService(slug) {
     return Product.findOne({ slug, isDeleted: false, status: "published" }).lean();
   }
 
-async getByFullSlugService({ fullSlug, page = 1, limit = 24, sort }) {
-  const p = Math.max(1, Number(page) || 1);
-  const l = Math.min(100, Math.max(1, Number(limit) || 24));
-  const skip = (p - 1) * l;
 
-  const base = String(fullSlug || "").trim();
-  const escaped = base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // בריחה לרג׳קס
-  const filter = {
-    isDeleted: false,
-    status: "published",
-    $or: [
-      { categoryFullSlug: base },
-      { categoryFullSlug: { $regex: `^${escaped}/` } }, // כל תתי־הענפים
-    ],
-  };
+  // services/product.service.js
 
-  const sortStage = sort || { updatedAt: -1 };
+  getAllProductsService = async ({ page = 1, limit = 24, sort } = {}) => {
+    try {
+      const p = Math.max(1, Number(page) || 1);
+      const l = Math.min(100, Math.max(1, Number(limit) || 24));
+      const skip = (p - 1) * l;
 
-  const [items, total] = await Promise.all([
+      const filter = {
+        isDeleted: false,
+        status: "published",
+      };
+
+      const sortStage = sort || { updatedAt: -1 };
+
+       const [items, total] = await Promise.all([
     Product.find(filter)
       .sort(sortStage)
       .skip(skip)
       .limit(l)
-      .select({ description: 0 })
+      .select({
+        _id: 1,
+        slug: 1,
+        title: 1,
+        storeId: 1,
+        images: 1,
+        currency: 1,
+        price: 1,
+        discount: 1,
+        description: 1,
+      })
+      .populate("storeId", "slug") // נקבל storeId.slug
       .lean(),
     Product.countDocuments(filter),
   ]);
+  
 
-  return {
-    items,
-    page: p,
-    limit: l,
-    total,
-    hasMore: skip + items.length < total,
+      const pages = Math.ceil(total / l) || 1;
+
+      return {
+        items,
+        meta: {
+          page: p,
+          pages,
+          total,
+          limit: l,
+        },
+      };
+    } catch (err) {
+      console.error("[getAllProductsService] error:", err);
+      throw err instanceof CustomError
+        ? err
+        : new CustomError(
+          err.message || "Error fetching products",
+          err.status || 500
+        );
+    }
   };
-}
 
 
 

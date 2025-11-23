@@ -1,46 +1,74 @@
-import mongoose from 'mongoose';
+// server/models/address.js
+import mongoose from "mongoose";
 
-const cartItemSchema = new mongoose.Schema({
-  productId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
-    required: true
-  },
-  variationId: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: false, // לא כל מוצר חייב וריאציות
-  },
-  quantity: {
-    type: Number,
-    required: true,
-    min: 1,
-    default: 1
-  },
-  unitPrice: {
-    type: Number,
-    required: true
-  }, // חדש
-  snapshot: {
-    attributes: { type: Map, of: String }, // צבע, מידה וכו'
-    images: [String], // רק התמונות של הווריאציה בזמן ההוספה
-    price: Number,    // המחיר בזמן ההוספה (לחשבונית יציבה)
-    discount: { type: Object }, // אם צריך לשמר הנחה ספציפית
-  },
-  selected: {
-    type: Boolean,
-    default: true  // ✅ כל מוצר חדש נבחר אוטומטית
-  } // חדש: נבחר לתשלום או לא
+const addressSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
-});
+    // לא חובה במונגוס – חובה ב-UI
+    fullName: {
+      type: String,
+      required: false,
+      trim: true,
+    },
 
-const cartSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    unique: true
+    // לא חובה במונגוס – חובה ב-UI
+    phone: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+
+    country: {
+      type: String,
+      required: false,
+      trim: true,
+      default: "IL",
+    },
+
+    city: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    street: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    houseNumber: {
+      type: String,
+      trim: true,
+    },
+
+    apartment: {
+      type: String,
+      trim: true,
+    },
+
+    zip: {
+      type: String,
+      trim: true,
+    },
+
+    isDefault: {
+      type: Boolean,
+      default: false,
+    },
+
+    notes: {
+      type: String,
+      default: "",
+      trim: true,
+    },
   },
-  items: [cartItemSchema]
-});
+  { timestamps: true }
+);
 
-export const Cart = mongoose.model('Cart', cartSchema);
+export const Address = mongoose.model("Address", addressSchema);
