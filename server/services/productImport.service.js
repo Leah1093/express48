@@ -4,11 +4,11 @@ import { CustomError } from "../utils/CustomError.js";
 import { Category } from "../models/category.js";
 import iconv from "iconv-lite";
 
+const MAX_OVERVIEW_BLOCKS = 5;
+
 export class ProductImportService {
   static async importFromCsv({ csvBuffer, sellerId, storeId }) {
     try {
-      //   const text = csvBuffer.toString("utf8");
-      // ננסה לזהות BOM של UTF-8, ואם אין – נניח שזה win1255 (עברית של ווינדוס)
       let text;
 
       if (
@@ -148,19 +148,10 @@ export class ProductImportService {
         ? row["price.amount"]
         : "";
 
-    console.log("CSV IMPORT DEBUG: rawPrice =", rawPrice);
-
     const priceClean = String(rawPrice ?? "")
       .replace(/,/g, "")
       .trim();
     const priceNumber = Number(priceClean);
-
-    console.log(
-      "CSV IMPORT DEBUG: priceClean =",
-      priceClean,
-      "| priceNumber =",
-      priceNumber
-    );
 
     if (!priceClean || Number.isNaN(priceNumber) || priceNumber <= 0) {
       throw new CustomError(
@@ -172,7 +163,7 @@ export class ProductImportService {
     // ----- מלאי -----
     const stockNumber = Number(row.stock ?? 0);
 
-    // ----- תמונות -----
+    // ----- תמונות כלליות (galery) -----
     const images = row.images
       ? String(row.images)
           .split(",")
@@ -180,20 +171,17 @@ export class ProductImportService {
           .filter(Boolean)
       : [];
 
-    // ----- description / overview -----
+    // ----- description (תיאור קצר ליד הגלריה) -----
     const description = row.descriptionHtml || "";
-    const overviewText = row.overviewHtml || "";
 
     // ----- GTIN -----
     const rawGtin = (row.gtin ?? "").toString().trim();
     let finalGtin;
 
     if (rawGtin) {
-      // מוחקים כל מה שלא ספרה – כדי לנקות פורמטים כמו 1.72802E+11
       const gtinDigits = rawGtin.replace(/\D/g, "");
 
       if (gtinDigits && !/^[0-9]{8,14}$/.test(gtinDigits)) {
-        // זה ייכנס ל־failed[row] עם הסבר ברור
         throw new CustomError(`GTIN לא חוקי: "${rawGtin}"`, 400);
       }
 
@@ -212,13 +200,12 @@ export class ProductImportService {
     // ----- מטבע -----
     const currency = row.currency || "ILS";
 
-    // ----- קטגוריה -----
+    // ----- קטגוריה לפי categoryFullSlug -----
     const categoryFullSlugFromCsv = (row.categoryFullSlug || "").trim();
     if (!categoryFullSlugFromCsv) {
       throw new CustomError("שדה categoryFullSlug חובה", 400);
     }
 
-    // מחפשים את הקטגוריה לפי fullSlug
     const leafCategory = await Category.findOne({
       fullSlug: categoryFullSlugFromCsv,
     }).lean();
@@ -230,14 +217,12 @@ export class ProductImportService {
       );
     }
 
-    // מניחים שיש לך על הקטגוריה שדה ancestors (או דומה) – תתאימי לשמות שלך
     const ancestors = Array.isArray(leafCategory.ancestors)
       ? leafCategory.ancestors
       : [];
 
     const path = [...ancestors, leafCategory];
 
-    // בונים breadcrumbs בפורמט של הסכמה של Product
     const breadcrumbs = path.map((c) => ({
       id: c._id,
       name: c.name,
@@ -245,8 +230,70 @@ export class ProductImportService {
       fullSlug: c.fullSlug,
       depth: c.depth,
     }));
+    // נגדיר גם category / subCategory עבור תאימות וצפייה נוחה בדטה בייס
+    const rootCategory = path[0] || leafCategory; // קטגוריה ראשית
+    const lastCategory = leafCategory; // הקטגוריה הסופית (leaf)
 
-    // נשתמש בזה למטה בבניית הדוקומנט
+    // ----- סקירה לפי בלוקים ממוספרים -----
+    const blocks = [];
+
+    for (let i = 1; i <= MAX_OVERVIEW_BLOCKS; i++) {
+      const typeKey = `overviewBlock${i}_type`;
+      const valueKey = `overviewBlock${i}_value`;
+      const providerKey = `overviewBlock${i}_provider`;
+
+      const type = (row[typeKey] || "").trim().toLowerCase();
+      const value = (row[valueKey] || "").trim();
+      const provider = (row[providerKey] || "").trim();
+
+      if (!type || !value) continue;
+
+      if (type === "text") {
+        blocks.push({
+          type: "text",
+          html: value,
+        });
+      } else if (type === "image") {
+        blocks.push({
+          type: "image",
+          url: value,
+          sourceType: "url",
+        });
+      } else if (type === "video") {
+        blocks.push({
+          type: "video",
+          videoUrl: value,
+          provider: provider || "youtube",
+        });
+      }
+    }
+
+    // תאימות לאחור - אם אין בלוקים אבל יש overviewHtml ישן
+    if (!blocks.length && row.overviewHtml) {
+      blocks.push({
+        type: "text",
+        html: row.overviewHtml,
+      });
+    }
+
+    // מפרקים מהבלוקים גם text/images/videos לשדות הישנים
+    const textParts = [];
+    const overviewImages = [];
+    const overviewVideos = [];
+
+    for (const b of blocks) {
+      if (!b || typeof b !== "object") continue;
+
+      if (b.type === "text" && b.html) {
+        textParts.push(b.html);
+      } else if (b.type === "image" && b.url) {
+        overviewImages.push(b.url);
+      } else if (b.type === "video" && b.videoUrl) {
+        overviewVideos.push(b.videoUrl);
+      }
+    }
+
+    const overviewText = textParts.join("<br/><br/>");
 
     // ----- משלוח -----
     const deliveryCost = row.deliveryCost ? Number(row.deliveryCost) : 0;
@@ -264,13 +311,14 @@ export class ProductImportService {
 
       description,
       brand: row.brand || "",
-      category: row.category || "",
-      subCategory: row.subCategory || "",
+      category: rootCategory?.name || "",
+      subCategory: lastCategory?.name || "",
 
       overview: {
         text: overviewText,
-        images: [],
-        videos: [],
+        images: overviewImages,
+        videos: overviewVideos,
+        blocks,
       },
 
       gtin: finalGtin,
@@ -293,9 +341,10 @@ export class ProductImportService {
         avg: 0,
         count: 0,
       },
+
       primaryCategoryId: leafCategory._id,
       categoryPathIds: path.map((c) => c._id),
-      categoryFullSlug: leafCategory.fullSlug, // חשוב: זה מהמערכת, לא רק מה־CSV
+      categoryFullSlug: leafCategory.fullSlug,
       breadcrumbs,
 
       status: "published",
