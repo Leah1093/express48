@@ -1,4 +1,3 @@
-// services/session.service.js
 import { Session } from "../models/session.js";
 import { buildRefreshToken, splitRefreshToken, hashRefreshSecret, compareRefreshSecret } from "../utils/refresh.js";
 

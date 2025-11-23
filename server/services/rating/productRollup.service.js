@@ -1,4 +1,3 @@
-// services/rating/product-rollup.service.js
 import { Product } from "../../models/product.js";
 
 export class ProductRatingsRollupService {

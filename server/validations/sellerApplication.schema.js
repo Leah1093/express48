@@ -1,4 +1,3 @@
-// validations/sellerApplication.schema.js
 import { z } from "zod";
 
 export const objectIdStr = z.string().regex(/^[0-9a-fA-F]{24}$/,"ObjectId לא תקין");

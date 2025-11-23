@@ -162,11 +162,6 @@ export default class SellerProductsController {
       // לבן את גוף הבקשה
       const data = pickAllowedUpdate(req.body || {});
 
-      // הגנות קטנות/נורמליזציה
-      // if (data?.status && ["טיוטא", "מפורסם", "מושהה"].includes(data.status)) {
-      //     const map = { "טיוטא": "draft", "מפורסם": "published", "מושהה": "suspended" };
-      //     data.status = map[data.status];
-      // }
       if (data?.discount) {
         // נרמול תאריכים (אם הגיעו כמחרוזת)
         if (data.discount.startsAt)
@@ -327,7 +322,6 @@ export default class SellerProductsController {
             details: err.errors,
           });
       }
-      // ולידציה של מעברי סטטוס/הרשאות מה-service
       if (err?.code === "FORBIDDEN") {
         return res
           .status(403)
@@ -338,10 +332,8 @@ export default class SellerProductsController {
           .status(409)
           .json({ error: "InvalidStatusTransition", message: err.message });
       }
-      // ולידציה של Mongoose (למשל: מוצר מפורסם חייב לכלול תמונה)
       if (err?.name === "ValidationError") {
         console.log("err.message", err.message);
-        // err.message יכיל את ההודעה מהמודל: "מוצר מפורסם חייב לכלול לפחות תמונה אחת"
         return res.status(400).json({
           error: "ValidationError",
 

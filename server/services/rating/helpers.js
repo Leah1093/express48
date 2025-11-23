@@ -1,4 +1,3 @@
-// services/rating/helpers.js
 import mongoose from "mongoose";
 export const toObjectId = (id) => new mongoose.Types.ObjectId(String(id));
 export const SORT_MAP = { /* מיפוי מיון משותף */ };

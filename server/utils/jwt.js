@@ -1,4 +1,3 @@
-// utils/jwt.js
 import jwt from "jsonwebtoken";
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;

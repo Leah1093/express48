@@ -1,16 +1,3 @@
-// // routes/storePublic.routes.js
-// import express from "express";
-// import { StorePublicController } from "../controllers/storePublic.controller.js";
-
-// const storePublicRouter = express.Router();
-// const controller = new StorePublicController();
-
-// storePublicRouter.get("/:slug", controller.getBySlug);
-// storePublicRouter.get("/:slug/products", controller.listProducts);
-// storePublicRouter.get("/:slug/reviews", controller.listReviews);
-
-// export { storePublicRouter };
-
 import express from "express";
 import { StorePublicController } from "../controllers/storePublic.controller.js";
 import { validate } from "../middlewares/validate.js";

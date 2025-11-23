@@ -1,10 +1,6 @@
-// utils/sanitize.js
 import sanitizeHtml from "sanitize-html";
 
-/**
- * סניטציה לטקסט חופשי של משתמשים (ביקורת/תגובה).
- * מאפשרים רק עיצוב בסיסי וטאגי שורה, בלי לינקים/תמונות/סקריפטים.
- */
+
 export function sanitizeUserText(input) {
   const str = typeof input === "string" ? input : String(input ?? "");
   return sanitizeHtml(str, {
@@ -18,9 +14,7 @@ export function sanitizeUserText(input) {
   });
 }
 
-/**
- * סניטציה קשיחה (ללא שום HTML) — אם תרצי להעלים כל עיצוב.
- */
+
 export function sanitizePlainText(input) {
   const str = typeof input === "string" ? input : String(input ?? "");
   // המרה לישויות HTML כך שכל תגיות יהפכו לטקסט

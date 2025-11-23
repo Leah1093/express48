@@ -1,4 +1,3 @@
-// validations/store.schema.js
 import { z } from "zod";
 
 export const updateStoreStatusSchema = z.object({

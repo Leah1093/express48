@@ -47,39 +47,6 @@ async function buildTree(rootId, maxDepth = 3) {
 }
 
 export class CategoryController {
-  // ---------- יצירה ----------
-  // async create(req, res, next) {
-  //   try {
-  //     const {
-  //       name,
-  //       slug,
-  //       parent = null,
-  //       order = 0,
-  //       isActive = true,
-  //       imageUrl = "",
-  //       description = "",
-  //     } = req.body;
-
-  //     const icon = req.file
-  //       ? `/uploads/icons/${req.file.filename}`
-  //       : req.body.icon ?? "";
-
-  //     const category = await service.create({
-  //       name,
-  //       slug,
-  //       parent,
-  //       order,
-  //       isActive,
-  //       icon,
-  //       imageUrl,
-  //       description,
-  //     });
-
-  //     res.status(201).json(category);
-  //   } catch (e) {
-  //     next(e);
-  //   }
-  // }
 async create(req, res, next) {
   try {
     const {

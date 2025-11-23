@@ -1,4 +1,3 @@
-// // services/rating/helpful.service.js
 import mongoose from "mongoose";
 import { Rating } from "../../models/rating.js";
 import { RatingLike } from "../../models/RatingLike.js";

@@ -1,4 +1,3 @@
-// utils/cleanupOrphanProductImages.js
 import fs from "fs/promises";
 import path from "path";
 import { Product } from "../models/product.modeis.js";

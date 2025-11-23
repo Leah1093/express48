@@ -1,4 +1,3 @@
-// services/rating/seller-rollup.service.js
 import { Seller } from "../../models/seller.js";
 
 export class SellerRatingsRollupService {

@@ -7,8 +7,14 @@ export class RatingHelpfulController {
       const userId = req.userId;
       const ratingId = req.params.id;
       const { action } = req.body; // "like" או "dislike"
-      const result = await RatingHelpfulService.toggleVote({ userId, ratingId, action });
+      const result = await RatingHelpfulService.toggleVote({
+        userId,
+        ratingId,
+        action,
+      });
       res.json({ ok: true, ...result });
-    } catch (err) { next(err); }
+    } catch (err) {
+      next(err);
+    }
   }
 }

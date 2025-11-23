@@ -1,4 +1,3 @@
-// services/rating/ratingsRollup.service.js
 import { Product } from "../../models/product.js";
 import { Seller } from "../../models/seller.js";
 

@@ -1,4 +1,3 @@
-// utils/cookies.js
 const isProd = process.env.NODE_ENV === "production";
 const domain = isProd ? process.env.COOKIE_DOMAIN : undefined; // למשל: .express48.co.il
 

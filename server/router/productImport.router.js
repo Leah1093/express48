@@ -1,4 +1,3 @@
-// src/router/productImport.router.js
 import { Router } from "express";
 import multer from "multer";
 import { ProductImportController } from "../controllers/productImport.controller.js";
@@ -9,10 +8,10 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.post(
-  "/import-csv",                  // 👈 שימי לב: לא עם /seller/products פה
+  "/import-csv",                 
   authMiddleware,
   requireRoles("seller", "admin"),
-  upload.single("file"),          // name="file"
+  upload.single("file"),          
   ProductImportController.importCsv
 );
 

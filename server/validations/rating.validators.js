@@ -1,4 +1,3 @@
-// validators/rating.validators.js
 import { z } from "zod";
 
 // עזר: מזהה אובייקט Mongo

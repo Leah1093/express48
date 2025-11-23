@@ -1,148 +1,120 @@
-import { Cart } from '../models/cart.js';
-import { Product } from "../models/Product.js"; // ודאי את הנתיב הנכון
-import { cartQueries } from '../mongoQueries/cartQueries.js';
-import { CustomError } from '../utils/CustomError.js';
+import { Cart } from "../models/cart.js";
+import { Product } from "../models/product.js";
+import { cartQueries } from "../mongoQueries/cartQueries.js";
+import { CustomError } from "../utils/CustomError.js";
 
-const toIdStr = (x) => (typeof x === 'object' && x?._id ? String(x._id) : String(x));
+const toIdStr = (x) =>
+  typeof x === "object" && x?._id ? String(x._id) : String(x);
 
 export class CartService {
   async getCart(userId) {
-    const cart = await Cart.findOne(cartQueries.findByUserId(userId)).populate('items.productId');
+    const cart = await Cart.findOne(cartQueries.findByUserId(userId)).populate(
+      "items.productId"
+    );
     return cart || { userId, items: [] };
   }
 
   async addToCart(userId, productId, variationId = null, quantity = 1) {
-  let cart = await Cart.findOne(cartQueries.findByUserId(userId));
+    let cart = await Cart.findOne(cartQueries.findByUserId(userId));
 
-  // --- ✨ טיפול במוצרים עם וריאציה ✨ ---
-  if (variationId) {
-    const prod = await Product.findById(productId);
-    if (!prod) throw new Error('Product not found');
+    // --- ✨ טיפול במוצרים עם וריאציה ✨ ---
+    if (variationId) {
+      const prod = await Product.findById(productId);
+      if (!prod) throw new Error("Product not found");
 
-    const variation = prod.variations.id(variationId);
-    if (!variation) throw new Error('Variation not found');
+      const variation = prod.variations.id(variationId);
+      if (!variation) throw new Error("Variation not found");
 
-    let unitPrice = variation.price?.amount || prod.price.amount;
+      let unitPrice = variation.price?.amount || prod.price.amount;
 
-    // ✨ בניית snapshot לוריאציה
+      // ✨ בניית snapshot לוריאציה
+      const snapshot = {
+        attributes: variation.attributes,
+        images: variation.images,
+        price: unitPrice,
+        discount: variation.discount || null,
+      };
+
+      if (!cart) {
+        cart = new Cart({
+          userId,
+          items: [{ productId, variationId, quantity, unitPrice, snapshot }],
+        });
+      } else {
+        // בודקים אם כבר יש את אותו מוצר + אותה וריאציה
+        const existingItem = cart.items.find(
+          (item) =>
+            item.productId.toString() === productId.toString() &&
+            item.variationId?.toString() === variationId.toString()
+        );
+
+        if (existingItem) {
+          existingItem.quantity += quantity;
+        } else {
+          cart.items.push({
+            productId,
+            variationId,
+            quantity,
+            unitPrice,
+            snapshot,
+          });
+        }
+      }
+
+      await cart.save();
+      return await Cart.findOne({ userId }).populate(
+        "items.productId",
+        "title price images"
+      );
+    }
+
+    // --- ✨ זרימה קיימת למוצרים פשוטים ✨ ---
+    const prod = await Product.findById(productId).lean();
+    if (!prod) throw new Error("Product not found");
+
+    let unitPrice = prod.price.amount;
+
+    // ✨ בניית snapshot גם למוצר פשוט
     const snapshot = {
-      attributes: variation.attributes,
-      images: variation.images,
+      attributes: {}, // אין וריאציות
+      images: prod.images || [],
       price: unitPrice,
-      discount: variation.discount || null,
+      discount: prod.discount || null,
     };
 
     if (!cart) {
       cart = new Cart({
         userId,
-        items: [{ productId, variationId, quantity, unitPrice, snapshot }]
+        items: [{ productId, quantity, unitPrice, snapshot }],
       });
     } else {
-      // בודקים אם כבר יש את אותו מוצר + אותה וריאציה
       const existingItem = cart.items.find(
-        item =>
-          item.productId.toString() === productId.toString() &&
-          item.variationId?.toString() === variationId.toString()
+        (item) => item.productId.toString() === productId.toString()
       );
-
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
-        cart.items.push({ productId, variationId, quantity, unitPrice, snapshot });
+        cart.items.push({ productId, quantity, unitPrice, snapshot });
       }
     }
 
     await cart.save();
-    return await Cart.findOne({ userId })
-      .populate("items.productId", "title price images");
+    return await Cart.findOne({ userId }).populate(
+      "items.productId",
+      "title price images"
+    );
   }
-
-  // --- ✨ זרימה קיימת למוצרים פשוטים ✨ ---
-  const prod = await Product.findById(productId).lean();
-  if (!prod) throw new Error('Product not found');
-
-  let unitPrice = prod.price.amount;
-
-  // ✨ בניית snapshot גם למוצר פשוט
-  const snapshot = {
-    attributes: {}, // אין וריאציות
-    images: prod.images || [],
-    price: unitPrice,
-    discount: prod.discount || null,
-  };
-
-  if (!cart) {
-    cart = new Cart({
-      userId,
-      items: [{ productId, quantity, unitPrice, snapshot }]
-    });
-  } else {
-    const existingItem = cart.items.find(item => item.productId.toString() === productId.toString());
-    if (existingItem) {
-      existingItem.quantity += quantity;
-    } else {
-      cart.items.push({ productId, quantity, unitPrice, snapshot });
-    }
-  }
-
-  await cart.save();
-  return await Cart.findOne({ userId })
-    .populate("items.productId", "title price images");
-}
-
-
-
-  // async addToCart(userId, productId, variationId = null, quantity = 1) {
-  //   let cart = await Cart.findOne(cartQueries.findByUserId(userId));
-  //   if (!cart) {
-  //       const prod = await Product.findById(productId).select('price').lean();
-  //   if (!prod) throw new Error('Product not found');
-  //     cart = new Cart({ userId, items: [{ productId, quantity,unitPrice: prod.price.amount }] });
-  //   } else {
-  //     const existingItem = cart.items.find(item => item.productId.toString() === productId.toString());
-  //     if (existingItem) {
-  //       existingItem.quantity += quantity;
-  //     } else {
-  //        const prod = await Product.findById(productId).select('price').lean();
-  //     if (!prod) throw new Error('Product not found');
-  //       cart.items.push({ productId, quantity, unitPrice: prod.price.amount });
-  //     }
-  //   }
-  //   await cart.save();
-  //   console.log("1111111111")
-  //   // console.log('Saved cart:', JSON.stringify(cart, null, 2));
-  //   return await  Cart.findOne({ userId }).populate("items.productId", "title price images");
-  // }
-
-
-  //   async addToCart(userId, productId, quantity = 1) {
-  //   const cart = await Cart.findOneAndUpdate(
-  //     { userId, 'items.productId': productId },
-  //     {
-  //       $inc: { 'items.$.quantity': quantity }, // אם הפריט קיים – תגדיל כמות
-  //     },
-  //     { new: true }
-  //   );
-
-  //   if (cart) return cart;
-
-  //   // אם לא קיים פריט כזה – הוסף חדש
-  //   return await Cart.findOneAndUpdate(
-  //     { userId },
-  //     { $push: { items: { productId, quantity } } },
-  //     { upsert: true, new: true }
-  //   );
-  // }
-
 
   async removeFromCart(userId, productId) {
     // שליפת העגלה של המשתמש
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
     if (!cart) {
-      throw new CustomError('Cart not found', 404);
+      throw new CustomError("Cart not found", 404);
     }
     // מציאת המוצר בעגלה לפי productId
-    const item = cart.items.find(item => item.productId.toString() === productId);
+    const item = cart.items.find(
+      (item) => item.productId.toString() === productId
+    );
     // אם לא נמצא פריט מתאים - נחזיר את העגלה כמו שהיא
     if (!item) {
       return cart;
@@ -152,29 +124,31 @@ export class CartService {
       item.quantity -= 1;
     } else {
       // אם יש רק אחד - נסיר את הפריט מהעגלה
-      cart.items = cart.items.filter(item => item.productId.toString() !== productId);
+      cart.items = cart.items.filter(
+        (item) => item.productId.toString() !== productId
+      );
     }
     // שמירה של השינויים בעגלה
     await cart.save();
     return cart;
   }
 
-  async removeProductCompletely(userId, productId,variationId = null) {
+  async removeProductCompletely(userId, productId, variationId = null) {
     // שליפת העגלה של המשתמש
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
     if (!cart) {
-      throw new CustomError('Cart not found', 404);
+      throw new CustomError("Cart not found", 404);
     }
 
     // סינון כל הפריטים שאינם המוצר הרצוי (כלומר - הסרה מוחלטת)
-    cart.items = cart.items.filter(item =>
-    !(
-      item.productId.toString() === productId.toString() &&
-      (item.variationId?.toString() || null) === (variationId?.toString() || null)
-    )
-  );
-
-
+    cart.items = cart.items.filter(
+      (item) =>
+        !(
+          item.productId.toString() === productId.toString() &&
+          (item.variationId?.toString() || null) ===
+            (variationId?.toString() || null)
+        )
+    );
 
     // שמירה של השינויים בעגלה
     await cart.save();
@@ -183,7 +157,6 @@ export class CartService {
       "title price images"
     );
   }
-
 
   async clearCart(userId) {
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
@@ -194,115 +167,59 @@ export class CartService {
     return cart;
   }
 
-
-  // async mergeLocalCart(userId, localItems) {
-  //   let cart = await Cart.findOne(cartQueries.findByUserId(userId));
-
-  //   if (!cart) {
-  //      const itemsWithPrice = [];
-  //   for (const item of localItems) {
-  //     const prod = await Product.findById(item.productId).select('price').lean();
-  //     if (!prod) throw new Error(`Product not found: ${item.productId}`);
-  //     itemsWithPrice.push({
-  //       productId: item.productId,
-  //       quantity: item.quantity,
-  //       unitPrice: prod.price
-  //     });
-  //   }
-
-  //     // // אם לא קיימת עגלה – ניצור עגלה חדשה עם הפריטים המקומיים
-  //     // cart = new Cart({
-  //     //   userId,
-  //     //   items: localItems.map(item => ({
-  //     //     productId: item.productId,
-  //     //     quantity: item.quantity
-  //     //   }))
-  //     // });
-  //     // console.log("🆕 created new cart with items:", cart.items.map(i => ({
-  //     //   productId: toIdStr(i.productId), quantity: i.quantity
-  //     // })));
-  //   } else {
-  //     // עגלה קיימת – נבצע מיזוג
-  //     localItems.forEach(localItem => {
-  //       console.log("🟡 בודק פריט לפני מיזוג:", {
-  //         localProductId: localItem.productId,
-  //         localQuantity: localItem.quantity
-  //       });
-
-  //       const existingItem = cart.items.find(item =>
-  //         item.productId.toString() === localItem.productId
-  //       );
-
-  //       console.log("🔍 נמצא בעגלה?:", !!existingItem, existingItem ? {
-  //         existingProductId: existingItem.productId,
-  //         existingQuantity: existingItem.quantity
-  //       } : null);
-
-  //       if (existingItem) {
-  //         existingItem.quantity += localItem.quantity;
-  //         console.log("🟢 עודכן פריט קיים:", {
-  //           productId: existingItem.productId,
-  //           added: localItem.quantity,
-  //           newQuantity: existingItem.quantity
-  //         });
-  //       } else {
-  //         cart.items.push({
-  //           productId: localItem.productId,
-  //           quantity: localItem.quantity
-  //         });
-  //         console.log("🔵 נוסף פריט חדש:", {
-  //           productId: localItem.productId,
-  //           quantity: localItem.quantity
-  //         });
-  //       }
-  //     });
-
-  //     console.log("✅ מצב סופי של העגלה אחרי מיזוג:", cart.items.map(item => ({
-  //       productId: item.productId,
-  //       quantity: item.quantity
-  //     })));
-
-  //     await cart.save();
-  //     return cart;
-  //   }
-
-  // }
-
-
   async mergeLocalCart(userId, localItems = []) {
     let cart = await Cart.findOne(cartQueries.findByUserId(userId));
 
     // נרמול קלט
     const normalized = (Array.isArray(localItems) ? localItems : [])
-      .map(it => ({ productId: toIdStr(it.productId), quantity: Number(it.quantity ?? 1), selected: Boolean(it.selected) }))
-      .filter(it => it.productId && it.quantity > 0);
+      .map((it) => ({
+        productId: toIdStr(it.productId),
+        quantity: Number(it.quantity ?? 1),
+        selected: Boolean(it.selected),
+      }))
+      .filter((it) => it.productId && it.quantity > 0);
 
     // באצ' מחירים מראש (יעיל ומהיר)
-    const ids = [...new Set(normalized.map(it => it.productId))];
-    const prods = await Product.find({ _id: { $in: ids } }).select('price').lean();
-    const priceMap = Object.fromEntries(prods.map(p => [String(p._id), Number(p.price.amount)]));
+    const ids = [...new Set(normalized.map((it) => it.productId))];
+    const prods = await Product.find({ _id: { $in: ids } })
+      .select("price")
+      .lean();
+    const priceMap = Object.fromEntries(
+      prods.map((p) => [String(p._id), Number(p.price.amount)])
+    );
 
     if (!cart) {
       // ✅ עגלה חדשה: לבנות items עם unitPrice, לשמור ולהחזיר
-      const itemsWithPrice = normalized.map(it => {
+      const itemsWithPrice = normalized.map((it) => {
         const price = priceMap[it.productId];
-        if (price == null) throw new Error(`Product not found: ${it.productId}`);
-        return { productId: it.productId, quantity: it.quantity, unitPrice: price, selected: it.selected ?? false };
+        if (price == null)
+          throw new Error(`Product not found: ${it.productId}`);
+        return {
+          productId: it.productId,
+          quantity: it.quantity,
+          unitPrice: price,
+          selected: it.selected ?? false,
+        };
       });
 
       cart = new Cart({ userId, items: itemsWithPrice });
       await cart.save();
-      return await Cart.findOne({ userId })
-        .populate("items.productId", "title price images");
+      return await Cart.findOne({ userId }).populate(
+        "items.productId",
+        "title price images"
+      );
     }
 
     // ✅ עגלה קיימת: מיזוג פריטים + השלמת unitPrice כשצריך
     for (const it of normalized) {
-      const existing = cart.items.find(row => String(row.productId) === it.productId);
+      const existing = cart.items.find(
+        (row) => String(row.productId) === it.productId
+      );
       if (existing) {
         if (existing.unitPrice == null) {
           const price = priceMap[it.productId];
-          if (price == null) throw new Error(`Product not found: ${it.productId}`);
+          if (price == null)
+            throw new Error(`Product not found: ${it.productId}`);
           existing.unitPrice = price;
         }
         existing.quantity += it.quantity;
@@ -310,14 +227,22 @@ export class CartService {
         if (it.selected) existing.selected = true;
       } else {
         const price = priceMap[it.productId];
-        if (price == null) throw new Error(`Product not found: ${it.productId}`);
-        cart.items.push({ productId: it.productId, quantity: it.quantity, unitPrice: price, selected: it.selected ?? false });
+        if (price == null)
+          throw new Error(`Product not found: ${it.productId}`);
+        cart.items.push({
+          productId: it.productId,
+          quantity: it.quantity,
+          unitPrice: price,
+          selected: it.selected ?? false,
+        });
       }
     }
 
     await cart.save();
-    return await Cart.findOne({ userId })
-      .populate("items.productId", "title price images");
+    return await Cart.findOne({ userId }).populate(
+      "items.productId",
+      "title price images"
+    );
   }
 
   async updateItemQuantity(userId, productId, variationId = null, quantity) {
@@ -326,11 +251,12 @@ export class CartService {
       throw new CustomError("Cart not found", 404);
     }
     // מציאת פריט לפי productId + variationId (אם יש)
-  const item = cart.items.find(
-    (i) =>
-      i.productId.toString() === productId.toString() &&
-      (i.variationId?.toString() || null) === (variationId?.toString() || null)
-  );
+    const item = cart.items.find(
+      (i) =>
+        i.productId.toString() === productId.toString() &&
+        (i.variationId?.toString() || null) ===
+          (variationId?.toString() || null)
+    );
     if (!item) {
       throw new CustomError("Product not found in cart", 404);
     }
@@ -357,10 +283,8 @@ export class CartService {
       console.log("cart", cart);
     }
 
-
     return cart;
   }
-
 
   async toggleSelectAll(userId, selected) {
     const cart = await Cart.findOneAndUpdate(
@@ -371,5 +295,4 @@ export class CartService {
 
     return cart;
   }
-
 }

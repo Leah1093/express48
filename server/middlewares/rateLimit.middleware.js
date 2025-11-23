@@ -1,12 +1,5 @@
-// middlewares/rateLimit.middleware.js
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
-/**
- * חשוב: שימי ב-app.js
- *   app.set('trust proxy', 1);
- * אחרת req.ip לא יהיה אמין מאחורי פרוקסי (NGINX/Heroku/Render וכו')
- */
 
-/** ✦ handler אחיד לכל החסימות */
 const json429 = (req, res) => {
     return res.status(429).json({
         ok: false,
@@ -15,12 +8,10 @@ const json429 = (req, res) => {
     });
 };
 
-/** ✦ פונקציות מפתח לזיהוי */
 const keyByAuthOrIp = (req, res) => {
     if (req.user?.userId) return `user:${req.user.userId}`;
     if (req.seller?._id) return `seller:${req.seller._id}`;
 
-    // שימוש ב־ipKeyGenerator במקום req.ip ישירות
     return `ip:${ipKeyGenerator(req, res)}`;
 };
 
@@ -41,8 +32,6 @@ export const apiLimiter = rateLimit({
     legacyHeaders: false,
     handler: json429,
     keyGenerator: keyByAuthOrIp,
-    // דוגמה לדילוג על מסלולים מסוימים:
-    // skip: (req) => req.path.startsWith("/admin") || req.path === "/health",
 });
 
 /* ========= דירוגים ========= */

@@ -230,7 +230,6 @@ export class ProductImportService {
       fullSlug: c.fullSlug,
       depth: c.depth,
     }));
-    // נגדיר גם category / subCategory עבור תאימות וצפייה נוחה בדטה בייס
     const rootCategory = path[0] || leafCategory; // קטגוריה ראשית
     const lastCategory = leafCategory; // הקטגוריה הסופית (leaf)
 
@@ -268,7 +267,6 @@ export class ProductImportService {
       }
     }
 
-    // תאימות לאחור - אם אין בלוקים אבל יש overviewHtml ישן
     if (!blocks.length && row.overviewHtml) {
       blocks.push({
         type: "text",
@@ -276,7 +274,6 @@ export class ProductImportService {
       });
     }
 
-    // מפרקים מהבלוקים גם text/images/videos לשדות הישנים
     const textParts = [];
     const overviewImages = [];
     const overviewVideos = [];

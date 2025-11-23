@@ -22,7 +22,6 @@ import './config/googleOAuth.config.js'
 import productRouter from "./router/product.router.js";
 import searchRouter from "./router/search.router.js";
 import { sellerProductsRouter } from "./router/seller.products.router.js";
-// import { sellerProfileRouter } from "./router/sellerProfile.router.js";
 import { marketplaceRouter } from "./router/marketplace.router.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

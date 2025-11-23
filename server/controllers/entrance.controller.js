@@ -1,4 +1,3 @@
-// controllers/entrance.controller.js
 import { EntranceService } from "../services/entrance.service.js";
 import { registerSchema } from "../validations/registerSchema.js";
 import { loginSchema } from "../validations/loginSchema.js";

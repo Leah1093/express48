@@ -1,4 +1,3 @@
-// services/rating/admin.service.js
 import mongoose from "mongoose";
 import { Rating } from "../../models/rating.js";
 
@@ -50,49 +49,3 @@ export class RatingAdminService {
 
 
 }
-
-
-//   static async deleteRating({ ratingId, adminId }) {
-//     const rating = await Rating.findById(toId(ratingId));
-//     if (!rating) throw Object.assign(new Error("Rating not found"), {status:404});
-//     rating.deletedAt = new Date();
-//     rating.deletedBy = toId(adminId);
-//     await rating.save();
-
-//     await RatingStatsService.recalcForProduct(rating.productId);
-//     await RatingStatsService.recalcForSeller(rating.sellerId);
-//     return rating.toObject();
-//   }
-
-//   static async restoreRating({ ratingId, adminId }) {
-//     const rating = await Rating.findById(toId(ratingId));
-//     if (!rating) throw Object.assign(new Error("Rating not found"), {status:404});
-//     rating.deletedAt = null;
-//     rating.deletedBy = null;
-//     rating.restoredBy = toId(adminId);
-//     await rating.save();
-
-//     await RatingStatsService.recalcForProduct(rating.productId);
-//     await RatingStatsService.recalcForSeller(rating.sellerId);
-//     return rating.toObject();
-//   }
-//   static async deleteSellerReply({ ratingId, adminId }) {
-//     const rating = await Rating.findById(toId(ratingId));
-//     if (!rating || !rating.sellerReply) throw Object.assign(new Error("Seller reply not found"), {status:404});
-//     rating.sellerReply.deletedAt = new Date();
-//     rating.sellerReply.deletedBy = toId(adminId);
-//     await rating.save();
-//     return rating.toObject();
-//   }
-
-//   static async restoreSellerReply({ ratingId, adminId }) {
-//     const rating = await Rating.findById(toId(ratingId));
-//     if (!rating || !rating.sellerReply) throw Object.assign(new Error("Seller reply not found"), {status:404});
-//     rating.sellerReply.deletedAt = null;
-//     rating.sellerReply.deletedBy = null;
-//     rating.updatedBy = toId(adminId);
-//     // ברירת מחדל: מחזירים visible=false עד שהאדמין יאשר
-//     rating.sellerReply.visible = false;
-//     await rating.save();
-//     return rating.toObject();
-//   }

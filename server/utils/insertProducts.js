@@ -1,11 +1,10 @@
 import mongoose from 'mongoose';
 import axios from 'axios';
-import { Product } from "../models/Product.js"
+import { Product } from "../models/product.js"
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { mockNormalizeWithAI } from "../ai/normalizeProduct.js";
-//  import { mockNormalizeWithAI } from "./mock/openaiMock.js";
 import { mapFakeStoreProduct } from "../mappers/fakeStoreMapper.js";
 
 

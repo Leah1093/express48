@@ -1,4 +1,3 @@
-// controllers/rating/reply.controller.js
 import { RatingReplyService } from "../../service/rating/reply.service.js";
 
 export class RatingReplyController {

@@ -1,35 +1,3 @@
-// // middlewares/authOptional.js
-// import jwt from "jsonwebtoken";
-
-// export function authOptional(req, _res, next) {
-//   try {
-//     const bearer = req.headers.authorization?.startsWith("Bearer ")
-//       ? req.headers.authorization.slice(7)
-//       : null;
-//     const cookieToken = req.cookies?.token || req.cookies?.accessToken || null;
-//     const token = bearer || cookieToken;
-
-//     if (!token) {
-//       req.user = null; // אורח
-//       return next();
-//     }
-
-//     const payload = jwt.verify(token, process.env.JWT_SECRET);
-//     // שמרי מבנה גמיש ליוזר
-//     req.user = {
-//       userId: payload.userId || payload.id || payload._id,
-//       email:  payload.email,
-//       role:   payload.role,
-//       ...payload
-//     };
-//     return next();
-//   } catch (_e) {
-//     // טוקן לא תקין – נמשיך כאורח, לא נכשיל את הבקשה
-//     req.user = null;
-//     return next();
-//   }
-// }
-
 import jwt from "jsonwebtoken";
 import { Seller } from "../models/seller.js";
 

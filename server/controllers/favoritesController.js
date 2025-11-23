@@ -84,4 +84,3 @@ export class FavoritesController {
   };
 }
 
-// export const favoritesController = new FavoritesController();

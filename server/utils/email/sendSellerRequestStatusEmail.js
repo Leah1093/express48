@@ -5,11 +5,6 @@ import { User } from "../../models/user.js";
 
 dotenv.config();
 
-/**
- * status: 'approved' | 'rejected'
- * reason: מחרוזת אופציונלית להסבר בדחייה
- * dashboardLink: קישור ללוח המוכר לאחר אישור
- */
 export async function sendSellerRequestStatusEmail(userId, { status, reason = "", dashboardLink = "" } = {}) {
   const user = await User.findById(userId);
   if (!user) return;
