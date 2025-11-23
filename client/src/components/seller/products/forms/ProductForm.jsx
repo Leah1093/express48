@@ -167,6 +167,7 @@ const defaultValuesMaster = {
   supplier: "",
   variations: [],
   variationsConfig: { priceRule: "sum", attributes: [] },
+   categoryId: "",
 };
 
 // ---------- הגדרת התפריט הימני ----------
@@ -231,9 +232,17 @@ const CSV_TEMPLATE_HEADERS = [
   "metaDescription",
   "title",
   "titleEn",
-  "descriptionHtml",
-  "overviewHtml",
   "brand",
+  "descriptionHtml",
+  "overviewBlock1_type",
+  "overviewBlock1_value",
+  "overviewBlock1_provider",
+  "overviewBlock2_type",
+  "overviewBlock2_value",
+  "overviewBlock2_provider",
+  "overviewBlock3_type",
+  "overviewBlock3_value",
+  "overviewBlock3_provider",
   "gtin",
   "sellerSku",
   "model",
@@ -254,30 +263,99 @@ const CSV_TEMPLATE_HEADERS = [
 ];
 
 const CSV_TEMPLATE_EXAMPLE_ROW = [
+  // supplier
   "ראלקו",
+
+  // metaTitle
   "מקרר 4 דלתות מקפיא תחתון אינוורטר - Sharp SJ-8420-SL",
+
+  // metaDescription
   "מקרר 4 דלתות חסכוני ושקט, מתאים למשפחות",
+
+  // title
   "מקרר 4 דלתות מקפיא תחתון אינוורטר",
+
+  // titleEn
   "Sharp SJ-8420-SL",
-  '<p style="text-align:right;"><strong>תיאור קצר של המוצר...</strong></p>',
-  '<p style="text-align:right;"><strong>סקירה מלאה של המוצר...</strong><br/>אפשר לשים כאן HTML מסודר.</p>',
+
+  // brand
   "Sharp",
-  "7290012345678",
-  "1728021728",
-  "SJ-8420-SL",
-  "ILS",
-  "3609",
-  "25",
-  "https://example.com/img1.jpg,https://example.com/img2.jpg",
+
+  // descriptionHtml (תיאור קצר ליד הגלריה)
+  "<p style='text-align:right;'><strong>תיאור קצר של המוצר...</strong></p>",
+
+  // overviewBlock1_type – בלוק ראשון: טקסט
+  "text",
+
+  // overviewBlock1_value – HTML של הסקירה
+  "<p style='text-align:right;'><strong>סקירה מלאה של המוצר...</strong><br/>אפשר לשים כאן HTML מסודר.</p>",
+
+  // overviewBlock1_provider – לטקסט לא צריך
   "",
+
+  // overviewBlock2_type – בלוק שני: תמונה
+  "image",
+
+  // overviewBlock2_value – URL של תמונה
+  "https://example.com/img1.jpg",
+
+  // overviewBlock2_provider – לא חובה לתמונה
+  "",
+
+  // overviewBlock3_type – בלוק שלישי: תמונה
+  "image",
+
+  // overviewBlock3_value – URL של תמונה נוספת
+  "https://example.com/img2.jpg",
+
+  // overviewBlock3_provider – לא חובה לתמונה
+  "",
+
+  // gtin
+  "7290012345678",
+
+  // sellerSku
+  "1728021728",
+
+  // model
+  "SJ-8420-SL",
+
+  // currency
+  "ILS",
+
+  // price
+  "3609",
+
+  // stock
+  "25",
+
+  // images – גלריה כללית, מופרד בפסיקים
+  "https://example.com/img1.jpg,https://example.com/img2.jpg",
+
+  // video – ריק בדוגמה
+  "",
+
+  // categoryFullSlug
   "kitchen/refrigerators/four-doors",
+
+  // warranty
   "שנה אחריות מלאה על ידי היבואן הרשמי",
+
+  // deliveryCost
   "60",
+
+  // deliveryNotes
   'מעל קומה שלישית - 60 ש"ח נוספים לכל קומה (משולם למובילים)',
+
+  // shippingFrom
   "IL",
-  "85",
-  "80",
-  "180",
+
+  // dimensions
+  "85", // length
+  "80", // width
+  "180", // height
+
+  // weightKg
   "75",
 ];
 
@@ -342,6 +420,14 @@ export default function ProductForm({
     if (!initialData) return defaultValuesMaster;
     const overview = initialData.overview || {};
     const blocks = buildBlocksFromOverview(overview);
+    // ✅ למצוא את הקטגוריה העמוקה ביותר מהמוצר שנשמר בדטה־בייס
+  const lastCategoryId =
+    initialData.categoryId ||
+    initialData.primaryCategoryId ||
+    (Array.isArray(initialData.categoryPathIds) &&
+      initialData.categoryPathIds.length > 0
+      ? initialData.categoryPathIds[initialData.categoryPathIds.length - 1]
+      : "");
 
     return {
       ...defaultValuesMaster,
@@ -358,6 +444,7 @@ export default function ProductForm({
       discount: { ...defaultValuesMaster.discount, ...initialData.discount },
       variations: initialData.variations || [],
       variationsConfig: { priceRule: "sum", attributes: [] },
+      categoryId: lastCategoryId || "",
     };
   }, [initialData]);
 
