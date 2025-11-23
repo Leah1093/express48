@@ -66,7 +66,7 @@ class SearchService {
 
   async combinedSearch({ q, quickLimit = 4, storeId, strict = false }) {
     const [suggestions, quickItems] = await Promise.all([
-      this.suggest({ q,  storeId, strict }),
+      this.suggest({ q, storeId, strict }),
       this.quick({ q, limit: quickLimit, storeId, strict }),
     ]);
     return { suggestions, quickItems };
@@ -89,12 +89,21 @@ class SearchService {
       Product.countDocuments(filter),
     ]);
 
-    const items = rows.map((p) => ({
-      name: p.title || p.name,
-      slug: p.slug,
-      price: p?.price?.amount ?? p?.price ?? 0,
-      image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
-    }));
+    const items = rows.map((p) => {
+      const { finalAmount, baseAmount, savedAmount, hasDiscount } = Product.hydrate(p).getEffectivePricing();
+      return {
+        _id: p._id,
+        title: p.title,
+        slug: p.slug,
+        images: p.images,
+        currency: p.currency,
+        basePrice: baseAmount,
+        finalPrice: finalAmount,
+        discountValue: hasDiscount ? savedAmount : 0,
+        hasDiscount,
+        isNew: p.publishedAt ? isNewProduct(p.publishedAt) : false
+      };
+    });
 
     return { items, page: pageNum, total, pages: Math.ceil(total / pageSize) };
   }
