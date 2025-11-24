@@ -14,7 +14,6 @@ const ALLOWED_STATUSES = [
 
 export class SellerOrdersService {
   /**
-   * מחזיר את כל ההזמנות שיש בהן מוצרים של המוכר
    * @param {Object} params
    * @param {string} params.sellerId - מזהה מוכר (ObjectId כ string)
    * @param {string | undefined} params.status - פילטר סטטוס (pending / paid / וכו')
