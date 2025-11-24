@@ -8,7 +8,6 @@ const baseQuery = fetchBaseQuery({
 });
 
 export const baseQueryWithReauth = async (args, api, extraOptions) => {
-    debugger
     let result = await baseQuery(args, api, extraOptions);
 
     if (result?.error?.status === 401) {
