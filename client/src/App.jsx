@@ -75,6 +75,7 @@ import Payments from "./components/account/Payments.jsx";
 import PolicySecurity from "./components/account/PolicySecurity.jsx";
 import CustomerService from "./components/account/CustomerService.jsx";
 import ManageRootCategories from "./components/Categories/ManageRootCategories.jsx";
+import SellerOrdersPanel from "./components/seller/orders/components/SellerOrdersPanel.js";
 
 function App() {
   const location = useLocation();
@@ -238,7 +239,7 @@ function App() {
               <Route path=":id/edit" element={<ProductEdit />} />
               <Route path=":id" element={<ProductDetailPage />} />
             </Route>
-            <Route path="orders" element={<OrdersSeller />} />
+            <Route path="orders" element={<SellerOrdersPanel />} />
             <Route path="reviews" element={<Reviews />} />
             <Route path="reports" element={<Reports />} />
             <Route path="coupons" element={<CouponForm />} />

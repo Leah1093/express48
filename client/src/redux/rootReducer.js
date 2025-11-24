@@ -8,7 +8,6 @@ import uiReducer from "./slices/uiSlice";
 import categoriesReducer from "./slices/categoriesSlice";
 import { adminApi } from "./services/adminApi";
 import { userApi } from "./services/userApi";
-import { sellerProductsApi } from "./services/sellerProductsApi";
 import { authApi } from "./services/authApi";
 import { productsApi } from "./services/productsApi";
 import { categoriesApi } from "./services/categoriesApi";
@@ -19,6 +18,8 @@ import { orderApi } from "./services/orderApi";
 import { favoritesApi } from "./services/favoritesApi";
 import { addressApi } from "./services/addressApi";
 import { uploadApi } from "./services/uploadApi";
+import { sellerProductsApi } from "./services/sellerProductsApi";
+import { sellerOrdersApi } from "./services/sellerOrdersApi";
 
 export default combineReducers({
   cart: cartReducer,
@@ -31,7 +32,6 @@ export default combineReducers({
   [userApi.reducerPath]: userApi.reducer,
   [categoriesApi.reducerPath]: categoriesApi.reducer,
   [sellerStoreApi.reducerPath]: sellerStoreApi.reducer,
-  [sellerProductsApi.reducerPath]: sellerProductsApi.reducer,
   [authApi.reducerPath]: authApi.reducer,
   [productsApi.reducerPath]: productsApi.reducer,
   [adminApi.reducerPath]: adminApi.reducer,
@@ -41,4 +41,6 @@ export default combineReducers({
   [favoritesApi.reducerPath]: favoritesApi.reducer,
   [addressApi.reducerPath]: addressApi.reducer,
   [uploadApi.reducerPath]: uploadApi.reducer,
+  [sellerProductsApi.reducerPath]: sellerProductsApi.reducer,
+  [sellerOrdersApi.reducerPath]: sellerOrdersApi.reducer,
 });
