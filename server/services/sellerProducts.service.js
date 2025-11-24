@@ -123,15 +123,24 @@ export class SellerProductsService {
 
     const match = {};
 
-    if (role !== "admin" && sellerId && mongoose.isValidObjectId(sellerId)) {
-      match.sellerId = new mongoose.Types.ObjectId(String(sellerId));
-    }
+    if (role !== "admin") {
+  if (sellerId && mongoose.isValidObjectId(sellerId)) {
+    match.sellerId = new mongoose.Types.ObjectId(String(sellerId));
+  }
 
-    if (storeId && mongoose.isValidObjectId(storeId)) {
-      match.storeId = new mongoose.Types.ObjectId(String(storeId));
-    } else if (query.storeId && mongoose.isValidObjectId(query.storeId)) {
-      match.storeId = new mongoose.Types.ObjectId(String(query.storeId));
-    }
+  // אם תרצי בעמוד של הסלר פילטר לפי חנות ספציפית (dropdown) – זה מאפשר:
+  if (query.storeId && mongoose.isValidObjectId(query.storeId)) {
+    match.storeId = new mongoose.Types.ObjectId(String(query.storeId));
+  }
+} else {
+  // לאדמין – נשאיר את ההתנהגות הקיימת
+  if (storeId && mongoose.isValidObjectId(storeId)) {
+    match.storeId = new mongoose.Types.ObjectId(String(storeId));
+  } else if (query.storeId && mongoose.isValidObjectId(query.storeId)) {
+    match.storeId = new mongoose.Types.ObjectId(String(query.storeId));
+  }
+}
+
 
     const deletedMode = parseDeletedFlag(deleted);
     if (deletedMode === "active") match.isDeleted = false;

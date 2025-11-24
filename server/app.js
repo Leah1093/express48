@@ -37,6 +37,7 @@ import uploadRoutes from "./router/upload.routes.js";
 
 import dotenv from 'dotenv';
 import { productImportRouter } from "./router/productImport.router.js";
+import { sellerOrdersRouter } from "./router/sellerOrders.router.js";
 
 
 
@@ -94,6 +95,9 @@ app.use('/payments/tranzila', tranzilaRouter);
 
 app.use("/uploads", uploadRoutes);
 app.use("/seller/products", sellerProductsRouter);
+app.use("/seller/orders", sellerOrdersRouter);
+
+
 
 app.use(errorHandler);
 
