@@ -63,7 +63,7 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
 }));
-app.use("/api/search", searchRouter);
+app.use("/search", searchRouter);
 app.use(passport.initialize());
 app.use(passport.session());
 
