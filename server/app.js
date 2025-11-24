@@ -44,12 +44,26 @@ import { productImportRouter } from "./router/productImport.router.js";
 
 const app = express();
 
-connectDB();
+connectDB()
+  .then(() => {
+    console.log("✅ MongoDB connected");
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection failed", err);
+    process.exit(1); // כדי שיהיה ברור בלוגים
+  });
 app.use(cors({
-  origin: ["http://localhost:5173", 'https://affirmatively-unparenthesised-brandon.ngrok-free.dev'],
+  origin: [
+    "http://localhost:5173",
+    "https://affirmatively-unparenthesised-brandon.ngrok-free.dev",
+    "https://express48.com",
+    "https://www.express48.com",
+    // ואם יש דומיין של CloudFront – גם אותו:
+    "https://<הדומיין-של-CloudFront-אם-יש>"
+  ],
   credentials: true,
   methods: ["GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization","X-Requested-With"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 }));
 
 // Middlewares

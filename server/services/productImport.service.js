@@ -1,5 +1,5 @@
 import { parse } from "csv-parse/sync";
-import { Product } from "../models/product.js";
+import { Product } from "../models/Product.js";
 import { CustomError } from "../utils/CustomError.js";
 import { Category } from "../models/category.js";
 import iconv from "iconv-lite";
