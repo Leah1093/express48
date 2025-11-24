@@ -2,7 +2,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-// import { selectCartItems } from "../../../redux/slices/cartSelectors";
+import { selectCartItems } from "../../../redux/slices/cartSelectors";
 import { fetchAddresses } from "../../../redux/thunks/addressThunks";
 import axios from "axios";
 
@@ -13,7 +13,7 @@ export default function OrderSummary({ selectedItems }) {
   const [discount, setDiscount] = useState(0);
 
   const { user, loading: userLoading, initialized } = useSelector((state) => state.user);
-  const { loading: addrLoading } = useSelector((state) => state.addresses);
+  const { list: addresses, loading: addrLoading } = useSelector((state) => state.addresses);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -49,7 +49,7 @@ export default function OrderSummary({ selectedItems }) {
   // const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
     // חישוב משלוח
   const shipping =
-    subtotal - discount <= 0 || subtotal - discount >= 300 ? 0 : 25;
+    subtotal - discount <= 0 || subtotal - discount >= 300 ? 0 : 0;
      // סכום סופי
   const grandTotal = Math.max(subtotal - discount + shipping, 0);
 
