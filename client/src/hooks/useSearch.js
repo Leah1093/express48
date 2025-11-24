@@ -4,7 +4,7 @@ import axios from "axios";
 const API_BASE =
   (location.hostname === "localhost"
     ? "http://localhost:8080"
-    : import.meta.env.VITE_API_URL || "http://localhost:8080") + "/api/search";
+    : import.meta.env.VITE_API_URL || "http://localhost:8080") + "/search";
 
 const includesCI = (txt = "", q = "") =>
   String(txt).toLowerCase().includes(String(q).toLowerCase());
