@@ -76,6 +76,7 @@ import PolicySecurity from "./components/account/PolicySecurity.jsx";
 import CustomerService from "./components/account/CustomerService.jsx";
 import ManageRootCategories from "./components/Categories/ManageRootCategories.jsx";
 import SellerOrdersPanel from "./components/seller/orders/components/SellerOrdersPanel.js";
+import { SellerCouponsPage } from "./components/seller/coupons/components/SellerCouponsPage.js";
 
 function App() {
   const location = useLocation();
@@ -176,7 +177,7 @@ function App() {
           <Route path="/faq" element={<Faq />} />
           <Route path="/bestSellers" element={<BestSellers />} />
           <Route path="/careers" element={<Careers />} />
-          <Route path="/coupons" element={<Coupons />} />
+          <Route path="/coupons" element={<SellerCouponsPage />} />
           <Route path="/guides" element={<Guides />} />
           <Route path="/support" element={<Support />} />
           <Route path="/marketplace" element={<MarketplaceInfo />} />
@@ -242,7 +243,7 @@ function App() {
             <Route path="orders" element={<SellerOrdersPanel />} />
             <Route path="reviews" element={<Reviews />} />
             <Route path="reports" element={<Reports />} />
-            <Route path="coupons" element={<CouponForm />} />
+            <Route path="coupons" element={<SellerCouponsPage />} />
           </Route>
 
           {/* חנות ספציפית */}

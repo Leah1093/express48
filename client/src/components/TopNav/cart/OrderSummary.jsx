@@ -1,8 +1,6 @@
-// components/checkout/OrderSummary.jsx
 import React, { useMemo, useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-// import { selectCartItems } from "../../../redux/slices/cartSelectors";
 import { fetchAddresses } from "../../../redux/thunks/addressThunks";
 import axios from "axios";
 
@@ -12,10 +10,19 @@ export default function OrderSummary({ selectedItems }) {
   const [message, setMessage] = useState("");
   const [discount, setDiscount] = useState(0);
 
-  const { user, loading: userLoading, initialized } = useSelector((state) => state.user);
+  const { user, loading: userLoading, initialized } = useSelector(
+    (state) => state.user
+  );
   const { loading: addrLoading } = useSelector((state) => state.addresses);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // פורמט בטוח לשקלים
+  const formatIls = (value) => {
+    const n = Number(value ?? 0);
+    if (!Number.isFinite(n)) return "0";
+    return n.toLocaleString("he-IL");
+  };
 
   useEffect(() => {
     if (user) {
@@ -29,78 +36,156 @@ export default function OrderSummary({ selectedItems }) {
       navigate("/login", { state: { from: "/payment" } });
       return;
     }
-    // ✅ עובר לדף התשלום (שכולל כתובת + מוצרים + תשלום)
+    // מעבר לדף התשלום
     navigate("/payment");
   };
 
   const getUnitPrice = (it) =>
-    Number(it?.unitPrice ?? it?.productId?.price ?? it?.product?.price ?? it?.price ?? 0);
+    Number(
+      it?.unitPrice ??
+        it?.productId?.price ??
+        it?.product?.price ??
+        it?.price ??
+        0
+    );
+
   const getQty = (it) => Number(it?.quantity ?? 0);
 
-  // חישובי סכומים לפי המוצרים שנבחרו
+  // סכום מוצרים לפי הפריטים שנבחרו
   const subtotal = useMemo(() => {
     return Array.isArray(selectedItems)
-      ? selectedItems
-        // .filter((it) => selectedItems.includes(getKey(it)))
-        .reduce((sum, it) => sum + getUnitPrice(it) * getQty(it), 0)
+      ? selectedItems.reduce(
+          (sum, it) => sum + getUnitPrice(it) * getQty(it),
+          0
+        )
       : 0;
   }, [selectedItems]);
 
-  // const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
-    // חישוב משלוח
+  const safeDiscount =
+    typeof discount === "number" && !Number.isNaN(discount) ? discount : 0;
+
+  // משלוח: חינם מעל 300 או אם אחרי הנחה יוצא 0
   const shipping =
-    subtotal - discount <= 0 || subtotal - discount >= 300 ? 0 : 25;
-     // סכום סופי
-  const grandTotal = Math.max(subtotal - discount + shipping, 0);
+    subtotal - safeDiscount <= 0 || subtotal - safeDiscount >= 300 ? 0 : 25;
 
-  // const handleApplyCoupon = () => {
-  //   if (!coupon.trim()) return;
-  //   setCouponApplied({ code: coupon.trim().toUpperCase(), discount: "10%" });
-  //   setCoupon("");
-  // };
-
-  
+  // סכום סופי
+  const grandTotal = Math.max(subtotal - safeDiscount + shipping, 0);
 
   const handleApplyCoupon = async () => {
+    if (!coupon.trim()) {
+      setMessage("נא להזין קוד קופון");
+      return;
+    }
+
     try {
-      // const sellers = selectedItems.map(it => it.sellerId);
+      const safeItems = Array.isArray(selectedItems) ? selectedItems : [];
+
+      const cartPayload = {
+        total: subtotal,
+        items: safeItems
+                  .map((it) => {
+          const productId =
+            it.productId?._id ||
+            it.product?._id ||
+            it._id ||
+            it.productId ||
+            null;
+
+            const sellerIdRaw =
+        it.sellerId ||
+        it.productId?.sellerId ||   // 👈 חשוב להוסיף
+        it.product?.sellerId ||
+        it.snapshot?.sellerId ||
+        null;
+
+          
+         if (!productId) return null;
+
+          // 👇 פה היה חסר לך ה-return
+          return {
+            _id: productId,
+            sellerId: sellerIdRaw ? String(sellerIdRaw) : null,
+            quantity: getQty(it),
+            // לא חובה אבל עדיף:
+            price: getUnitPrice(it),
+          };
+        })
+        .filter(Boolean)
+    ,
+      };
+
+      console.log("coupon validate payload cart:", cartPayload);
+
+      const apiBase =
+        import.meta.env.VITE_API_URL || "http://localhost:8080";
+
       const res = await axios.post(
-        `${import.meta.env.VITE_API_URL || "http://localhost:8080"}/coupons/validate`,
-        { code: coupon, cart:{ total: subtotal },  },
+        `${apiBase}/coupons/validate`,
+        {
+          code: coupon.trim(),
+          cart: cartPayload,
+        },
         { withCredentials: true }
       );
 
       if (res.data.valid) {
-        setDiscount(res.data.discount);
-        setCouponApplied(res.data.finalTotal);
-        setMessage(`קופון הוחל בהצלחה! הנחה: ₪${res.data.discount}`);
+        const rawDiscount = res.data.discount;
+        const numericDiscount =
+          typeof rawDiscount === "number" && !Number.isNaN(rawDiscount)
+            ? rawDiscount
+            : 0;
+
+        setDiscount(numericDiscount);
+
+        setCouponApplied({
+          code: coupon.trim(),
+          finalTotal: res.data.finalTotal,
+        });
+
+        setCoupon("");
+        setMessage(
+          `קופון הוחל בהצלחה! הנחה: ₪${formatIls(numericDiscount)}`
+        );
+      } else {
+        setMessage(res.data.error || "קופון לא תקף");
       }
     } catch (err) {
-      setMessage(err.response?.data?.error || "שגיאה בהחלת הקופון");
+      console.error("coupon validate error:", err);
+      setMessage(err?.response?.data?.error || "שגיאה בהחלת הקופון");
     }
   };
 
-
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm" dir="rtl">
-      <h2 className="text-xl font-bold mb-6 text-gray-900 text-right">סיכום הזמנה</h2>
+    <div
+      className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm"
+      dir="rtl"
+    >
+      <h2 className="text-xl font-bold mb-6 text-gray-900 text-right">
+        סיכום הזמנה
+      </h2>
 
       {/* פרטי סכומים */}
       <div className="space-y-3 mb-6">
         <div className="flex items-center justify-between text-gray-700">
           <span>מוצרים</span>
-          <span className="font-medium">₪{subtotal.toLocaleString("he-IL")}</span>
+          <span className="font-medium">
+            ₪{formatIls(subtotal)}
+          </span>
         </div>
 
         <div className="flex items-center justify-between text-gray-700">
           <span>משלוח</span>
-          <span className="font-medium">{shipping === 0 ? "חינם" : `₪${shipping}`}</span>
+          <span className="font-medium">
+            {shipping === 0 ? "חינם" : `₪${formatIls(shipping)}`}
+          </span>
         </div>
 
         {couponApplied && (
           <div className="flex items-center justify-between text-green-600">
             <span>קופון ({couponApplied.code})</span>
-            <span className="font-semibold">-₪{discount.toLocaleString("he-IL")}</span>
+            <span className="font-semibold">
+              -₪{formatIls(safeDiscount)}
+            </span>
           </div>
         )}
       </div>
@@ -110,23 +195,25 @@ export default function OrderSummary({ selectedItems }) {
       {/* סך הכל */}
       <div className="flex items-center justify-between mb-6">
         <span className="text-lg font-bold text-gray-900">סך הכל</span>
-        <span className="text-xl font-bold text-gray-900">₪{grandTotal.toLocaleString("he-IL")}</span>
+        <span className="text-xl font-bold text-gray-900">
+          ₪{formatIls(grandTotal)}
+        </span>
       </div>
 
-      {/* כפתור להשלים */}
-      <button 
+      {/* כפתור לתשלום */}
+      <button
         onClick={handleCheckoutClick}
         disabled={(userLoading && !initialized) || addrLoading}
         className="w-full bg-black text-white font-bold py-4 rounded-xl hover:bg-gray-800 transition-all mb-6 disabled:opacity-50 cursor-pointer"
       >
-       לתשלום
+        לתשלום
       </button>
 
       {/* קוד קופון */}
       <div className="mb-3 text-right">
         <p className="text-gray-700 font-medium">קוד קופון</p>
       </div>
-      
+
       {/* שדה קופון */}
       <div className="flex gap-2">
         <input
