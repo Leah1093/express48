@@ -54,13 +54,14 @@ class SearchService {
     )
       .sort({ updatedAt: -1 })
       .limit(Math.min(limit, 8))
-      .lean();
+      .lean().populate("storeId");;
 
     return rows.map((p) => ({
       name: p.title || p.name,
       slug: p.slug,
       price: p?.price?.amount ?? p?.price ?? 0,
       image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
+      storeSlug: p.storeId?.slug || null,
     }));
   }
 
@@ -81,31 +82,16 @@ class SearchService {
     const filter = { ...baseVisibility(storeId, strict), $or: buildOr(term) };
 
     const [rows, total] = await Promise.all([
-      Product.find(filter, { title: 1, name: 1, slug: 1, price: 1, image: 1, images: 1, updatedAt: 1 })
+      Product.find(filter)
         .sort({ updatedAt: -1 })
         .skip((pageNum - 1) * pageSize)
         .limit(pageSize)
-        .lean(),
+        .lean()
+        .populate("storeId"),
       Product.countDocuments(filter),
     ]);
 
-    const items = rows.map((p) => {
-      const { finalAmount, baseAmount, savedAmount, hasDiscount } = Product.hydrate(p).getEffectivePricing();
-      return {
-        _id: p._id,
-        title: p.title,
-        slug: p.slug,
-        images: p.images,
-        currency: p.currency,
-        basePrice: baseAmount,
-        finalPrice: finalAmount,
-        discountValue: hasDiscount ? savedAmount : 0,
-        hasDiscount,
-        isNew: p.publishedAt ? isNewProduct(p.publishedAt) : false
-      };
-    });
-
-    return { items, page: pageNum, total, pages: Math.ceil(total / pageSize) };
+    return { items:rows, page: pageNum, total, pages: Math.ceil(total / pageSize) };
   }
 }
 
