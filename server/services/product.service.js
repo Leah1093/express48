@@ -147,6 +147,8 @@ class ProductService {
         price: 1,
         discount: 1,
         description: 1,
+         stock: 1,  
+      inStock: 1,  
       })
       .populate("storeId", "slug") // נקבל storeId.slug
       .lean(),
