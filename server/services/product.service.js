@@ -77,25 +77,25 @@ class ProductService {
     const sortStage = sort || { updatedAt: -1 };
 
     const [items, total] = await Promise.all([
-    Product.find(filter)
-      .sort(sortStage)
-      .skip(skip)
-      .limit(l)
-      .select({
-        _id: 1,
-        slug: 1,
-        title: 1,
-        storeId: 1,
-        images: 1,
-        currency: 1,
-        price: 1,
-        discount: 1,
-        description: 1,
-      })
-      .populate("storeId", "slug") // נקבל storeId.slug
-      .lean(),
-    Product.countDocuments(filter),
-  ]);
+      Product.find(filter)
+        .sort(sortStage)
+        .skip(skip)
+        .limit(l)
+        .select({
+          _id: 1,
+          slug: 1,
+          title: 1,
+          storeId: 1,
+          images: 1,
+          currency: 1,
+          price: 1,
+          discount: 1,
+          description: 1,
+        })
+        .populate("storeId", "slug") // נקבל storeId.slug
+        .lean(),
+      Product.countDocuments(filter),
+    ]);
 
 
     const pages = Math.ceil(total / l) || 1;
@@ -132,29 +132,29 @@ class ProductService {
 
       const sortStage = sort || { updatedAt: -1 };
 
-       const [items, total] = await Promise.all([
-    Product.find(filter)
-      .sort(sortStage)
-      .skip(skip)
-      .limit(l)
-      .select({
-        _id: 1,
-        slug: 1,
-        title: 1,
-        storeId: 1,
-        images: 1,
-        currency: 1,
-        price: 1,
-        discount: 1,
-        description: 1,
-         stock: 1,  
-      inStock: 1,  
-      })
-      .populate("storeId", "slug") // נקבל storeId.slug
-      .lean(),
-    Product.countDocuments(filter),
-  ]);
-  
+      const [items, total] = await Promise.all([
+        Product.find(filter)
+          .sort(sortStage)
+          .skip(skip)
+          .limit(l)
+          .select({
+            _id: 1,
+            slug: 1,
+            title: 1,
+            storeId: 1,
+            images: 1,
+            currency: 1,
+            price: 1,
+            discount: 1,
+            description: 1,
+            stock: 1,
+            inStock: 1,
+          })
+          .populate("storeId", "slug") // נקבל storeId.slug
+          .lean(),
+        Product.countDocuments(filter),
+      ]);
+
 
       const pages = Math.ceil(total / l) || 1;
 
