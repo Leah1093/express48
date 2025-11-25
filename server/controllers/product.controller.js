@@ -16,7 +16,7 @@ export class ProductController {
   getAllProducts = async (req, res, next) => {
     try {
       const products = await productService.getAllProductsService();
-      res.json({ items: products });
+      res.json( products );
     } catch (err) {
       next(new CustomError("שגיאה בשליפת מוצרים", 500));
     }

@@ -4,11 +4,15 @@ import QuantityInput from "./QuantityInput";
 
 export default function CartRow({ item, isMobile = false }) {
   const {
-    unitPrice,
-    handleRemoveCompletely,
+    title, image, unitPrice, localQty, user, displayQty, id,
+    handleAdd, handleRemove, handleRemoveCompletely,
+    handleLocalChange, commitIfValid, handleChangeGuest,
   } = useCartItemLogic(item);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const name = title || "מוצר ללא שם";
+  const qtyNum = Number(displayQty || 0);
 
   const confirmDelete = () => {
     handleRemoveCompletely();

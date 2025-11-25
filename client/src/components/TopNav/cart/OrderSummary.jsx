@@ -10,10 +10,14 @@ export default function OrderSummary({ selectedItems }) {
   const [message, setMessage] = useState("");
   const [discount, setDiscount] = useState(0);
 
-  const { user, loading: userLoading, initialized } = useSelector(
-    (state) => state.user
-  );
+  const {
+    user,
+    loading: userLoading,
+    initialized,
+  } = useSelector((state) => state.user);
   const { loading: addrLoading } = useSelector((state) => state.addresses);
+  //   const { user, loading: userLoading, initialized } = useSelector((state) => state.user);
+  //   const { list: addresses, loading: addrLoading } = useSelector((state) => state.addresses);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -83,41 +87,38 @@ export default function OrderSummary({ selectedItems }) {
       const cartPayload = {
         total: subtotal,
         items: safeItems
-                  .map((it) => {
-          const productId =
-            it.productId?._id ||
-            it.product?._id ||
-            it._id ||
-            it.productId ||
-            null;
+          .map((it) => {
+            const productId =
+              it.productId?._id ||
+              it.product?._id ||
+              it._id ||
+              it.productId ||
+              null;
 
             const sellerIdRaw =
-        it.sellerId ||
-        it.productId?.sellerId ||   // 👈 חשוב להוסיף
-        it.product?.sellerId ||
-        it.snapshot?.sellerId ||
-        null;
+              it.sellerId ||
+              it.productId?.sellerId || // 👈 חשוב להוסיף
+              it.product?.sellerId ||
+              it.snapshot?.sellerId ||
+              null;
 
-          
-         if (!productId) return null;
+            if (!productId) return null;
 
-          // 👇 פה היה חסר לך ה-return
-          return {
-            _id: productId,
-            sellerId: sellerIdRaw ? String(sellerIdRaw) : null,
-            quantity: getQty(it),
-            // לא חובה אבל עדיף:
-            price: getUnitPrice(it),
-          };
-        })
-        .filter(Boolean)
-    ,
+            // 👇 פה היה חסר לך ה-return
+            return {
+              _id: productId,
+              sellerId: sellerIdRaw ? String(sellerIdRaw) : null,
+              quantity: getQty(it),
+              // לא חובה אבל עדיף:
+              price: getUnitPrice(it),
+            };
+          })
+          .filter(Boolean),
       };
 
       console.log("coupon validate payload cart:", cartPayload);
 
-      const apiBase =
-        import.meta.env.VITE_API_URL || "http://localhost:8080";
+      const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
       const res = await axios.post(
         `${apiBase}/coupons/validate`,
@@ -143,9 +144,7 @@ export default function OrderSummary({ selectedItems }) {
         });
 
         setCoupon("");
-        setMessage(
-          `קופון הוחל בהצלחה! הנחה: ₪${formatIls(numericDiscount)}`
-        );
+        setMessage(`קופון הוחל בהצלחה! הנחה: ₪${formatIls(numericDiscount)}`);
       } else {
         setMessage(res.data.error || "קופון לא תקף");
       }
@@ -168,9 +167,7 @@ export default function OrderSummary({ selectedItems }) {
       <div className="space-y-3 mb-6">
         <div className="flex items-center justify-between text-gray-700">
           <span>מוצרים</span>
-          <span className="font-medium">
-            ₪{formatIls(subtotal)}
-          </span>
+          <span className="font-medium">₪{formatIls(subtotal)}</span>
         </div>
 
         <div className="flex items-center justify-between text-gray-700">
@@ -183,9 +180,7 @@ export default function OrderSummary({ selectedItems }) {
         {couponApplied && (
           <div className="flex items-center justify-between text-green-600">
             <span>קופון ({couponApplied.code})</span>
-            <span className="font-semibold">
-              -₪{formatIls(safeDiscount)}
-            </span>
+            <span className="font-semibold">-₪{formatIls(safeDiscount)}</span>
           </div>
         )}
       </div>
