@@ -12,6 +12,16 @@ export class UserController {
       next(err);
     }
   }
+   async listCustomers(req, res, next) {
+        try {
+                const service = new UserService();
+            // אם תרצי, אפשר לבדוק כאן שהמשתמש הוא admin / seller
+            const users = await service.listCustomers();
+            res.json({ items: users });
+        } catch (err) {
+            next(err);
+        }
+    }
 
   
 }
