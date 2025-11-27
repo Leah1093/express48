@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { or } from "ajv/dist/compile/codegen/index.js";
 import { Order } from "../models/order.js";
 import { CustomError } from "../utils/CustomError.js";
@@ -37,28 +38,84 @@ export class OrderService {
 
   async getUserOrders(userId) {
     try {
-      const orders = await Order.find({ userId })
-        .populate("addressId");
-      console.log('[OrderService] Fetched user orders:', JSON.stringify(orders));
-      const result = [];
-      for (const order of orders) {
-        const populatedItems = []
-        for (const item of order.items) {
-          const product = await Product
-            .findById(item.productId)
-            .select("title price images slug")
-            .lean();
-          populatedItems.push({
-            ...item.toObject(),
-            productId: product || null
-          });
-        }
-        result.push({
-          ...order.toObject(),
-          items: populatedItems
-        });
-      }
-      return result;
+      // אופטימיזציה: שימוש ב-aggregate כדי להוציא את ה-N+1 query problem
+      // במקום לעשות query לכל מוצר בנפרד, אנחנו רוחצים הכל במבחן אחד
+      const orders = await Order.aggregate([
+        { 
+          $match: { 
+            userId: new mongoose.Types.ObjectId(userId) 
+          } 
+        },
+        // Join products מתוך items array
+        {
+          $lookup: {
+            from: "products",
+            let: { productIds: "$items.productId" },
+            pipeline: [
+              { $match: { $expr: { $in: ["$_id", "$$productIds"] } } },
+              { $project: { _id: 1, title: 1, price: 1, images: 1, slug: 1 } }
+            ],
+            as: "productsLookup"
+          }
+        },
+        // Join addresses
+        {
+          $lookup: {
+            from: "addresses",
+            localField: "addressId",
+            foreignField: "_id",
+            as: "addressLookup"
+          }
+        },
+        // Reformat response
+        {
+          $project: {
+            orderId: 1,
+            userId: 1,
+            totalAmount: 1,
+            discountedAmount: 1,
+            notes: 1,
+            status: 1,
+            payment: 1,
+            gatewayLog: 1,
+            orderDate: 1,
+            estimatedDelivery: 1,
+            actualDelivery: 1,
+            receiptUrl: 1,
+            warranty: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            addressId: { $arrayElemAt: ["$addressLookup", 0] },
+            items: {
+              $map: {
+                input: "$items",
+                as: "item",
+                in: {
+                  productId: {
+                    $arrayElemAt: [
+                      {
+                        $filter: {
+                          input: "$productsLookup",
+                          as: "prod",
+                          cond: { $eq: ["$$prod._id", "$$item.productId"] }
+                        }
+                      },
+                      0
+                    ]
+                  },
+                  quantity: "$$item.quantity",
+                  price: "$$item.price",
+                  priceAfterDiscount: "$$item.priceAfterDiscount"
+                }
+              }
+            }
+          }
+        },
+        // Sort by order date, newest first
+        { $sort: { orderDate: -1 } }
+      ]);
+
+      return orders;
     } catch (err) {
       if (err instanceof CustomError) throw err;
       throw new CustomError("Failed to fetch user orders", 500);
