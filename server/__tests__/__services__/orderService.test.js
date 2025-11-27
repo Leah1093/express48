@@ -10,6 +10,9 @@ jest.unstable_mockModule("../../models/order.js", () => {
 
   Order.__mockSave = save;
 
+  // Mock aggregate method
+  Order.aggregate = jest.fn();
+  
   Order.find = jest.fn();
   Order.findOne = jest.fn();
   Order.findByIdAndUpdate = jest.fn();
@@ -23,7 +26,7 @@ let Order, OrderService, CustomError;
 
 beforeAll(async () => {
   ({ Order } = await import("../../models/order.js"));
-  ({ OrderService } = await import("../../service/orderService.js"));
+  ({ OrderService } = await import("../../services/orderService.js"));
   ({ CustomError } = await import("../../utils/CustomError.js"));
 });
 
@@ -33,6 +36,8 @@ describe("OrderService", () => {
   beforeEach(() => {
     service = new OrderService();
     jest.clearAllMocks();
+    // Default mock for aggregate
+    Order.aggregate.mockResolvedValue([]);
   });
 
   // ---- createOrder ----
@@ -69,17 +74,38 @@ describe("OrderService", () => {
 
   // ---- getUserOrders ----
   describe("getUserOrders", () => {
-    test("should return orders", async () => {
-      Order.find.mockReturnValue({
-        populate: () => ({ populate: () => ["o1"] })
-      });
+    test("should return orders using aggregation pipeline", async () => {
+      const mockOrders = [
+        {
+          _id: "o1",
+          userId: "u1",
+          totalAmount: 200,
+          items: [
+            {
+              productId: {
+                _id: "p1",
+                title: "Product 1",
+                price: 100,
+                images: [],
+                slug: "product-1"
+              },
+              quantity: 2,
+              price: 100
+            }
+          ],
+          addressId: { _id: "addr1" }
+        }
+      ];
+
+      Order.aggregate.mockResolvedValueOnce(mockOrders);
 
       const res = await service.getUserOrders("u1");
-      expect(res).toEqual(["o1"]);
+      expect(res).toEqual(mockOrders);
+      expect(Order.aggregate).toHaveBeenCalled();
     });
 
     test("should throw CustomError on DB error", async () => {
-      Order.find.mockImplementation(() => { throw new Error("DB fail"); });
+      Order.aggregate.mockRejectedValueOnce(new Error("DB fail"));
 
       await expect(service.getUserOrders("u1"))
         .rejects.toThrow(/Failed to fetch user orders/);
