@@ -1,4 +1,4 @@
-import axios from 'axios';  
+import axios from 'axios';
 import { CustomError } from '../utils/CustomError.js';
 
 const TIMEOUT_MS = 8000;
@@ -9,12 +9,13 @@ export class TranzilaService {
     const items = Array.isArray(itemsRaw) ? itemsRaw : [];
     if (!items.length) throw new CustomError('No items to pay', 400);
 
-    return toILS(items.reduce((s, it) => {
-      const qty =
-        Number(it?.qty ?? it?.quantity ?? it?.quentity ?? 1);
-      const price = Number(it?.priceAfterDiscount ?? it?.price ?? 0);
-      return s + (isFinite(price) ? price : 0) * (isFinite(qty) ? qty : 1);
-    }, 0));
+    return toILS(
+      items.reduce((s, it) => {
+        const qty = Number(it?.qty ?? it?.quantity ?? it?.quentity ?? 1);
+        const price = Number(it?.priceAfterDiscount ?? it?.price ?? 0);
+        return s + (isFinite(price) ? price : 0) * (isFinite(qty) ? qty : 1);
+      }, 0)
+    );
   }
 
   static buildIframeUrl({ orderId, items, baseUrl, terminal, customerInfo }) {
@@ -22,7 +23,10 @@ export class TranzilaService {
 
     // הגנות בסיסיות
     if (!terminal || /@/.test(terminal)) {
-      throw new CustomError('Invalid TRANZILA_TERMINAL (must be terminal name, not email)', 500);
+      throw new CustomError(
+        'Invalid TRANZILA_TERMINAL (must be terminal name, not email)',
+        500
+      );
     }
     if (!baseUrl || !/^https?:\/\//i.test(baseUrl)) {
       throw new CustomError('BASE_URL must be HTTP/HTTPS', 500);
@@ -32,32 +36,61 @@ export class TranzilaService {
     if (total <= 0) throw new CustomError('Total must be greater than zero', 400);
 
     // סניטיזציה של מזהה ההזמנה (WAF/URL-safe)
-    const safeOrderId = String(orderId).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+    const safeOrderId = String(orderId)
+      .replace(/[^A-Za-z0-9_-]/g, '')
+      .slice(0, 64);
+
+    // נורמליזציה של baseUrl ובניית כתובת webhook
+    const safeBaseUrl = baseUrl.replace(/\/+$/, ''); // להוריד / בסוף אם יש
+    const postUrl = `${safeBaseUrl}/payments/tranzila/webhook`;
 
     const url = new URL(`https://direct.tranzila.com/${terminal}/iframe.php`);
-    
-    // ✅ רק המינימום! ללא URLs שיחסמו אותנו
+
+    // סכום וחיוב
     url.searchParams.set('sum', String(total));
     url.searchParams.set('currency', '1');
     url.searchParams.set('cred_type', '1');
     url.searchParams.set('lang', 'il');
-    
-    console.log('[TRZ] terminal=', terminal, 'sum=', total, 'url=', url.toString());
+
+    // ✅ להזדהות ההזמנה – כדי שה-webhook ידע למי לשייך את התשלום
+    url.searchParams.set('orderid', safeOrderId);
+
+    // ✅ כתובת webhook לשרת שלך בענן
+    url.searchParams.set('posturl', postUrl);
+
+    // מידע ללקוח (לא חובה אבל מומלץ)
+    if (customerInfo?.email) {
+      url.searchParams.set('email', customerInfo.email);
+    }
+    if (customerInfo?.phone) {
+      url.searchParams.set('phone', customerInfo.phone);
+    }
+    if (customerInfo?.name) {
+      url.searchParams.set('contact', customerInfo.name);
+    }
+
+    console.log('[TRZ] terminal=', terminal, 'sum=', total, 'url=', url.toString(), 'posturl=', postUrl);
     return { iframeUrl: url.toString(), amount: total };
   }
 
   static async verifyTransaction({ transaction_index }) {
     const env = (process.env.TRZ_ENV || 'live').toLowerCase();
+
+    // מצב בדיקות (development) – מאשר תמיד
     if (env === 'mock') {
       console.log('[TRZ][VERIFY] mock mode → approve always');
       return { approved: true, source: 'mock' };
     }
-    // test כרגע מתנהג כמו live; אפשר לשנות לפי מה שתבקשי מטרנזילה
+
     const terminal = process.env.TRANZILA_TERMINAL;
-    const token = process.env.TRANZILA_PRIVATE_API || process.env.TRANZILA_ACCESS_TOKEN;
+    const token =
+      process.env.TRANZILA_PRIVATE_API || process.env.TRANZILA_ACCESS_TOKEN;
 
     if (!terminal || !token) {
-      console.warn('[TRZ][VERIFY] missing credentials', { hasTerminal: !!terminal, hasToken: !!token });
+      console.warn('[TRZ][VERIFY] missing credentials', {
+        hasTerminal: !!terminal,
+        hasToken: !!token,
+      });
       return { approved: false, reason: 'missing_credentials' };
     }
 
