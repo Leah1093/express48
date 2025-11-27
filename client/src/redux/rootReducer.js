@@ -20,6 +20,7 @@ import { addressApi } from "./services/addressApi";
 import { uploadApi } from "./services/uploadApi";
 import { sellerProductsApi } from "./services/sellerProductsApi";
 import { sellerOrdersApi } from "./services/sellerOrdersApi";
+import { sellerReportsApi } from "./services/sellerReportsApi";
 
 export default combineReducers({
   cart: cartReducer,
@@ -43,4 +44,5 @@ export default combineReducers({
   [uploadApi.reducerPath]: uploadApi.reducer,
   [sellerProductsApi.reducerPath]: sellerProductsApi.reducer,
   [sellerOrdersApi.reducerPath]: sellerOrdersApi.reducer,
+  [sellerReportsApi.reducerPath]: sellerReportsApi.reducer,
 });

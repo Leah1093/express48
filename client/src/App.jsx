@@ -85,6 +85,7 @@ import Checkout from "./components/payments/pages/Checkout";
 import ThankYou from "./components/payments/pages/ThankYou";
 import Cancelled from "./components/payments/pages/Cancelled";
 import MockPay from "./components/payments/pages/MockPay";
+import { SellerReportsPage } from "./components/seller/reports/components/SellerReportsPage.js";
 
 function App() {
   const location = useLocation();
@@ -260,7 +261,7 @@ function App() {
             </Route>
             <Route path="orders" element={<SellerOrdersPanel />} />
             <Route path="reviews" element={<Reviews />} />
-            <Route path="reports" element={<Reports />} />
+            <Route path="reports" element={<SellerReportsPage />} />
             <Route path="coupons" element={<SellerCouponsPage />} />
           </Route>
 
