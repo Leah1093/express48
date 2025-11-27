@@ -43,6 +43,7 @@ import { apiLimiter } from "./middlewares/rateLimit.middleware.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 
 import "./config/googleOAuth.config.js";
+import { sellerReportsRouter } from "./router/seller.reports.router.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -119,6 +120,8 @@ app.use('/payments/tranzila', tranzilaRouter);
 app.use("/uploads", uploadRoutes);
 app.use("/seller/products", sellerProductsRouter);
 app.use("/seller/orders", sellerOrdersRouter);
+app.use("/seller/reports", sellerReportsRouter);
+
 
 
 
