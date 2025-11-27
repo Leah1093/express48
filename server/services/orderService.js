@@ -1,5 +1,7 @@
+import { or } from "ajv/dist/compile/codegen/index.js";
 import { Order } from "../models/order.js";
 import { CustomError } from "../utils/CustomError.js";
+import { Product } from "../models/Product.js";
 
 export class OrderService {
   async createOrder(userId, data) {
@@ -35,9 +37,28 @@ export class OrderService {
 
   async getUserOrders(userId) {
     try {
-      return await Order.find({ userId })
-        .populate("items.productId", "title price")
+      const orders = await Order.find({ userId })
         .populate("addressId");
+      console.log('[OrderService] Fetched user orders:', JSON.stringify(orders));
+      const result = [];
+      for (const order of orders) {
+        const populatedItems = []
+        for (const item of order.items) {
+          const product = await Product
+            .findById(item.productId)
+            .select("title price images slug")
+            .lean();
+          populatedItems.push({
+            ...item.toObject(),
+            productId: product || null
+          });
+        }
+        result.push({
+          ...order.toObject(),
+          items: populatedItems
+        });
+      }
+      return result;
     } catch (err) {
       if (err instanceof CustomError) throw err;
       throw new CustomError("Failed to fetch user orders", 500);
@@ -108,7 +129,7 @@ export class OrderService {
         .populate("items.productId", "title price")
         .populate("addressId")
         .populate("userId", "username email");
-      
+
       return order;
     } catch (err) {
       throw new CustomError("Failed to fetch order by ID", 500);
@@ -132,7 +153,7 @@ export class OrderService {
 
       order.status = 'paid';
       await order.save();
-      
+
       console.log('[OrderService] Order marked as paid:', orderId);
       return order;
     } catch (err) {
