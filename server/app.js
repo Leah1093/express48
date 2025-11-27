@@ -105,7 +105,6 @@ app.use("/addresses", addressRoutes);
 app.use("/orders", orderRoutes);
 app.use("/coupons", couponsRoutes);
 app.use('/payments/tranzila', tranzilaRouter);
-
 app.use("/uploads", uploadRoutes);
 app.use("/seller/products", sellerProductsRouter);
 
