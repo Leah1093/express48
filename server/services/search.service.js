@@ -50,7 +50,7 @@ class SearchService {
 
     const rows = await Product.find(
       filter,
-      { title: 1, name: 1, slug: 1, price: 1, image: 1, images: 1, updatedAt: 1 }
+      { title: 1, name: 1, description: 1, slug: 1, price: 1, image: 1, images: 1, updatedAt: 1 }
     )
       .sort({ updatedAt: -1 })
       .limit(Math.min(limit, 8))
@@ -62,6 +62,7 @@ class SearchService {
       price: p?.price?.amount ?? p?.price ?? 0,
       image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
       storeSlug: p.storeId?.slug || null,
+      description: p.description || "",
     }));
   }
 
@@ -91,7 +92,7 @@ class SearchService {
       Product.countDocuments(filter),
     ]);
 
-    return { items:rows, page: pageNum, total, pages: Math.ceil(total / pageSize) };
+    return { items: rows, page: pageNum, total, pages: Math.ceil(total / pageSize) };
   }
 }
 
