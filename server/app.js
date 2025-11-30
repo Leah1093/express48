@@ -84,7 +84,10 @@ app.get("/", (req, res) => {
   res.send("Express48 API is running 🚀");
 });
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
+app.use((req, res, next) => {
+  console.log("➡️ NEW REQUEST:", req.method, req.url);
+  next();
+});
 // Routes
 app.use('/entrance', entranceRouter);
 app.use('/password', passwordRouter);

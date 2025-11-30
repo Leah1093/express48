@@ -6,6 +6,6 @@ import { verifyRecaptcha } from '../middlewares/verifyRecaptcha.js';
 const contactRouter = express.Router();
 const contactController = new ContactController();
 
-contactRouter.post('/send',contactLimiter,verifyRecaptcha, contactController.sendMessage);
+contactRouter.post('/send', contactController.sendMessage);
 
 export { contactRouter };
