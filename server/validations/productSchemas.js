@@ -56,6 +56,27 @@ const deliverySchema = z.object({
   notes: z.string().optional().default(""),
 }).partial().default({});
 
+const variationTermConfigSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().trim().min(1),
+  priceType: z.enum(["none", "addon", "override"]),
+  price: z.number().optional().nullable(),
+  images: z.array(z.string().trim()).optional().default([]),
+});
+
+const variationAttributeConfigSchema = z.object({
+  name: z.string().trim().min(1),        // slug באנגלית, למשל "size"
+  displayName: z.string().trim().min(1), // למשל "גודל"
+  terms: z.array(variationTermConfigSchema).min(1),
+});
+
+const variationsConfigSchema = z.object({
+  priceRule: z.string().trim().default("base"),
+  attributes: z.array(variationAttributeConfigSchema).default([]),
+}).partial().default({});
+
+
+
 // סכימת יצירת מוצר
 export const createProductSchema = z.object({
   // זיהוי לפי ספק/מוכר/חנות
@@ -90,6 +111,9 @@ export const createProductSchema = z.object({
 
   // וריאציות - אופציונלי
   variations: z.array(variationSchema).optional().default([]),
+
+  defaultVariationId: z.string().trim().optional(),
+  variationsConfig: variationsConfigSchema.optional().default({}),
 
   // מלאי בסיסי - אופציונלי, יחושב גם מהווריאציות בצד המודל
   stock: z.number().int().min(0).optional().default(0),
