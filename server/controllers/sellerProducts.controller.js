@@ -34,7 +34,9 @@ function pickAllowedUpdate(body = {}) {
     "status",
     "sellerSku",
     "variations",
-    "categoryId", // זה מה שהפרונט ישלח
+    "categoryId", 
+    "variationsConfig",  
+    "defaultVariationId"
   ];
 
   const out = {};

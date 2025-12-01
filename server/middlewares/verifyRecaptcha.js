@@ -19,10 +19,13 @@ export const verifyRecaptcha = async (req, res, next) => {
         },
       }
     );
+    console.log("✅👌")
 
     const data = response.data;
 
     if (!data.success || data.score < 0.5) {
+console.log("reCAPTCHA response data:", data);
+
       return res.status(403).json({ error: "reCAPTCHA failed. Suspicious activity detected." });
     }
 
