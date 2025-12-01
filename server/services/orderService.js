@@ -229,115 +229,119 @@ export class OrderService {
 
   // ---- פונקציה בשביל Tranzila ----
   // מסמנת הזמנה כ"paid" ומעדכנת מלאי ומספר רכישות
-  async markPaid(orderId, paymentInfo = {}) {
-    try {
-      console.log("[OrderService] markPaid CALLED with:", {
-        orderId,
-        paymentInfo,
-      });
+ async markPaid(orderIdOrCode, paymentInfo = {}) {
+  try {
+    console.log("[OrderService] markPaid CALLED with:", {
+      orderIdOrCode,
+      paymentInfo,
+    });
 
-      // 1. שולפים את ההזמנה
-      const order = await Order.findById(orderId);
+    // נחפש גם לפי _id של מונגו וגם לפי orderId טקסטואלי (ORD-123...)
+    const query = mongoose.isValidObjectId(orderIdOrCode)
+      ? { _id: orderIdOrCode }
+      : { orderId: orderIdOrCode };
 
-      if (!order) {
-        console.error("[OrderService] markPaid: ORDER NOT FOUND:", orderId);
-        throw new CustomError("Order not found", 404);
-      }
+    const order = await Order.findOne(query);
 
-      console.log("[OrderService] order BEFORE update:", {
-        id: order._id,
-        status: order.status,
-        payment: order.payment,
-        items: order.items.map((it) => ({
-          productId: it.productId,
-          quantity: it.quantity,
-        })),
-      });
-
-      // 2. אם כבר שולם – לא עושים שוב
-      if (order.payment?.status === "paid") {
-        console.log(
-          "[OrderService] markPaid called but order already paid:",
-          orderId
-        );
-        return order;
-      }
-
-      const now = new Date();
-
-      // 3. עדכון אובייקט התשלום של ההזמנה
-      order.payment = {
-        ...(order.payment || {}),
-        status: "paid",
-        gateway: paymentInfo.gateway || "tranzila",
-        transactionId:
-          paymentInfo.transaction_index ||
-          paymentInfo.transactionId ||
-          order.payment?.transactionId ||
-          null,
-        details: paymentInfo,
-        paidAt: now,
-      };
-
-      order.status = "paid";
-      order.orderDate = order.orderDate || now;
-
-      // 4. עדכון מלאי ורכישות לכל פריט בהזמנה
-      for (const item of order.items) {
-        if (!item.productId) continue;
-
-        const qty = item.quantity || 1;
-
-        const product = await Product.findById(item.productId);
-        if (!product) {
-          console.warn(
-            "[OrderService] markPaid: product not found for item",
-            item.productId
-          );
-          continue;
-        }
-
-        // מלאי נוכחי מתוך המסד
-        const currentStock =
-          typeof product.stock === "number" ? product.stock : 0;
-        const newStock = Math.max(0, currentStock - qty);
-
-        // עדכון ישיר במסד – בלי product.save(), כדי שלא ירוץ pre('save') שמדרס את הערך
-        await Product.updateOne(
-          { _id: product._id },
-          {
-            $set: {
-              stock: newStock,
-              inStock: newStock > 0,
-              instock: newStock > 0, // לשדה ישן אם קיים
-            },
-            $inc: {
-              purchases: qty,
-            },
-          }
-        );
-      }
-
-      // 5. שמירת ההזמנה אחרי העדכון
-      await order.save();
-
-      // 6. לוג לתוך gatewayLog
-      await this.logGatewayEvent(orderId, {
-        gateway: paymentInfo.gateway || "tranzila",
-        event: "paid",
-        paymentInfo,
-      });
-
-      console.log(
-        "[OrderService] Order marked as paid and inventory updated:",
-        orderId
+    if (!order) {
+      console.error(
+        "[OrderService] markPaid: ORDER NOT FOUND:",
+        orderIdOrCode
       );
-
-      return order;
-    } catch (err) {
-      console.error("[OrderService] markPaid error:", err);
-      if (err instanceof CustomError) throw err;
-      throw new CustomError("Failed to mark order as paid", 500);
+      throw new CustomError("Order not found", 404);
     }
+
+    console.log("[OrderService] order BEFORE update:", {
+      id: order._id,
+      status: order.status,
+      payment: order.payment,
+      items: order.items.map((it) => ({
+        productId: it.productId,
+        quantity: it.quantity,
+      })),
+    });
+
+    // אם כבר שולם – לא עושים שוב
+    if (order.payment?.status === "paid") {
+      console.log(
+        "[OrderService] markPaid called but order already paid:",
+        order._id
+      );
+      return order;
+    }
+
+    const now = new Date();
+
+    // עדכון אובייקט התשלום של ההזמנה
+    order.payment = {
+      ...(order.payment || {}),
+      status: "paid",
+      gateway: paymentInfo.gateway || "tranzila",
+      transactionId:
+        paymentInfo.transaction_index ||
+        paymentInfo.transactionId ||
+        order.payment?.transactionId ||
+        null,
+      details: paymentInfo,
+      paidAt: now,
+    };
+
+    order.status = "paid";
+    order.orderDate = order.orderDate || now;
+
+    // עדכון מלאי ורכישות לכל פריט בהזמנה
+    for (const item of order.items) {
+      if (!item.productId) continue;
+
+      const qty = item.quantity || 1;
+
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        console.warn(
+          "[OrderService] markPaid: product not found for item",
+          item.productId
+        );
+        continue;
+      }
+
+      const currentStock =
+        typeof product.stock === "number" ? product.stock : 0;
+      const newStock = Math.max(0, currentStock - qty);
+
+      await Product.updateOne(
+        { _id: product._id },
+        {
+          $set: {
+            stock: newStock,
+            inStock: newStock > 0,
+            instock: newStock > 0, // לשדה ישן אם קיים
+          },
+          $inc: {
+            purchases: qty,
+          },
+        }
+      );
+    }
+
+    await order.save();
+
+    // לוג לתוך gatewayLog
+    await this.logGatewayEvent(order._id, {
+      gateway: paymentInfo.gateway || "tranzila",
+      event: "paid",
+      paymentInfo,
+    });
+
+    console.log(
+      "[OrderService] Order marked as paid and inventory updated:",
+      order._id
+    );
+
+    return order;
+  } catch (err) {
+    console.error("[OrderService] markPaid error:", err);
+    if (err instanceof CustomError) throw err;
+    throw new CustomError("Failed to mark order as paid", 500);
   }
+}
 }
