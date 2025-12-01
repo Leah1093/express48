@@ -1,5 +1,5 @@
+// services/orderService.js
 import mongoose from "mongoose";
-import { or } from "ajv/dist/compile/codegen/index.js";
 import { Order } from "../models/order.js";
 import { CustomError } from "../utils/CustomError.js";
 import { Product } from "../models/Product.js";
@@ -19,7 +19,10 @@ export class OrderService {
         }
       }
 
-      const totalAmount = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
+      const totalAmount = items.reduce(
+        (sum, it) => sum + it.price * it.quantity,
+        0
+      );
 
       const order = new Order({
         userId,
@@ -38,36 +41,31 @@ export class OrderService {
 
   async getUserOrders(userId) {
     try {
-      // אופטימיזציה: שימוש ב-aggregate כדי להוציא את ה-N+1 query problem
-      // במקום לעשות query לכל מוצר בנפרד, אנחנו רוחצים הכל במבחן אחד
       const orders = await Order.aggregate([
-        { 
-          $match: { 
-            userId: new mongoose.Types.ObjectId(userId) 
-          } 
+        {
+          $match: {
+            userId: new mongoose.Types.ObjectId(userId),
+          },
         },
-        // Join products מתוך items array
         {
           $lookup: {
             from: "products",
             let: { productIds: "$items.productId" },
             pipeline: [
               { $match: { $expr: { $in: ["$_id", "$$productIds"] } } },
-              { $project: { _id: 1, title: 1, price: 1, images: 1, slug: 1 } }
+              { $project: { _id: 1, title: 1, price: 1, images: 1, slug: 1 } },
             ],
-            as: "productsLookup"
-          }
+            as: "productsLookup",
+          },
         },
-        // Join addresses
         {
           $lookup: {
             from: "addresses",
             localField: "addressId",
             foreignField: "_id",
-            as: "addressLookup"
-          }
+            as: "addressLookup",
+          },
         },
-        // Reformat response
         {
           $project: {
             orderId: 1,
@@ -97,22 +95,21 @@ export class OrderService {
                         $filter: {
                           input: "$productsLookup",
                           as: "prod",
-                          cond: { $eq: ["$$prod._id", "$$item.productId"] }
-                        }
+                          cond: { $eq: ["$$prod._id", "$$item.productId"] },
+                        },
                       },
-                      0
-                    ]
+                      0,
+                    ],
                   },
                   quantity: "$$item.quantity",
                   price: "$$item.price",
-                  priceAfterDiscount: "$$item.priceAfterDiscount"
-                }
-              }
-            }
-          }
+                  priceAfterDiscount: "$$item.priceAfterDiscount",
+                },
+              },
+            },
+          },
         },
-        // Sort by order date, newest first
-        { $sort: { orderDate: -1 } }
+        { $sort: { orderDate: -1 } },
       ]);
 
       return orders;
@@ -124,7 +121,9 @@ export class OrderService {
 
   async getOrderById(orderId, userId) {
     try {
-      const order = await Order.findOne({ _id: orderId, userId })
+      const query = userId ? { _id: orderId, userId } : { _id: orderId };
+
+      const order = await Order.findOne(query)
         .populate("items.productId", "title price")
         .populate("addressId")
         .populate("userId", "username email");
@@ -142,7 +141,13 @@ export class OrderService {
 
   async updateOrderStatus(orderId, status) {
     try {
-      const allowedStatuses = ["pending", "shipped", "delivered", "cancelled"];
+      const allowedStatuses = [
+        "pending",
+        "shipped",
+        "delivered",
+        "cancelled",
+        "paid",
+      ];
       if (!allowedStatuses.includes(status)) {
         throw new CustomError("Invalid status", 400);
       }
@@ -179,10 +184,14 @@ export class OrderService {
     }
   }
 
-  // מתודות לתמיכה ב-Tranzila webhook
+  // כאן משתמשים גם ב־_id וגם ב־orderId (המחרוזת ORD-...)
   async getByOrderId(orderId) {
     try {
-      const order = await Order.findById(orderId)
+      const query = mongoose.isValidObjectId(orderId)
+        ? { _id: orderId }
+        : { orderId };
+
+      const order = await Order.findOne(query)
         .populate("items.productId", "title price")
         .populate("addressId")
         .populate("userId", "username email");
@@ -193,38 +202,14 @@ export class OrderService {
     }
   }
 
-  async markPaid(orderId, paymentDetails) {
-    try {
-      const order = await Order.findById(orderId);
-      if (!order) {
-        throw new CustomError("Order not found", 404);
-      }
-
-      order.payment = {
-        status: 'paid',
-        gateway: paymentDetails.gateway || 'tranzila',
-        transactionId: paymentDetails.transaction_index,
-        paidAt: new Date(),
-        details: paymentDetails
-      };
-
-      order.status = 'paid';
-      await order.save();
-
-      console.log('[OrderService] Order marked as paid:', orderId);
-      return order;
-    } catch (err) {
-      if (err instanceof CustomError) throw err;
-      throw new CustomError("Failed to mark order as paid", 500);
-    }
-  }
-
   async logGatewayEvent(orderId, eventData) {
     try {
-      const order = await Order.findById(orderId);
-      if (!order) {
-        return null;
-      }
+      const query = mongoose.isValidObjectId(orderId)
+        ? { _id: orderId }
+        : { orderId };
+
+      const order = await Order.findOne(query);
+      if (!order) return null;
 
       if (!order.gatewayLog) {
         order.gatewayLog = [];
@@ -232,14 +217,131 @@ export class OrderService {
 
       order.gatewayLog.push({
         timestamp: new Date(),
-        ...eventData
+        ...eventData,
       });
 
       await order.save();
       return order;
     } catch (err) {
-      console.error('[OrderService] Failed to log gateway event:', err);
       return null;
     }
   }
+
+  // ---- פונקציה בשביל Tranzila ----
+  // מסמנת הזמנה כ"paid" ומעדכנת מלאי ומספר רכישות
+ async markPaid(orderIdOrCode, paymentInfo = {}) {
+  try {
+    console.log("[OrderService] markPaid CALLED with:", {
+      orderIdOrCode,
+      paymentInfo,
+    });
+
+    // נחפש גם לפי _id של מונגו וגם לפי orderId טקסטואלי (ORD-123...)
+    const query = mongoose.isValidObjectId(orderIdOrCode)
+      ? { _id: orderIdOrCode }
+      : { orderId: orderIdOrCode };
+
+    const order = await Order.findOne(query);
+
+    if (!order) {
+      console.error(
+        "[OrderService] markPaid: ORDER NOT FOUND:",
+        orderIdOrCode
+      );
+      throw new CustomError("Order not found", 404);
+    }
+
+    console.log("[OrderService] order BEFORE update:", {
+      id: order._id,
+      status: order.status,
+      payment: order.payment,
+      items: order.items.map((it) => ({
+        productId: it.productId,
+        quantity: it.quantity,
+      })),
+    });
+
+    // אם כבר שולם – לא עושים שוב
+    if (order.payment?.status === "paid") {
+      console.log(
+        "[OrderService] markPaid called but order already paid:",
+        order._id
+      );
+      return order;
+    }
+
+    const now = new Date();
+
+    // עדכון אובייקט התשלום של ההזמנה
+    order.payment = {
+      ...(order.payment || {}),
+      status: "paid",
+      gateway: paymentInfo.gateway || "tranzila",
+      transactionId:
+        paymentInfo.transaction_index ||
+        paymentInfo.transactionId ||
+        order.payment?.transactionId ||
+        null,
+      details: paymentInfo,
+      paidAt: now,
+    };
+
+    order.status = "paid";
+    order.orderDate = order.orderDate || now;
+
+    // עדכון מלאי ורכישות לכל פריט בהזמנה
+    for (const item of order.items) {
+      if (!item.productId) continue;
+
+      const qty = item.quantity || 1;
+
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        console.warn(
+          "[OrderService] markPaid: product not found for item",
+          item.productId
+        );
+        continue;
+      }
+
+      const currentStock =
+        typeof product.stock === "number" ? product.stock : 0;
+      const newStock = Math.max(0, currentStock - qty);
+
+      await Product.updateOne(
+        { _id: product._id },
+        {
+          $set: {
+            stock: newStock,
+            inStock: newStock > 0,
+            instock: newStock > 0, // לשדה ישן אם קיים
+          },
+          $inc: {
+            purchases: qty,
+          },
+        }
+      );
+    }
+
+    await order.save();
+
+    // לוג לתוך gatewayLog
+    await this.logGatewayEvent(order._id, {
+      gateway: paymentInfo.gateway || "tranzila",
+      event: "paid",
+      paymentInfo,
+    });
+
+    console.log(
+      "[OrderService] Order marked as paid and inventory updated:",
+      order._id
+    );
+
+    return order;
+  } catch (err) {
+    console.error("[OrderService] markPaid error:", err);
+    if (err instanceof CustomError) throw err;
+    throw new CustomError("Failed to mark order as paid", 500);
+  }
+}
 }
