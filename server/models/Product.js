@@ -105,6 +105,31 @@ const OverviewBlockSchema = new mongoose.Schema(
   { _id: true, timestamps: false }
 );
 
+const VariationTermSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },          // ה־id שאת מייצרת ב־crypto.randomUUID
+    label: { type: String, required: true },       // "ורוד" / "L" / "256GB"
+    priceType: {
+      type: String,
+      enum: ["none", "addon", "override"],
+      default: "none",
+    },
+    price: { type: Number },                       // תוספת / מחיר סופי (אופציונלי)
+    images: { type: [String], default: [] },       // 👈 כאן התמונות למונח
+  },
+  { _id: false } // אין צורך ב-_id נוסף, יש לך id משלך
+);
+const VariationAttributeSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },        // slug: "color" / "size" / "storage"
+    displayName: { type: String, required: true }, // "צבע" / "מידה"...
+    terms: { type: [VariationTermSchema], default: [] },
+  },
+  { _id: false }
+);
+
+
+
 
 const DiscountSchema = new mongoose.Schema({
   discountType: { type: String, enum: ["percent", "fixed"], required: true },
@@ -140,6 +165,10 @@ const variationSchema = new mongoose.Schema({
   stock: { type: Number, default: 0 },
   inStock: { type: Boolean, default: false },
   images: { type: [String], default: [] },
+    active: { type: Boolean, default: true },      // האם הווריאציה פעילה למכירה
+  _calculatedPrice: { type: Number },            // המחיר שחושב לפי הכללים
+  _manualOverride: { type: Number },             // מחיר ידני אם דרסת את המחושב
+
 });
 
 const productSchema = new mongoose.Schema({
@@ -178,6 +207,11 @@ const productSchema = new mongoose.Schema({
   currency: { type: String, default: "ILS" },
   price: { type: PriceSchema, required: true },
   discount: { type: DiscountSchema, required: false },
+
+    variationsConfig: {
+    priceRule: { type: String, default: "base" },  // או מה שבחרת אצלך (לוגיקה בפרונט)
+    attributes: { type: [VariationAttributeSchema], default: [] },
+  },
 
   defaultVariationId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -291,7 +325,19 @@ productSchema.index({ primaryCategoryId: 1 });
 productSchema.index({ categoryPathIds: 1 });
 productSchema.index({ categoryFullSlug: 1 }); // לשאילתת by-category
 
+productSchema.pre("validate", function (next) {
+  // אם יש וריאציות ואין עדיין ברירת מחדל – נקח את הראשונה
+  if (Array.isArray(this.variations) && this.variations.length > 0) {
+    if (!this.defaultVariationId) {
+      this.defaultVariationId = this.variations[0]._id;
+    }
+  } else {
+    // אם אין וריאציות – ודא שלא נשאר defaultVariationId ישן
+    this.defaultVariationId = undefined;
+  }
 
+  next();
+});
 productSchema.pre("save", function (next) {
   if (Array.isArray(this.variations) && this.variations.length > 0) {
     this.stock = this.variations.reduce((sum, v) => sum + (v.stock || 0), 0);
