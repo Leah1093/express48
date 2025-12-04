@@ -57,7 +57,9 @@ app.use(cors({
     "http://localhost:5173",
     "https://affirmatively-unparenthesised-brandon.ngrok-free.dev",
     "https://express48.com",
+    "https://express48.co.il",
     "https://www.express48.com",
+    "https://www.express48.co.il",
     // ואם יש דומיין של CloudFront – גם אותו:
     "https://<הדומיין-של-CloudFront-אם-יש>"
   ],
