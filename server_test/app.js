@@ -71,7 +71,6 @@ app.use('/cart', cartRouter);
 app.use('/products', productRouter);
 app.use("/favorites", favoritesRouter);
 app.use("/categories", categoryRoutes);
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/addresses", addressRoutes);
 app.use("/orders", orderRoutes);
 app.use("/coupons",couponsRoutes);

@@ -34,9 +34,11 @@ function pickAllowedUpdate(body = {}) {
     "status",
     "sellerSku",
     "variations",
+    "category",
     "categoryId", 
     "variationsConfig",  
-    "defaultVariationId"
+    "defaultVariationId",
+    "warranty"
   ];
 
   const out = {};
@@ -163,6 +165,12 @@ export default class SellerProductsController {
 
       // לבן את גוף הבקשה
       const data = pickAllowedUpdate(req.body || {});
+      
+      console.log("📝 UPDATE REQUEST for product:", id);
+      console.log("📤 Raw body fields:", Object.keys(req.body || {}));
+      console.log("📋 Allowed data after filter:", Object.keys(data));
+      console.log("📌 Category value in request:", req.body?.category);
+      console.log("📌 Category value after filter:", data?.category);
 
       if (data?.discount) {
         // נרמול תאריכים (אם הגיעו כמחרוזת)
