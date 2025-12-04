@@ -50,21 +50,24 @@ connectDB()
   })
   .catch((err) => {
     console.error("❌ MongoDB connection failed", err);
-    process.exit(1); // כדי שיהיה ברור בלוגים
+    process.exit(1);
   });
-app.use(cors({
+
+// CORS middleware - must be before all other middleware
+const corsOptions = {
   origin: [
     "http://localhost:5173",
+    "http://localhost:5174",
     "https://affirmatively-unparenthesised-brandon.ngrok-free.dev",
     "https://express48.com",
     "https://www.express48.com",
-    // ואם יש דומיין של CloudFront – גם אותו:
-    "https://<הדומיין-של-CloudFront-אם-יש>"
   ],
   credentials: true,
   methods: ["GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Middlewares
 app.use(express.json());
