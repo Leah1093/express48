@@ -104,6 +104,8 @@ export class OrderService {
                   quantity: "$$item.quantity",
                   price: "$$item.price",
                   priceAfterDiscount: "$$item.priceAfterDiscount",
+                  variationId: "$$item.variationId",
+                  variationAttributes: "$$item.variationAttributes",
                 },
               },
             },
