@@ -1,7 +1,7 @@
 // server/utils/email/orderEmails.js
 
 import { sendEmail } from "./sendEmail.js";
-import { Product } from "../../models/Product.js"; 
+import { Product } from "../../models/Product.js";
 const ADMIN_EMAIL = process.env.ADMIN_ORDERS_EMAIL || "orders@express48.co.il";
 
 function formatOrderDate(date) {
@@ -34,7 +34,7 @@ function getItemUnitPrice(it, productDoc) {
 function calcOrderTotal(items = [], productMap = new Map()) {
   return items.reduce((sum, it) => {
     const productKey =
-      (it.productId && it.productId._id)
+      it.productId && it.productId._id
         ? String(it.productId._id)
         : String(it.productId);
 
@@ -45,12 +45,20 @@ function calcOrderTotal(items = [], productMap = new Map()) {
   }, 0);
 }
 
-function buildOrderHtml({ order, user, address, items, totalAmount, mode, productMap }) {
+function buildOrderHtml({
+  order,
+  user,
+  address,
+  items,
+  totalAmount,
+  mode,
+  productMap,
+}) {
   const orderId = order._id?.toString() || "";
   const createdAt = formatOrderDate(order.createdAt);
 
   const customerName =
-    (user?.firstName || user?.lastName)
+    user?.firstName || user?.lastName
       ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
       : user?.username || user?.name || "";
 
@@ -58,9 +66,7 @@ function buildOrderHtml({ order, user, address, items, totalAmount, mode, produc
   const customerPhone = address?.phone || user?.phone || user?.mobile || "";
 
   const title =
-    mode === "customer"
-      ? "תודה על ההזמנה שלך"
-      : "התקבלה הזמנה חדשה באתר";
+    mode === "customer" ? "תודה על ההזמנה שלך" : "התקבלה הזמנה חדשה באתר";
 
   const headlinePrefix =
     mode === "customer"
@@ -96,41 +102,55 @@ function buildOrderHtml({ order, user, address, items, totalAmount, mode, produc
   const rowsHtml =
     items && items.length
       ? items
-        .map((it) => {
-          const productKey =
-            (it.productId && it.productId._id)
-              ? String(it.productId._id)
-              : String(it.productId);
+          .map((it) => {
+            const productKey =
+              it.productId && it.productId._id
+                ? String(it.productId._id)
+                : String(it.productId);
 
-          const product = productMap.get(productKey) || null;
+            const product = productMap.get(productKey) || null;
 
-          const productTitle =
-            product?.title ||
-            product?.name ||
-            "מוצר";
+            const productTitle = product?.title || product?.name || "מוצר";
+            const variationAttributes = it.variationAttributes || {};
+            const hasVariations =
+              variationAttributes &&
+              typeof variationAttributes === "object" &&
+              Object.keys(variationAttributes).length > 0;
 
-          const qty = safeNumber(it.quantity, 0);
-          const unitPrice = getItemUnitPrice(it, product);
-          const lineTotal = qty * unitPrice;
+            const variationHtml = hasVariations
+              ? `
+      <div style="margin-top:4px;font-size:12px;color:#555;">
+        ${Object.entries(variationAttributes)
+          .map(
+            ([key, value]) =>
+              `<span style="display:inline-block;margin-left:8px;">
+                <strong>${key}:</strong> ${value}
+              </span>`
+          )
+          .join("")}
+      </div>
+    `
+              : "";
+            const qty = safeNumber(it.quantity, 0);
+            const unitPrice = getItemUnitPrice(it, product);
+            const lineTotal = qty * unitPrice;
 
-          const imgUrl =
-            (product?.images && product.images[0]) ||
-            product?.image ||
-            "";
+            const imgUrl =
+              (product?.images && product.images[0]) || product?.image || "";
 
-          const imageHtml = imgUrl
-            ? `
+            const imageHtml = imgUrl
+              ? `
                 <img src="${imgUrl}" alt="${productTitle}"
                      style="width:80px;height:80px;object-fit:contain;
                             border-radius:8px;background:#f7f7f7;
                             display:block;margin:0 auto;" />
               `
-            : `
+              : `
                 <div style="width:80px;height:80px;border-radius:8px;
                             background:#f2f2f2;margin:0 auto;"></div>
               `;
 
-          return `
+            return `
         <tr>
     <td style="padding:10px 16px;border-bottom:1px solid #eee;
                text-align:right;font-size:14px;">
@@ -145,6 +165,7 @@ function buildOrderHtml({ order, user, address, items, totalAmount, mode, produc
             <div style="font-size:14px;font-weight:500;line-height:1.4;">
               ${productTitle}
             </div>
+            ${variationHtml}
           </td>
         </tr>
       </table>
@@ -163,8 +184,8 @@ function buildOrderHtml({ order, user, address, items, totalAmount, mode, produc
     </td>
   </tr>
             `;
-        })
-        .join("")
+          })
+          .join("")
       : `
         <tr>
           <td colspan="4" style="padding:12px;text-align:center;font-size:14px;">
@@ -192,12 +213,13 @@ function buildOrderHtml({ order, user, address, items, totalAmount, mode, produc
         <p style="margin:0 0 8px 0;font-size:14px;">
           ${headlinePrefix}
         </p>
-        ${mode === "customer"
-      ? `<p style="margin:0 0 16px 0;font-size:14px;">
+        ${
+          mode === "customer"
+            ? `<p style="margin:0 0 16px 0;font-size:14px;">
                  קיבלנו את ההזמנה שלך והיא נמצאת כעת בטיפול.
                </p>`
-      : ""
-    }
+            : ""
+        }
 
         <p style="margin:0 0 4px 0;font-size:14px;">
           <strong>סכום כולל:</strong>
@@ -261,15 +283,13 @@ export async function sendOrderCreatedEmails(order) {
     const address = order.addressId || {};
     const items = Array.isArray(order.items) ? order.items : [];
 
-    const rawProductIds = items
-      .map((it) => it.productId)
-      .filter(Boolean);
+    const rawProductIds = items.map((it) => it.productId).filter(Boolean);
 
     const productIds = [
       ...new Set(
         rawProductIds.map((pid) => {
           if (typeof pid === "object" && pid._id) return pid._id;
-          return pid; 
+          return pid;
         })
       ),
     ];
@@ -280,9 +300,7 @@ export async function sendOrderCreatedEmails(order) {
         _id: { $in: productIds },
       }).select("title name images image price");
 
-      productMap = new Map(
-        products.map((p) => [p._id.toString(), p])
-      );
+      productMap = new Map(products.map((p) => [p._id.toString(), p]));
     }
 
     const totalAmount =
