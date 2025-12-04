@@ -4,7 +4,6 @@ import { CustomError } from "../utils/CustomError.js";
 import { SearchLog } from "../models/SearchLog.js";
 import CategoryModel, { Category } from "../models/category.js"; // לפי הנתיב שלך
 
-
 // פונקציית עזר
 function isNewProduct(publishedAt) {
   if (!publishedAt) return false;
@@ -24,20 +23,23 @@ class ProductService {
     try {
       const query = {
         status: "published",
-        publishedAt: { $gte: twelveDaysAgo }
+        publishedAt: { $gte: twelveDaysAgo },
       };
 
       const products = await Product.find(query)
         .sort({ publishedAt: -1 })
         .limit(limit)
-        .select("title images price currency slug _id storeId discount publishedAt")
+        .select(
+          "title images price currency slug _id storeId discount publishedAt variations variationsConfig"
+        )
         .lean({ virtuals: true });
 
       return products.map((p) => {
-
         const { finalAmount, baseAmount, savedAmount, hasDiscount } =
           Product.hydrate(p).getEffectivePricing();
-
+        const hasVariations = !!(
+          p.variationsConfig?.attributes?.length && p.variations?.length
+        );
         return {
           _id: p._id,
           title: p.title,
@@ -49,11 +51,18 @@ class ProductService {
           discountValue: hasDiscount ? savedAmount : 0,
           hasDiscount,
 
-          isNew: p.publishedAt ? isNewProduct(p.publishedAt) : false
+          isNew: p.publishedAt ? isNewProduct(p.publishedAt) : false,
+          // 👇 חדש:
+          hasVariations,
+          variationsConfig: p.variationsConfig,
+          variations: p.variations,
         };
       });
     } catch (err) {
-      throw new CustomError(err.message || "Error listing new products", err.status || 500);
+      throw new CustomError(
+        err.message || "Error listing new products",
+        err.status || 500
+      );
     }
   }
 
@@ -91,12 +100,13 @@ class ProductService {
           price: 1,
           discount: 1,
           description: 1,
+          variations: 1,
+          variationsConfig: 1,
         })
         .populate("storeId", "slug") // נקבל storeId.slug
         .lean(),
       Product.countDocuments(filter),
     ]);
-
 
     const pages = Math.ceil(total / l) || 1;
 
@@ -111,11 +121,13 @@ class ProductService {
     };
   }
 
-
   async getProductBySlugService(slug) {
-    return Product.findOne({ slug, isDeleted: false, status: "published" }).lean();
+    return Product.findOne({
+      slug,
+      isDeleted: false,
+      status: "published",
+    }).lean();
   }
-
 
   // services/product.service.js
 
@@ -150,12 +162,15 @@ class ProductService {
             stock: 1,
             inStock: 1,
             brand:1,
+            defaultVariationId: 1,
+            variations: 1,
+            variationsConfig: 1,
+
           })
           .populate("storeId", "slug") // נקבל storeId.slug
           .lean(),
         Product.countDocuments(filter),
       ]);
-
 
       const pages = Math.ceil(total / l) || 1;
       return {
@@ -172,13 +187,11 @@ class ProductService {
       throw err instanceof CustomError
         ? err
         : new CustomError(
-          err.message || "Error fetching products",
-          err.status || 500
-        );
+            err.message || "Error fetching products",
+            err.status || 500
+          );
     }
   };
-
-
 
   searchProductsService = async ({ search, page = 1, limit = 20 }) => {
     const p = Math.max(1, Number(page) || 1);
@@ -189,14 +202,14 @@ class ProductService {
     if (search && search.trim()) {
       const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const normalizeHebrew = (str = "") => {
-        const FINAL_MAP = { "ך": "כ", "ם": "מ", "ן": "נ", "ף": "פ", "ץ": "צ" };
+        const FINAL_MAP = { ך: "כ", ם: "מ", ן: "נ", ף: "פ", ץ: "צ" };
         let s = String(str)
           .replace(/[\u0591-\u05C7]/g, "")
           .replace(/[\u05F3\u05F4'"]/g, "")
           .replace(/[^\u0590-\u05FF0-9A-Za-z\s-]/g, " ")
           .replace(/\s+/g, " ")
           .trim();
-        s = s.replace(/[ךםןףץ]/g, ch => FINAL_MAP[ch] || ch);
+        s = s.replace(/[ךםןףץ]/g, (ch) => FINAL_MAP[ch] || ch);
         return s.toLowerCase();
       };
       const q = escapeRegex(search.trim());
@@ -219,7 +232,6 @@ class ProductService {
     }
 
     try {
-
       if (search && search.trim()) {
         await SearchLog.findOneAndUpdate(
           { term: search.trim().toLowerCase() },
@@ -234,9 +246,18 @@ class ProductService {
         .populate("storeId");
 
       const total = await Product.countDocuments(match);
-      return { items: products, page: p, limit: l, total, hasNextPage: skip + products.length < total };
+      return {
+        items: products,
+        page: p,
+        limit: l,
+        total,
+        hasNextPage: skip + products.length < total,
+      };
     } catch (err) {
-      throw new CustomError(err.message || "Error searching products", err.status || 500);
+      throw new CustomError(
+        err.message || "Error searching products",
+        err.status || 500
+      );
     }
   };
 
@@ -249,10 +270,12 @@ class ProductService {
 
       return terms;
     } catch (err) {
-      throw new CustomError(err.message || "Error fetching popular searches", err.status || 500);
+      throw new CustomError(
+        err.message || "Error fetching popular searches",
+        err.status || 500
+      );
     }
   };
-
 }
 
 export const productService = new ProductService();

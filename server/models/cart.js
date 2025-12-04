@@ -45,8 +45,6 @@
 
 // export const Cart = mongoose.model('Cart', cartSchema);
 
-
-
 import mongoose from "mongoose";
 
 const { Schema, model } = mongoose;
@@ -58,6 +56,7 @@ const CartItemSchema = new Schema(
       ref: "Product",
       required: true,
     },
+    variationId: { type: String, default: null },
     quantity: {
       type: Number,
       required: true,
