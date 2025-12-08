@@ -161,6 +161,7 @@ class ProductService {
             description: 1,
             stock: 1,
             inStock: 1,
+            brand:1,
             defaultVariationId: 1,
             variations: 1,
             variationsConfig: 1,
@@ -172,7 +173,6 @@ class ProductService {
       ]);
 
       const pages = Math.ceil(total / l) || 1;
-
       return {
         items,
         meta: {
