@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import path from "path";
 import { fileURLToPath } from "url";
+import { sitemapRouter } from "./router/sitemap.router.js";
 
 import { connectDB } from "./config/db.js";
 import 'dotenv/config';
@@ -87,10 +88,8 @@ app.use(session({
 app.use("/search", searchRouter);
 app.use(passport.initialize());
 app.use(passport.session());
+app.use("/", sitemapRouter); // חשוב לפני errorHandler
 
-app.get("/", (req, res) => {
-  res.send("Express48 API is running 🚀");
-});
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use((req, res, next) => {
   console.log("➡️ NEW REQUEST:", req.method, req.url);

@@ -111,10 +111,28 @@ function buildOrderHtml({
             const product = productMap.get(productKey) || null;
 
             const productTitle = product?.title || product?.name || "מוצר";
-            const variationAttributes = it.variationAttributes || {};
+            let variationAttributes = it.variationAttributes || {};
+            if (variationAttributes instanceof Map) {
+              // Map אמיתי
+              variationAttributes = Object.fromEntries(
+                variationAttributes.entries()
+              );
+            } else if (
+              variationAttributes &&
+              typeof variationAttributes.toObject === "function"
+            ) {
+              // Mongoose Map
+              variationAttributes = variationAttributes.toObject();
+            }
+            // סינון רק ערכים "אמיתיים" (ליתר ביטחון)
+            variationAttributes = Object.fromEntries(
+              Object.entries(variationAttributes).filter(
+                ([key, value]) =>
+                  typeof value === "string" || typeof value === "number"
+              )
+            );
             const hasVariations =
               variationAttributes &&
-              typeof variationAttributes === "object" &&
               Object.keys(variationAttributes).length > 0;
 
             const variationHtml = hasVariations

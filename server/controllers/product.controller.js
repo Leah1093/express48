@@ -112,6 +112,7 @@ export class ProductController {
   getProductsBySlug = async (req, res, next) => {
     try {
       const { slug } = req.params;
+      console.log("ghghf")
       const product = await productService.getProductBySlugService(slug);
       if (!product) return next(new CustomError("מוצר לא נמצא", 404));
       res.json(product);
