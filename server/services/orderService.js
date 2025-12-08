@@ -260,6 +260,7 @@ export class OrderService {
       items: order.items.map((it) => ({
         productId: it.productId,
         quantity: it.quantity,
+        variationId: it.variationId,
       })),
     });
 
@@ -306,23 +307,56 @@ export class OrderService {
         continue;
       }
 
-      const currentStock =
-        typeof product.stock === "number" ? product.stock : 0;
-      const newStock = Math.max(0, currentStock - qty);
+// אם יש וריאציה - נעדכן את המלאי שלה
+      if (item.variationId && Array.isArray(product.variations)) {
+        const variationIdStr = String(item.variationId);
+        const variation = product.variations.find(
+          (v) => String(v._id) === variationIdStr
+        );
 
-      await Product.updateOne(
-        { _id: product._id },
-        {
-          $set: {
-            stock: newStock,
-            inStock: newStock > 0,
-            instock: newStock > 0, // לשדה ישן אם קיים
-          },
-          $inc: {
-            purchases: qty,
-          },
+        if (!variation) {
+          console.warn(
+            "[OrderService] markPaid: variation not found",
+            item.variationId,
+            "for product",
+            product._id
+          );
+        } else {
+          const currentVarStock =
+            typeof variation.stock === "number" ? variation.stock : 0;
+          const newVarStock = Math.max(0, currentVarStock - qty);
+
+          variation.stock = newVarStock;
+          variation.inStock = newVarStock > 0;
+
+          // מחשבים מחדש מלאי מוצר כסכום כל הווריאציות
+          const newProductStock = product.variations.reduce((sum, v) => {
+            const s = typeof v.stock === "number" ? v.stock : 0;
+            return sum + s;
+          }, 0);
+
+          product.stock = newProductStock;
+          product.inStock = newProductStock > 0;
+          // לשדה ישן אם קיים
+          product.instock = newProductStock > 0;
         }
-      );
+      } else {
+        // בלי וריאציה – התנהגות כמו קודם: מורידים מהמלאי הכללי
+        const currentStock =
+          typeof product.stock === "number" ? product.stock : 0;
+        const newStock = Math.max(0, currentStock - qty);
+
+        product.stock = newStock;
+        product.inStock = newStock > 0;
+        product.instock = newStock > 0; // לשדה ישן אם קיים
+      }
+
+      // עדכון purchases ברמת מוצר
+      const currentPurchases =
+        typeof product.purchases === "number" ? product.purchases : 0;
+      product.purchases = currentPurchases + qty;
+
+      await product.save();
     }
 
     await order.save();
