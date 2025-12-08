@@ -44,7 +44,7 @@ export class TranzilaService {
     const safeBaseUrl = baseUrl.replace(/\/+$/, ''); // להוריד / בסוף אם יש
     const postUrl = `${safeBaseUrl}/payments/tranzila/webhook`;
 
-    const url = new URL(`https://direct.tranzila.com/${terminal}/iframe.php`);
+    const url = new URL(`https://direct.tranzila.co.il/${terminal}/iframe.php`);
 
     // סכום וחיוב
     url.searchParams.set('sum', String(total));
@@ -95,7 +95,7 @@ export class TranzilaService {
     }
 
     const client = axios.create({
-      baseURL: 'https://api.tranzila.com/v1',
+      baseURL: 'https://api.tranzila.co.il/v1',
       timeout: TIMEOUT_MS,
       headers: {
         'access-token': token,

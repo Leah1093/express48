@@ -1,6 +1,9 @@
-// src/services/zapFeed.service.js
+// services/zapFeedService.js
 import { Product } from "../models/Product.js";
 
+const BASE_SITE_URL = "https://www.express48.co.il";
+
+// המרת טקסט לבטוח ל-XML
 function xmlEscape(str = "") {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -10,37 +13,54 @@ function xmlEscape(str = "") {
     .replace(/'/g, "&apos;");
 }
 
+// קיצור טקסט לאורך מקסימלי
 function shortText(str = "", max = 255) {
   const s = String(str).replace(/\s+/g, " ").trim();
   return s.length <= max ? s : s.slice(0, max - 1).trim() + "…";
 }
 
-// מתרגם מוצר אחד לבלוק של PRODUCT
+// מתרגם מוצר אחד לבלוק PRODUCT ל-ZAP
 function mapProductToZapXml(product) {
-  const url = `https://www.express48.co.il/product/${product.slug}`;
+  // נקבע storeSlug לפי החנות (אם יש), אחרת ברירת מחדל
+  const storeSlug =
+    product.storeId && typeof product.storeId === "object"
+      ? product.storeId.slug || product.storeId.storeSlug || "express48"
+      : "express48";
+
+  const productSlug = product.slug;
+  const url = `${BASE_SITE_URL}/products/${storeSlug}/${productSlug}`;
 
   const name = shortText(product.title || "מוצר", 40);
   const model = product.model || "";
-  const details =
-    shortText(product.metaDescription || product.description || "", 255);
+  const details = shortText(
+    product.metaDescription || product.description || "",
+    255
+  );
 
   const numberCatalog = product.gtin || product.sku || "";
   const productCode = product.sku || String(product._id);
 
   const currency = product.currency || "ILS";
-  const price = product.price?.amount != null ? product.price.amount : 0;
+  const price =
+    product.price && product.price.amount != null ? product.price.amount : 0;
 
   const costShipment =
-    product.delivery?.cost != null ? product.delivery.cost : 0;
+    product.delivery && product.delivery.cost != null
+      ? product.delivery.cost
+      : 0;
 
   const timeDelivery =
-    product.delivery?.timeDays != null ? product.delivery.timeDays : 0;
+    product.delivery && product.delivery.timeDays != null
+      ? product.delivery.timeDays
+      : 0;
 
   const manufacturer = product.brand || "";
   const warranty = product.warranty || "";
 
   const image =
-    (product.images && product.images[0]) || product.image || "";
+    (Array.isArray(product.images) && product.images[0]) ||
+    product.image ||
+    "";
 
   return `
     <PRODUCT>
@@ -62,12 +82,17 @@ function mapProductToZapXml(product) {
   `;
 }
 
-// בונה את כל הפיד
+// בונה את כל הפיד ל-ZAP
 export async function buildZapFeedXml() {
   const products = await Product.find({
     isDeleted: false,
+    status: "published",
+    visibility: "public",
     "price.amount": { $gt: 0 },
-  }).lean();
+  })
+    // חשוב: לוודא שבמודל Store יש שדה slug או storeSlug
+    .populate("storeId", "slug storeSlug")
+    .lean();
 
   const itemsXml = products.map(mapProductToZapXml).join("\n");
 
