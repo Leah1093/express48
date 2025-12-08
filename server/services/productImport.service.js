@@ -11,16 +11,44 @@ export class ProductImportService {
     try {
       let text;
 
-      if (
+      // Check for UTF-8 BOM (0xEF 0xBB 0xBF)
+      const hasUTF8BOM =
+        csvBuffer.length >= 3 &&
         csvBuffer[0] === 0xef &&
         csvBuffer[1] === 0xbb &&
-        csvBuffer[2] === 0xbf
-      ) {
-        // יש BOM → הקובץ כבר UTF-8
+        csvBuffer[2] === 0xbf;
+
+      if (hasUTF8BOM) {
+        // יש BOM → הקובץ UTF-8 (הסר את ה-BOM)
         text = csvBuffer.toString("utf8");
       } else {
-        // בלי BOM → כנראה שמור בקידוד של ווינדוס בעברית
-        text = iconv.decode(csvBuffer, "win1255");
+        // בלי BOM → נסה UTF-8 קודם, ואם לא עובד אז Windows-1255
+        try {
+          // Try to decode as UTF-8 first
+          text = csvBuffer.toString("utf8");
+          // Validate that UTF-8 decoding worked (Hebrew chars are multi-byte)
+          // If all chars are valid UTF-8, proceed
+          if (!text.includes("\ufffd")) {
+            // No replacement character, UTF-8 is valid
+            // But check if it looks like gibberish by counting non-ASCII chars
+            const nonAsciiCount = (text.match(/[^\x00-\x7F]/g) || []).length;
+            const hebrewCount = (text.match(/[\u0590-\u05FF]/g) || []).length;
+            
+            // If we have Hebrew-looking characters, use UTF-8
+            if (hebrewCount > nonAsciiCount * 0.5) {
+              // Likely valid Hebrew in UTF-8
+            } else if (nonAsciiCount > 0) {
+              // Has non-ASCII but doesn't look like Hebrew, try Win1255
+              text = iconv.decode(csvBuffer, "win1255");
+            }
+          } else {
+            // Has replacement chars, try Windows-1255
+            text = iconv.decode(csvBuffer, "win1255");
+          }
+        } catch (e) {
+          // If UTF-8 fails, fallback to Windows-1255
+          text = iconv.decode(csvBuffer, "win1255");
+        }
       }
 
       // ----- זיהוי delimiter בצורה חכמה -----

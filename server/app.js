@@ -39,6 +39,7 @@ import uploadRoutes from "./router/upload.routes.js";
 import dotenv from 'dotenv';
 import { productImportRouter } from "./router/productImport.router.js";
 
+import zapFeedRoutes from "./router/zapFeedRoutes.js";
 
 
 
@@ -118,6 +119,7 @@ app.use("/uploads", uploadRoutes);
 app.use("/seller/products", sellerProductsRouter);
 
 app.use(errorHandler);
+app.use("/", zapFeedRoutes);
 
 
 const PORT = process.env.PORT || 8080;
