@@ -25,6 +25,7 @@ export class ProductController {
       });
 
       res.json(result);
+
     } catch (err) {
       next(
         err instanceof CustomError

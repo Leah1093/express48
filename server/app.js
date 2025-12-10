@@ -1,35 +1,33 @@
+
+// app.js / server.js
 import express from "express";
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
+import cors from "cors";
+import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 import { sitemapRouter } from "./router/sitemap.router.js";
+import session from "express-session";
+import passport from "passport";
+import "dotenv/config.js";
+
 
 import { connectDB } from "./config/db.js";
-import 'dotenv/config';
+
 import { passwordRouter } from "./router/password.router.js";
 import { entranceRouter } from "./router/entrance.router.js";
-import { errorHandler } from "./middlewares/errorHandler.js";
 import { googleAuthRouter } from "./router/googleAuth.router.js";
 import { contactRouter } from "./router/contactRouter.js";
 import { userRouter } from "./router/user.routes.js";
 import { storeRouter } from "./router/store.router.js";
-import cartRouter from './router/cartRouter.js';
+import cartRouter from "./router/cartRouter.js";
 import { storePublicRouter } from "./router/storePublic.router.js";
-import passport from "passport";
-import session from "express-session";
-import { apiLimiter } from "./middlewares/rateLimit.middleware.js";
-import './config/googleOAuth.config.js'
 import productRouter from "./router/product.router.js";
 import searchRouter from "./router/search.router.js";
 import { sellerProductsRouter } from "./router/seller.products.router.js";
 import { marketplaceRouter } from "./router/marketplace.router.js";
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 import { favoritesRouter } from "./router/favoritesRoutes.js";
-import categoryRoutes from "./router/categoryRoutes.js"
-import addressRoutes from "./router/addressRoutes.js"
+import categoryRoutes from "./router/categoryRoutes.js";
+import addressRoutes from "./router/addressRoutes.js";
 import orderRoutes from "./router/orderRoutes.js";
 import couponsRoutes from "./router/couponsRoutes.js";
 import tranzilaRouter from "./router/tranzilaRouter.js";
@@ -38,11 +36,20 @@ import uploadRoutes from "./router/upload.routes.js";
 
 import dotenv from 'dotenv';
 import { productImportRouter } from "./router/productImport.router.js";
+import { sellerOrdersRouter } from "./router/sellerOrders.router.js";
 
 import zapFeedRoutes from "./router/zapFeedRoutes.js";
 
 
 
+import { apiLimiter } from "./middlewares/rateLimit.middleware.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
+
+import "./config/googleOAuth.config.js";
+import { sellerReportsRouter } from "./router/seller.reports.router.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -68,6 +75,7 @@ const corsOptions = {
     // ואם יש דומיין של CloudFront – גם אותו:
     "https://<הדומיין-של-CloudFront-אם-יש>"
   ],
+
   credentials: true,
   methods: ["GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
@@ -75,9 +83,18 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Middlewares
+// CORS – תשאירי כי הפרונט ב־5173 והשרת ב־8080
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+    methods: ["GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 app.use(express.json());
-app.set('trust proxy', 1);
+app.set("trust proxy", 1);
 app.use(apiLimiter);
 app.use(cookieParser());
 app.use(session({
@@ -86,6 +103,7 @@ app.use(session({
   saveUninitialized: true,
 }));
 app.use("/search", searchRouter);
+
 app.use(passport.initialize());
 app.use(passport.session());
 app.use("/", sitemapRouter); // חשוב לפני errorHandler
@@ -99,6 +117,7 @@ app.use((req, res, next) => {
 app.use('/entrance', entranceRouter);
 app.use('/password', passwordRouter);
 app.use('/contact', contactRouter);
+
 app.use("/user", userRouter);
 app.use("/auth", googleAuthRouter);
 app.use("/marketplace", marketplaceRouter)
@@ -109,6 +128,13 @@ app.use("/seller/products", productImportRouter); // 👈 מוסיפים את ז
 app.use('/cart', cartRouter);
 // app.use('/products', productRoutes);
 app.use('/products', productRouter);
+app.use("/api/search", searchRouter);
+app.use("/marketplace", marketplaceRouter);
+app.use("/seller-store", storeRouter);
+app.use("/public/stores", storePublicRouter);
+app.use("/seller/products", sellerProductsRouter);
+app.use("/products", productRouter);
+app.use("/cart", cartRouter);
 app.use("/favorites", favoritesRouter);
 app.use("/categories", categoryRoutes);
 app.use("/addresses", addressRoutes);
@@ -117,7 +143,17 @@ app.use("/coupons", couponsRoutes);
 app.use('/payments/tranzila', tranzilaRouter);
 app.use("/uploads", uploadRoutes);
 app.use("/seller/products", sellerProductsRouter);
+app.use("/seller/orders", sellerOrdersRouter);
+app.use("/seller/reports", sellerReportsRouter);
 
+
+
+
+
+// ----- טרנזילה -----
+app.use("/payments/tranzila", tranzilaRouter);
+
+// error handler – תמיד בסוף
 app.use(errorHandler);
 app.use("/", zapFeedRoutes);
 
@@ -128,3 +164,4 @@ dotenv.config();
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`start server port: ${PORT}`);
 });
+

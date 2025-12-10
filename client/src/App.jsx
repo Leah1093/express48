@@ -51,6 +51,8 @@ import CategoryManagementPage from "./components/Categories/CategoryManagementPa
 import CartLayout from "./components/TopNav/cart/CartLayout.jsx";
 import OrderSuccessPage from "./components/TopNav/cart/OrderSuccessPage.jsx";
 import PaymentPage from "./components/TopNav/cart/PaymentPage.jsx";
+import PaymentSuccess from "./components/TopNav/cart/PaymentSuccess.jsx";
+import PaymentFailed from "./components/TopNav/cart/PaymentFailed.jsx";
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 import Layout from "./components/Layout.jsx";
 import CouponForm from "./components/seller/Coupons.jsx";
@@ -75,15 +77,26 @@ import Payments from "./components/account/Payments.jsx";
 import PolicySecurity from "./components/account/PolicySecurity.jsx";
 import CustomerService from "./components/account/CustomerService.jsx";
 import ManageRootCategories from "./components/Categories/ManageRootCategories.jsx";
+import SellerOrdersPanel from "./components/seller/orders/components/SellerOrdersPanel.js";
+import { SellerCouponsPage } from "./components/seller/coupons/components/SellerCouponsPage.js";
+
+// זרימת תשלום לדוגמה (Altcha / Mock)
+import Checkout from "./components/payments/pages/Checkout";
+import ThankYou from "./components/payments/pages/ThankYou";
+import Cancelled from "./components/payments/pages/Cancelled";
+import MockPay from "./components/payments/pages/MockPay";
+import { SellerReportsPage } from "./components/seller/reports/components/SellerReportsPage.js";
 
 function App() {
   const location = useLocation();
   const dispatch = useDispatch();
   const isMobile = useSelector((state) => state.ui.isMobile);
+  const user = useSelector((state) => state.user?.user);
+
   const hideMainHeader =
     ["/login", "/register", "/forgot-password"].includes(location.pathname) ||
     location.pathname.startsWith("/reset-password/");
-  const user = useSelector((state) => state.user?.user);
+
   const {
     data: currentUser,
     isSuccess,
@@ -92,10 +105,12 @@ function App() {
     skip: !!user,
   });
 
+  // רק לראות שה-API URL מוגדר
   useEffect(() => {
     console.log("API_URL =", import.meta.env.VITE_API_URL);
   }, []);
 
+  // מצב מובייל
   useEffect(() => {
     const handleResize = () => {
       dispatch(setIsMobile(window.innerWidth <= 768));
@@ -105,6 +120,7 @@ function App() {
     return () => window.removeEventListener("resize", handleResize);
   }, [dispatch]);
 
+  // טעינת משתמש קיים (me)
   useEffect(() => {
     if (!user) {
       if (isSuccess && currentUser) {
@@ -115,12 +131,13 @@ function App() {
     }
   }, [isSuccess, isError, currentUser, user, dispatch]);
 
+  // טעינת עגלה ממונגו אחרי ריענון, רק כשיש user._id
   useEffect(() => {
-    if (user) {
+    if (user?._id) {
       console.log("🔄 טוען עגלה ממונגו אחרי ריפרוש...");
       dispatch(loadCart());
     }
-  }, [user, dispatch]);
+  }, [user?._id, dispatch]);
 
   return (
     <div className="min-h-screen flex flex-col font-[Rubik]">
@@ -129,13 +146,15 @@ function App() {
         toastOptions={{ style: { marginTop: "70px" } }}
         reverseOrder={false}
       />
+
       {!hideMainHeader && <TopBar />}
-      {!hideMainHeader && <CategoriesBar />}
-      <main className="flex-grow pb-[90px] md:pb-0">
+
+      <main className="flex-grow">
         <Routes>
           {/* חיפוש/חנות */}
           <Route path="/" element={<ProductsPage />} />
           <Route path="products" element={<ProductsPage />} />
+
           {/* עמוד מוצר לפי קטגוריה+סלאג */}
 
           <Route
@@ -146,15 +165,12 @@ function App() {
             path="products/:storeSlug/:productSlug"
             element={<ProductPage />}
           />
-
           {/* עמוד מוצר לפי מזהה/סלאג קצר (דף בית / חיפוש מהיר) */}
           <Route path="/p/:idOrSlug" element={<StorefrontProduct />} />
 
+          {/* מועדפים וקטגוריות */}
           <Route path="/favorites" element={<FavoritesList />} />
-          <Route
-            path="/categories/manage"
-            element={<CategoryManagementPage />}
-          />
+          <Route path="/categories/manage" element={<CategoryManagementPage />} />
 
           <Route path="/categories/ManagmentCategory" element={<ManageRootCategories />} />
 
@@ -164,18 +180,22 @@ function App() {
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CartCheckout />} />
             <Route path="/payment" element={<PaymentPage />} />
-            <Route path="/order/success/:id" element={<OrderSuccessPage />} />
+            <Route
+              path="/order/success/:id"
+              element={<OrderSuccessPage />}
+            />
           </Route>
 
-          <Route path="/checkout/success" element={<CheckoutSuccess />} />
-          <Route path="/checkout/failed" element={<CheckoutFaild />} />
+          {/* תוצאה סופית של תשלום (דפי הצלחה/כישלון) */}
+          <Route path="/checkout/success" element={<PaymentSuccess />} />
+          <Route path="/checkout/failed" element={<PaymentFailed />} />
 
-          {/* סטטי/מידע */}
+          {/* דפי מידע/תוכן סטטי */}
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/bestSellers" element={<BestSellers />} />
           <Route path="/careers" element={<Careers />} />
-          <Route path="/coupons" element={<Coupons />} />
+          <Route path="/coupons" element={<SellerCouponsPage />} />
           <Route path="/guides" element={<Guides />} />
           <Route path="/support" element={<Support />} />
           <Route path="/marketplace" element={<MarketplaceInfo />} />
@@ -186,10 +206,10 @@ function App() {
           <Route path="/shipping-policy" element={<ShippingPolicy />} />
           <Route path="/returns-policy" element={<ReturnsPolicy />} />
 
-          {/* חשבון/אימות */}
+          {/* חשבון / משתמש */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="forgot-password" element={<ForgotPassword />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/account" element={<AccountLayout />}>
             {/* ברירת מחדל – הפרופיל שלי */}
@@ -209,7 +229,7 @@ function App() {
             {/* <Route path="logout" element={<Logout />} /> */}
           </Route>
 
-          {/* מוכר/אדמין */}
+          {/* מוכר / אדמין */}
           <Route
             path="/admin/marketplace/applications"
             element={
@@ -222,6 +242,7 @@ function App() {
             path="/admin/applications"
             element={<AdminApplicationsPage />}
           />
+
           <Route
             path="/seller"
             element={
@@ -238,19 +259,26 @@ function App() {
               <Route path=":id/edit" element={<ProductEdit />} />
               <Route path=":id" element={<ProductDetailPage />} />
             </Route>
-            <Route path="orders" element={<OrdersSeller />} />
+            <Route path="orders" element={<SellerOrdersPanel />} />
             <Route path="reviews" element={<Reviews />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="coupons" element={<CouponForm />} />
+            <Route path="reports" element={<SellerReportsPage />} />
+            <Route path="coupons" element={<SellerCouponsPage />} />
           </Route>
+
+          {/* זרימת תשלום לדוגמה (לא חלק מעגלת הקניות, כדי לא להתנגש) */}
+          <Route path="/pay/checkout" element={<Checkout />} />
+          <Route path="/pay/success" element={<ThankYou />} />
+          <Route path="/pay/cancel" element={<Cancelled />} />
+          <Route path="/mock/pay" element={<MockPay />} />
 
           {/* חנות ספציפית */}
           <Route path="/store/:slug" element={<StorePage />} />
         </Routes>
       </main>
 
-      <Footer />
+      <footer />
     </div>
   );
 }
+
 export default App;

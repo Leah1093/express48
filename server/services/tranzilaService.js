@@ -5,6 +5,7 @@ const TIMEOUT_MS = 8000;
 const toILS = (n) => Math.round(Number(n) * 100) / 100;
 
 export class TranzilaService {
+  // חישוב סכום לתשלום לפי המוצרים
   static calcTotal(itemsRaw) {
     const items = Array.isArray(itemsRaw) ? itemsRaw : [];
     if (!items.length) throw new CustomError('No items to pay', 400);
@@ -18,10 +19,15 @@ export class TranzilaService {
     );
   }
 
-  static buildIframeUrl({ orderId, items, baseUrl, terminal, customerInfo }) {
-    if (!orderId) throw new CustomError('Missing orderId', 400);
+  /**
+   * בניית URL ל-iframenew.php של טרנזילה
+   * משתמשים ב-supplier + myid כמו בדוגמה שקיבלת מהם
+   */
+  static buildIframeUrl({ orderId, items, terminal, customerInfo }) {
+    if (!orderId) {
+      throw new CustomError('Missing orderId', 400);
+    }
 
-    // הגנות בסיסיות
     if (!terminal || /@/.test(terminal)) {
       throw new CustomError(
         'Invalid TRANZILA_TERMINAL (must be terminal name, not email)',
@@ -33,7 +39,13 @@ export class TranzilaService {
     }
 
     const total = this.calcTotal(items);
-    if (total <= 0) throw new CustomError('Total must be greater than zero', 400);
+    if (total <= 0) {
+      throw new CustomError('Total must be greater than zero', 400);
+    }
+
+    const safeOrderId = String(orderId)
+      .replace(/[^A-Za-z0-9_-]/g, '')
+      .slice(0, 64);
 
     // סניטיזציה של מזהה ההזמנה (WAF/URL-safe)
     const safeOrderId = String(orderId)
@@ -73,6 +85,7 @@ export class TranzilaService {
     return { iframeUrl: url.toString(), amount: total };
   }
 
+  // אימות עסקה ל-webhook
   static async verifyTransaction({ transaction_index }) {
     const env = (process.env.TRZ_ENV || 'live').toLowerCase();
 

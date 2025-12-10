@@ -39,6 +39,7 @@ function pickAllowedUpdate(body = {}) {
     "variationsConfig",  
     "defaultVariationId",
     "warranty"
+
   ];
 
   const out = {};

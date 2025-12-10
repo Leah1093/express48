@@ -3,7 +3,7 @@ const API = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 export async function fetchSuggest(q, { signal } = {}) {
   if (!q?.trim()) return [];
   const res = await fetch(
-    `${API}/api/search/suggest?q=${encodeURIComponent(q)}`,
+    `${API}/search/suggest?q=${encodeURIComponent(q)}`,
     { signal, credentials: "include" }
   );
   if (!res.ok) throw new Error("suggest failed");
@@ -13,7 +13,7 @@ export async function fetchSuggest(q, { signal } = {}) {
 export async function fetchQuick(q, { signal } = {}) {
   if (!q?.trim()) return [];
   const res = await fetch(
-    `${API}/api/search/quick?q=${encodeURIComponent(q)}&limit=4`,
+    `${API}/search/quick?q=${encodeURIComponent(q)}&limit=4`,
     { signal, credentials: "include" }
   );
   if (!res.ok) throw new Error("quick failed");

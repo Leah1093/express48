@@ -6,6 +6,26 @@ import iconv from "iconv-lite";
 
 const MAX_OVERVIEW_BLOCKS = 5;
 
+function normalizeGtinValue(value) {
+  if (value == null) return "";
+
+  let raw = String(value).trim();
+
+  if (!raw) return "";
+
+  // אם אקסל שמר כפורמט מדעי (E+12)
+  const sciRegex = /^[0-9.]+e[+-]?[0-9]+$/i;
+  if (sciRegex.test(raw)) {
+    const num = Number(raw);
+    if (!Number.isNaN(num)) {
+      // GTIN הוא עד 14 ספרות, אז אין בעיית דיוק במספר
+      raw = num.toFixed(0); // מוריד את ה־E+12 והנקודה
+    }
+  }
+
+  return raw;
+}
+
 export class ProductImportService {
   static async importFromCsv({ csvBuffer, sellerId, storeId }) {
     try {
@@ -94,6 +114,13 @@ export class ProductImportService {
       for (let i = 0; i < records.length; i++) {
         const row = records[i];
         const rowNumber = i + 2; // כי שורה 1 זה כותרות
+        const allEmpty = Object.values(row).every((val) => {
+          return val == null || String(val).trim() === "";
+        });
+        if (allEmpty) {
+          console.log("CSV IMPORT: skip empty row", rowNumber);
+          continue;
+        }
 
         try {
           console.log("CSV IMPORT DEBUG: row", rowNumber, row);
@@ -160,15 +187,18 @@ export class ProductImportService {
   }
 
   static async mapRowToProductDoc({ row, sellerId, storeId }) {
-    // ----- כותרת -----
-    const titleFromCsv = (row.title || row.titleEn || "").trim();
-    if (!titleFromCsv) {
-      throw new CustomError("שדה titleEn חובה", 400);
-    }
+    // ----- כותרת – לא חובה בייבוא -----
+    const titleFromCsv = (
+      row.title ||
+      row.titleEn ||
+      row.metaTitle ||
+      row.sellerSku ||
+      ""
+    ).trim();
 
     const titleEn = (row.titleEn || "").trim();
 
-    // ----- מחיר (price.amount) -----
+    // ----- מחיר (price.amount) – לא חובה בייבוא -----
     const rawPrice =
       row.price !== undefined && row.price !== null
         ? row.price
@@ -176,16 +206,17 @@ export class ProductImportService {
         ? row["price.amount"]
         : "";
 
-    const priceClean = String(rawPrice ?? "")
-      .replace(/,/g, "")
-      .trim();
-    const priceNumber = Number(priceClean);
+    let priceNumber = 0;
 
-    if (!priceClean || Number.isNaN(priceNumber) || priceNumber <= 0) {
-      throw new CustomError(
-        "price.amount של מוצר הוא שדה חובה ומספר תקין",
-        400
-      );
+    if (rawPrice !== "" && rawPrice !== null && rawPrice !== undefined) {
+      const priceClean = String(rawPrice).replace(/,/g, "").trim();
+
+      const parsed = Number(priceClean);
+
+      if (!Number.isNaN(parsed) && parsed >= 0) {
+        priceNumber = parsed;
+      }
+      // אם זה לא מספר תקין – לא זורקים שגיאה, פשוט נשאר 0
     }
 
     // ----- מלאי -----
@@ -203,7 +234,7 @@ export class ProductImportService {
     const description = row.descriptionHtml || "";
 
     // ----- GTIN -----
-    const rawGtin = (row.gtin ?? "").toString().trim();
+    const rawGtin = normalizeGtinValue(row.gtin);
     let finalGtin;
 
     if (rawGtin) {
@@ -228,28 +259,30 @@ export class ProductImportService {
     // ----- מטבע -----
     const currency = row.currency || "ILS";
 
-    // ----- קטגוריה לפי categoryFullSlug -----
+    // ----- קטגוריה לפי categoryFullSlug – לא חובה בייבוא -----
     const categoryFullSlugFromCsv = (row.categoryFullSlug || "").trim();
-    if (!categoryFullSlugFromCsv) {
-      throw new CustomError("שדה categoryFullSlug חובה", 400);
+
+    let leafCategory = null;
+    let path = [];
+
+    if (categoryFullSlugFromCsv) {
+      leafCategory = await Category.findOne({
+        fullSlug: categoryFullSlugFromCsv,
+      }).lean();
+
+      if (!leafCategory) {
+        throw new CustomError(
+          `categoryFullSlug לא קיים בעץ הקטגוריות: "${categoryFullSlugFromCsv}"`,
+          400
+        );
+      }
+
+      const ancestors = Array.isArray(leafCategory.ancestors)
+        ? leafCategory.ancestors
+        : [];
+
+      path = [...ancestors, leafCategory];
     }
-
-    const leafCategory = await Category.findOne({
-      fullSlug: categoryFullSlugFromCsv,
-    }).lean();
-
-    if (!leafCategory) {
-      throw new CustomError(
-        `categoryFullSlug לא קיים בעץ הקטגוריות: "${categoryFullSlugFromCsv}"`,
-        400
-      );
-    }
-
-    const ancestors = Array.isArray(leafCategory.ancestors)
-      ? leafCategory.ancestors
-      : [];
-
-    const path = [...ancestors, leafCategory];
 
     const breadcrumbs = path.map((c) => ({
       id: c._id,
@@ -258,8 +291,9 @@ export class ProductImportService {
       fullSlug: c.fullSlug,
       depth: c.depth,
     }));
-    const rootCategory = path[0] || leafCategory; // קטגוריה ראשית
-    const lastCategory = leafCategory; // הקטגוריה הסופית (leaf)
+
+    const rootCategory = path[0] || null; // קטגוריה ראשית אם קיימת
+    const lastCategory = leafCategory; // הקטגוריה הסופית אם קיימת
 
     // ----- סקירה לפי בלוקים ממוספרים -----
     const blocks = [];
@@ -367,12 +401,13 @@ export class ProductImportService {
         count: 0,
       },
 
-      primaryCategoryId: leafCategory._id,
+      primaryCategoryId: leafCategory ? leafCategory._id : undefined,
       categoryPathIds: path.map((c) => c._id),
-      categoryFullSlug: leafCategory.fullSlug,
+      categoryFullSlug: leafCategory ? leafCategory.fullSlug : undefined,
       breadcrumbs,
 
-      status: "published",
+      // 🔹 ייבוא כטיוטה, לא מפורסם
+      status: "draft",
       visibility: "private",
 
       warranty: row.warranty || "",

@@ -75,7 +75,6 @@ const variationsConfigSchema = z.object({
   attributes: z.array(variationAttributeConfigSchema).default([]),
 }).partial().default({});
 
-
 // סכימת יצירת מוצר
 export const createProductSchema = z.object({
   // זיהוי לפי ספק/מוכר/חנות
@@ -110,6 +109,9 @@ export const createProductSchema = z.object({
 
   // וריאציות - אופציונלי
   variations: z.array(variationSchema).optional().default([]),
+  defaultVariationId: z.string().trim().optional(),
+  variationsConfig: variationsConfigSchema.optional().default({}),
+
   defaultVariationId: z.string().trim().optional(),
   variationsConfig: variationsConfigSchema.optional().default({}),
 

@@ -1,4 +1,3 @@
-// controllers/tranzilaController.js
 import { OrderService } from '../services/orderService.js';
 import { TranzilaService } from '../services/tranzilaService.js';
 import { CustomError } from '../utils/CustomError.js';
@@ -8,7 +7,11 @@ export class TranzilaController {
   static async startIframe(req, res, next) {
     try {
       const payload = req.validated ?? req.body ?? {};
-      const { orderId, items } = payload.body || payload;
+      const { orderId, items } = payload;
+
+      if (!orderId) {
+        throw new CustomError('Missing orderId', 400);
+      }
 
       if (!Array.isArray(items) || items.length === 0) {
         throw new CustomError('No items selected', 400);
@@ -24,6 +27,7 @@ export class TranzilaController {
       const orderService = new OrderService();
       const order = await orderService.getByOrderId(orderId);
 
+
       const customerInfo = {
         email: order?.userId?.email || req.user?.email || '',
         name: order?.userId?.username || req.user?.username || 'לקוח',
@@ -38,12 +42,14 @@ export class TranzilaController {
         customerInfo,
       });
       res.json({ iframeUrl, amount });
+
     } catch (err) {
       next(err);
     }
   }
 
    static async webhook(req, res) {
+
     try {
       // טרנזילה שולחים form-urlencoded → bodyParser.urlencoded כבר מטפל בזה
       const payload = req.body || {};
