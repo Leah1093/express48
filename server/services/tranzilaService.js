@@ -89,7 +89,7 @@ export class TranzilaService {
     }
 
     const client = axios.create({
-      baseURL: 'https://api.tranzila.com/v1',
+      baseURL: 'https://api.tranzila.co.il/v1',
       timeout: TIMEOUT_MS,
       headers: {
         'access-token': token,
