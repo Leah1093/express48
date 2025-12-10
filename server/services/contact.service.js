@@ -1,3 +1,4 @@
+// services/contact.service.js
 import { sendContactEmail } from "../utils/email/sendContactEmail.js";
 import { ContactMessage } from "../models/contactMessage.js";
 import { CustomError } from "../utils/CustomError.js";
@@ -18,9 +19,10 @@ export class ContactService {
 
     // 3. שליחת מייל
     try {
-      await sendContactEmail({ name, email, message });
+      await sendContactEmail({ name, email, message, phone });
     } catch (err) {
-      throw new CustomError("כשלון בשליחת מייל לשירות לקוחות", 500, err);
+      console.error("❌ שגיאה אמיתית מ-nodemailer:", err);
+      throw new CustomError("כשלון בשליחת מייל לשירות לקוחות", 500);
     }
 
     // 4. שמירה במסד
@@ -28,7 +30,8 @@ export class ContactService {
       const saved = await ContactMessage.create(data);
       return saved;
     } catch (err) {
-      throw new CustomError("כשלון בשמירת פנייה במסד נתונים", 500, err);
+      console.error("❌ שגיאה בשמירת פנייה במסד:", err);
+      throw new CustomError("כשלון בשמירת פנייה במסד נתונים", 500);
     }
   }
 }

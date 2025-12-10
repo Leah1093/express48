@@ -47,76 +47,76 @@ async function buildTree(rootId, maxDepth = 3) {
 }
 
 export class CategoryController {
-async create(req, res, next) {
-  try {
-    const {
-      name,
-      slug,
-      order = 0,
-      isActive = true,
-      imageUrl: imageUrlFromBody = "",
-      description = "",
-    } = req.body;
+  async create(req, res, next) {
+    try {
+      const {
+        name,
+        slug,
+        order = 0,
+        isActive = true,
+        imageUrl: imageUrlFromBody = "",
+        description = "",
+      } = req.body;
 
-    if (!name || !slug) {
-      throw new CustomError("name and slug are required", 400);
-    }
+      if (!name || !slug) {
+        throw new CustomError("name and slug are required", 400);
+      }
 
-    // כרגע: תמיד קטגוריית שורש
-    const parent = null;
+      // כרגע: תמיד קטגוריית שורש
+      const parent = null;
 
-    let finalImageUrl = imageUrlFromBody || "";
-    let icon = "";
+      let finalImageUrl = imageUrlFromBody || "";
+      let icon = "";
 
-    if (req.file) {
-      const uploadResult = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          {
-            folder: "express48/categories",
-            resource_type: "image",
-          },
-          (error, result) => {
-            if (error) return reject(error);
-            resolve(result);
-          }
+      if (req.file) {
+        const uploadResult = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            {
+              folder: "express48/categories",
+              resource_type: "image",
+            },
+            (error, result) => {
+              if (error) return reject(error);
+              resolve(result);
+            }
+          );
+
+          stream.end(req.file.buffer);
+        });
+
+        finalImageUrl = uploadResult.secure_url;
+        icon = uploadResult.secure_url;
+      } else if (req.body.icon) {
+        icon = req.body.icon;
+        if (!finalImageUrl) {
+          finalImageUrl = req.body.icon;
+        }
+      }
+
+      // 🔴 כאן עושים את החובה לתמונה לקטגוריה ראשית
+      if (!parent && !icon && !finalImageUrl) {
+        throw new CustomError(
+          "לכל קטגוריה ראשית חייבת להיות תמונה (קובץ או קישור)",
+          400
         );
+      }
 
-        stream.end(req.file.buffer);
+      const category = await service.create({
+        name,
+        slug,
+        parent, // תמיד שורש כרגע
+        order,
+        isActive,
+        icon,
+        imageUrl: finalImageUrl,
+        description,
       });
 
-      finalImageUrl = uploadResult.secure_url;
-      icon = uploadResult.secure_url;
-    } else if (req.body.icon) {
-      icon = req.body.icon;
-      if (!finalImageUrl) {
-        finalImageUrl = req.body.icon;
-      }
+      res.status(201).json(category);
+    } catch (e) {
+      next(e);
     }
-
-    // 🔴 כאן עושים את החובה לתמונה לקטגוריה ראשית
-    if (!parent && !icon && !finalImageUrl) {
-      throw new CustomError(
-        "לכל קטגוריה ראשית חייבת להיות תמונה (קובץ או קישור)",
-        400
-      );
-    }
-
-    const category = await service.create({
-      name,
-      slug,
-      parent, // תמיד שורש כרגע
-      order,
-      isActive,
-      icon,
-      imageUrl: finalImageUrl,
-      description,
-    });
-
-    res.status(201).json(category);
-  } catch (e) {
-    next(e);
   }
-}
 
   // ---------- רשימה ----------
   async list(req, res, next) {
@@ -133,8 +133,10 @@ async create(req, res, next) {
   async getRoots(req, res, next) {
     try {
       const roots = await Category.find({ parent: null })
-        .sort({ order: 1, name: 1 })
+        .sort({ createdAt: 1 })
         .lean();
+      console.log(roots)
+
       res.json(roots);
     } catch (e) {
       next(e);
@@ -157,26 +159,26 @@ async create(req, res, next) {
 
 
   // ---------- לפי fullSlug ----------
-getByFullSlug = async (req, res, next) => {
-  try {
-    const { fullSlug = "", page = 1, limit = 24, sort } = req.query;
+  getByFullSlug = async (req, res, next) => {
+    try {
+      const { fullSlug = "", page = 1, limit = 24, sort } = req.query;
 
-    if (!fullSlug || typeof fullSlug !== "string") {
-      return next(new CustomError("fullSlug חובה", 400));
+      if (!fullSlug || typeof fullSlug !== "string") {
+        return next(new CustomError("fullSlug חובה", 400));
+      }
+
+      const result = await productService.getByFullSlugService({
+        fullSlug,
+        page: Number(page) || 1,
+        limit: Number(limit) || 24,
+        sort,
+      });
+
+      res.json(result);
+    } catch (err) {
+      next(err instanceof CustomError ? err : new CustomError("שגיאה בשליפת מוצרים לפי קטגוריה", 500));
     }
-
-    const result = await productService.getByFullSlugService({
-      fullSlug,
-      page: Number(page) || 1,
-      limit: Number(limit) || 24,
-      sort,
-    });
-
-    res.json(result);
-  } catch (err) {
-    next(err instanceof CustomError ? err : new CustomError("שגיאה בשליפת מוצרים לפי קטגוריה", 500));
-  }
-};
+  };
 
 
   // ---------- עץ מקונן החל מ-id ----------

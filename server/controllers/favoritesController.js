@@ -46,7 +46,7 @@ export class FavoritesController {
         skip: Number(skip) || 0,
       });
 
-      res.json({ ok: true, items });
+      res.json(items);
     } catch (err) {
       next(err);
     }

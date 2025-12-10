@@ -1,4 +1,3 @@
-﻿// server/services/tranzilaService.js
 import axios from 'axios';
 import { CustomError } from '../utils/CustomError.js';
 
@@ -35,35 +34,50 @@ export class TranzilaService {
         500
       );
     }
+    if (!baseUrl || !/^https?:\/\//i.test(baseUrl)) {
+      throw new CustomError('BASE_URL must be HTTP/HTTPS', 500);
+    }
 
     const total = this.calcTotal(items);
     if (total <= 0) {
       throw new CustomError('Total must be greater than zero', 400);
     }
 
+    // סניטיזציה של מזהה ההזמנה (WAF/URL-safe)
     const safeOrderId = String(orderId)
       .replace(/[^A-Za-z0-9_-]/g, '')
       .slice(0, 64);
 
-    const url = new URL(`https://direct.tranzila.com/${terminal}/iframenew.php`);
+    // נורמליזציה של baseUrl ובניית כתובת webhook
+    const safeBaseUrl = baseUrl.replace(/\/+$/, ''); // להוריד / בסוף אם יש
+    const postUrl = `${safeBaseUrl}/payments/tranzila/webhook`;
 
-    url.searchParams.set('supplier', terminal);
+    const url = new URL(`https://direct.tranzila.com/${terminal}/iframe.php`);
+
+    // סכום וחיוב
     url.searchParams.set('sum', String(total));
     url.searchParams.set('currency', '1');
-    url.searchParams.set('myid', safeOrderId);
+    url.searchParams.set('cred_type', '1');
+    url.searchParams.set('lang', 'il');
 
-    if (customerInfo?.name) {
-      url.searchParams.set('contact', customerInfo.name);
-    }
+    // ✅ להזדהות ההזמנה – כדי שה-webhook ידע למי לשייך את התשלום
+    url.searchParams.set('orderid', safeOrderId);
+
+    // ✅ כתובת webhook לשרת שלך בענן
+    url.searchParams.set('posturl', postUrl);
+
+    // מידע ללקוח (לא חובה אבל מומלץ)
     if (customerInfo?.email) {
       url.searchParams.set('email', customerInfo.email);
     }
     if (customerInfo?.phone) {
       url.searchParams.set('phone', customerInfo.phone);
     }
+    if (customerInfo?.name) {
+      url.searchParams.set('contact', customerInfo.name);
+    }
 
-    console.log('[TRZ] iframe url:', url.toString());
-
+    console.log('[TRZ] terminal=', terminal, 'sum=', total, 'url=', url.toString(), 'posturl=', postUrl);
     return { iframeUrl: url.toString(), amount: total };
   }
 
@@ -71,6 +85,7 @@ export class TranzilaService {
   static async verifyTransaction({ transaction_index }) {
     const env = (process.env.TRZ_ENV || 'live').toLowerCase();
 
+    // מצב בדיקות (development) – מאשר תמיד
     if (env === 'mock') {
       console.log('[TRZ][VERIFY] mock mode → approve always');
       return { approved: true, source: 'mock' };

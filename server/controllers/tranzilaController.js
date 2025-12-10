@@ -1,8 +1,7 @@
-
-// server/controllers/tranzilaController.js
 import { OrderService } from '../services/orderService.js';
 import { TranzilaService } from '../services/tranzilaService.js';
 import { CustomError } from '../utils/CustomError.js';
+import { sendOrderCreatedEmails } from "../utils/email/orderEmails.js";
 
 export class TranzilaController {
   static async startIframe(req, res, next) {
@@ -19,12 +18,15 @@ export class TranzilaController {
       }
 
       const terminal = process.env.TRANZILA_TERMINAL;
-      if (!terminal) {
-        throw new CustomError('Payment configuration missing (terminal)', 500);
+      const baseUrl = process.env.BASE_URL;
+
+      if (!terminal || !baseUrl) {
+        throw new CustomError('Payment configuration missing', 500);
       }
 
       const orderService = new OrderService();
-      const order = await orderService.getByOrderId(orderId).catch(() => null);
+      const order = await orderService.getByOrderId(orderId);
+
 
       const customerInfo = {
         email: order?.userId?.email || req.user?.email || '',
@@ -35,99 +37,138 @@ export class TranzilaController {
       const { iframeUrl, amount } = TranzilaService.buildIframeUrl({
         orderId,
         items,
+        baseUrl,
         terminal,
         customerInfo,
       });
+      res.json({ iframeUrl, amount });
 
-      return res.json({ iframeUrl, amount });
     } catch (err) {
       next(err);
     }
   }
 
-  static async webhook(req, res) {
-    try {
-      const payload = req.validated ?? req.body ?? {};
-      const { orderid, transaction_index, sum, currency } = payload;
+   static async webhook(req, res) {
 
-      console.log('[TRZ][WEBHOOK] got:', {
-        orderid,
-        transaction_index,
-        sum,
-        currency,
-        keys: Object.keys(payload),
-      });
+    try {
+      // טרנזילה שולחים form-urlencoded → bodyParser.urlencoded כבר מטפל בזה
+      const payload = req.body || {};
+      console.log("[TRZ][WEBHOOK] RAW PAYLOAD:", payload);
+
+      // בד"כ השדות האלה מגיעים מטרנזילה
+      const orderid =
+        payload.orderid || payload.orderId || payload.OrderId;
+      const respCode =
+        payload.Response || payload.response;
+
+      console.log("[TRZ][WEBHOOK] parsed:", { orderid, respCode });
 
       const orderService = new OrderService();
-      const order = await orderService.getByOrderId(orderid).catch(() => null);
 
-      if (!order) {
-        console.warn('[TRZ][WEBHOOK] order not found:', orderid);
-        return res.status(200).send('OK');
+      if (!orderid) {
+        console.warn("[TRZ][WEBHOOK] missing orderid in payload");
+        return res.status(200).send("OK");
       }
 
-      if (order.payment?.status === 'paid') {
+      // אם אין קוד תשובה – רק מתעדים
+      if (!respCode) {
+        console.warn("[TRZ][WEBHOOK] missing Response code", { orderid });
         await orderService
           .logGatewayEvent(orderid, {
-            gateway: 'tranzila',
-            event: 'duplicate_webhook',
+            gateway: "tranzila",
+            event: "webhook_no_response_code",
             payload,
           })
           .catch(() => {});
-        return res.status(200).send('OK');
+        return res.status(200).send("OK");
       }
 
-      const verification = await TranzilaService.verifyTransaction({
-        transaction_index,
-      });
+      // ✅ "000" = עסקה מאושרת לפי טרנזילה
+      const isApproved = String(respCode) === "000";
 
-      const approved =
-        verification?.approved === true ||
-        verification?.status === 'approved' ||
-        verification?.response === '000';
-
-      if (!approved) {
-        console.warn('[TRZ][WEBHOOK] not approved:', {
+      if (!isApproved) {
+        console.warn("[TRZ][WEBHOOK] not approved:", {
           orderid,
-          transaction_index,
-          verification,
+          respCode,
         });
 
         await orderService
           .logGatewayEvent(orderid, {
-            gateway: 'tranzila',
-            event: 'not_approved',
+            gateway: "tranzila",
+            event: "not_approved",
             payload,
-            verification,
+            respCode,
           })
           .catch(() => {});
-        return res.status(200).send('OK');
+        return res.status(200).send("OK");
       }
 
-      // בדיקת סכום (לא חובה אבל טוב ללוג)
-      try {
-        const orderTotal = Number(order.totalAmount ?? order.total ?? 0);
-        if (sum && isFinite(orderTotal) && Number(sum) !== orderTotal) {
-          console.warn('[TRZ][WEBHOOK] amount mismatch', {
-            orderid,
-            sum,
-            orderTotal,
-          });
-        }
-      } catch {}
+      // עד כאן רק בדיקה. מכאן – העסקה מאושרת ✔
 
+      // שולפים את ההזמנה
+      const existing = await orderService
+        .getByOrderId(orderid)
+        .catch(() => null);
+
+      if (!existing) {
+        console.warn("[TRZ][WEBHOOK] order not found:", orderid);
+        return res.status(200).send("OK");
+      }
+
+      // אם כבר שולם – לא מסמנים שוב
+      if (existing.payment?.status === "paid") {
+        console.log(
+          "[TRZ][WEBHOOK] order already paid, skipping:",
+          orderid
+        );
+        await orderService
+          .logGatewayEvent(orderid, {
+            gateway: "tranzila",
+            event: "duplicate_webhook",
+            payload,
+          })
+          .catch(() => {});
+        return res.status(200).send("OK");
+      }
+
+      // 👇 כאן קורה בפועל:
+      // - סימון ההזמנה כ-paid
+      // - עדכון מלאי
+      // - הגדלת purchases
       await orderService.markPaid(orderid, {
-        gateway: 'tranzila',
-        transaction_index,
+        gateway: "tranzila",
         payload,
-        verification,
+        responseCode: respCode,
       });
 
-      return res.status(200).send('OK');
+      console.log(
+        "[TRZ][WEBHOOK] markPaid done for order:",
+        orderid
+      );
+
+      // שליחת מיילים – משתמשת ב-fullOrder עם populate
+      try {
+        const fullOrder = await orderService.getByOrderId(orderid);
+        if (fullOrder) {
+          await sendOrderCreatedEmails(fullOrder);
+        } else {
+          console.warn(
+            "[TRZ][WEBHOOK] no order found for emails:",
+            orderid
+          );
+        }
+      } catch (mailErr) {
+        console.error(
+          "[TRZ][WEBHOOK] sendOrderCreatedEmails error:",
+          mailErr
+        );
+      }
+
+      return res.status(200).send("OK");
     } catch (e) {
-      console.error('[TRZ][WEBHOOK][ERR]', e);
-      return res.status(200).send('OK');
+      console.error("[TRZ][WEBHOOK][ERR]", e);
+      // לטרנזילה תמיד מחזירים 200 כדי שלא יחזרו שוב ושוב
+      return res.status(200).send("OK");
     }
   }
 }
-

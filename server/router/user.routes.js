@@ -1,10 +1,12 @@
 import express from "express";
 import { UserController } from "../controllers/user.controller.js";
+
 import {
   profileSchema,
   passwordSchema,
 } from "../../client/src/components/validations/profileSchema.js";
 import { validate } from "../middlewares/validate.js";
+
 import { authMiddleware } from "../middlewares/auth.js";
 
 const userRouter = express.Router();

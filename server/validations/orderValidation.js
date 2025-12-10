@@ -10,6 +10,8 @@ export const createOrderSchema = z.object({
         quantity: z.number().min(1, "כמות חייבת להיות לפחות 1"),
         price: z.number().min(0, "מחיר חייב להיות חיובי"),
         priceAfterDiscount: z.number().min(0).optional(),
+        variationId: z.string().nullable().optional(),
+        variationAttributes: z.record(z.string(), z.string()).optional(),
       })
     )
     .min(1, "חייב להיות לפחות מוצר אחד"),
@@ -22,5 +24,6 @@ export const updateStatusSchema = z.object({
     "canceled",
     "returned",
     "completed",
+    "paid",
   ]),
 });
