@@ -36,9 +36,9 @@ export const addToCart = async (req, res, next) => {
 export const removeFromCart = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const { productId } = req.body;
+    const { productId, variationId } = req.body;
 
-    const cartResponse = await cartService.removeFromCart(userId, productId);
+    const cartResponse = await cartService.removeFromCart(userId, productId,variationId ?? null);
     res.json(cartResponse);
   } catch (err) {
     next(err);
@@ -48,11 +48,12 @@ export const removeFromCart = async (req, res, next) => {
 export const removeProductCompletely = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const { productId } = req.body;
+    const { productId, variationId } = req.body;
 
     const cartResponse = await cartService.removeProductCompletely(
       userId,
-      productId
+      productId,
+      variationId ?? null
     );
 
     res.status(200).json(cartResponse);
@@ -88,7 +89,7 @@ export const mergeLocalCart = async (req, res, next) => {
 export const updateItemQuantity = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const { productId, quantity } = req.body;
+    const { productId, quantity, variationId } = req.body;
 
     console.log("userId:", userId);
     console.log("body:", req.body);
@@ -96,7 +97,8 @@ export const updateItemQuantity = async (req, res, next) => {
     const cartResponse = await cartService.updateItemQuantity(
       userId,
       productId,
-      quantity
+      quantity,
+      variationId ?? null
     );
 
     res.status(200).json(cartResponse);

@@ -358,7 +358,7 @@ async addToCart(userId, productId, quantity = 1, variationId = null) {
 
 
 
-  async removeFromCart(userId, productId) {
+  async removeFromCart(userId, productId, variationId = null) {
     // 1) שליפת העגלה
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
     if (!cart) {
@@ -368,8 +368,12 @@ async addToCart(userId, productId, quantity = 1, variationId = null) {
     const productIdStr = productId.toString();
 
     // 2) מציאת הפריט לפי productId
-    const item = cart.items.find(
-      (it) => it.productId.toString() === productIdStr
+    cart.items = cart.items.filter(
+      (it) =>
+        !(
+          it.productId.toString() === productIdStr &&
+          String(it.variationId || "") === String(variationId || "")
+        )
     );
 
     // 3) אם לא קיים כזה פריט – מחזירים את העגלה כמו שהיא, אבל כבר כ-CartResponse
@@ -384,7 +388,11 @@ async addToCart(userId, productId, quantity = 1, variationId = null) {
     } else {
       // 5) אם הכמות 1 – מסירים את הפריט לגמרי
       cart.items = cart.items.filter(
-        (it) => it.productId.toString() !== productIdStr
+        (it) =>
+          !(
+            it.productId.toString() === productIdStr &&
+            String(it.variationId || "") === String(variationId || "")
+          )
       );
     }
 
@@ -392,14 +400,15 @@ async addToCart(userId, productId, quantity = 1, variationId = null) {
     await cart.save();
 
     // 7) שליפה מחדש עם populate + מיפוי ל-CartResponse
-    const updated = await Cart.findOne(cartQueries.findByUserId(userId))
-      .populate("items.productId");
-
+     const updated = await Cart.findOne(
+          cartQueries.findByUserId(userId)
+        ).populate("items.productId");
+    
     return mapCartToResponse(updated);
   }
 
 
-  async removeProductCompletely(userId, productId) {
+  async removeProductCompletely(userId, productId, variationId = null) {
     // 1) שליפת העגלה של המשתמש
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
     if (!cart) {
@@ -408,10 +417,22 @@ async addToCart(userId, productId, quantity = 1, variationId = null) {
 
     const productIdStr = productId.toString();
 
-    // 2) מחיקת כל הפריטים של אותו productId (הסרה מוחלטת מהעגלה)
-    cart.items = cart.items.filter(
-      (item) => item.productId.toString() !== productIdStr
-    );
+  // 2) מחיקת כל הפריטים של אותו productId (הסרה מוחלטת מהעגלה)
+    if (variationId) {
+      // מוחקים רק את הווריאציה הספציפית
+      cart.items = cart.items.filter(
+        (item) =>
+          !(
+            item.productId.toString() === productIdStr &&
+            String(item.variationId || "") === String(variationId || "")
+          )
+      );
+    } else {
+      // מוחקים את כל הווריאציות של המוצר הזה
+      cart.items = cart.items.filter(
+        (item) => item.productId.toString() !== productIdStr
+      );
+    }
 
     // 3) שמירה של השינויים
     await cart.save();
@@ -422,11 +443,6 @@ async addToCart(userId, productId, quantity = 1, variationId = null) {
 
     return mapCartToResponse(updated);
   }
-
-
-
-
-
 
   async clearCart(userId) {
     // 1) שליפת העגלה
@@ -457,6 +473,7 @@ async addToCart(userId, productId, quantity = 1, variationId = null) {
     const normalized = (Array.isArray(localItems) ? localItems : [])
       .map((it) => ({
         productId: toIdStr(it.productId),
+        variationId: it.variationId ? String(it.variationId) : null,
         quantity: Number(it.quantity ?? 1),
         selected: it.selected === undefined ? true : Boolean(it.selected),
       }))
@@ -474,24 +491,26 @@ async addToCart(userId, productId, quantity = 1, variationId = null) {
 
     // 🔹 באצ' מחירים מהמוצרים (יעיל)
     const ids = [...new Set(normalized.map((it) => it.productId))];
-    const prods = await Product.find({ _id: { $in: ids } })
-      .select("price")
-      .lean();
+    const prods = await Product.find({ _id: { $in: ids } }).lean();
 
-    const priceMap = Object.fromEntries(
-      prods.map((p) => [String(p._id), Number(p.price?.amount ?? 0)])
-    );
+    const priceMap = Object.fromEntries(prods.map((p) => [String(p._id), p]));
+
 
     // 🆕 אם אין עגלה – יוצרים אחת חדשה
     if (!cart) {
       const itemsWithPrice = normalized.map((it) => {
-        const price = priceMap[it.productId];
+        const product = productMap[it.productId];
+        if (!product) {
+          throw new Error(`Product not found: ${it.productId}`);
+        }
+        const price = getCurrentPriceFromProduct(product, it.variationId);
         if (price == null || Number.isNaN(price)) {
-          throw new Error(`Product not found or invalid price: ${it.productId}`);
+          throw new Error(`Invalid price for product: ${it.productId}`);
           // או CustomError אם תרצי
         }
         return {
           productId: it.productId,
+          variationId: it.variationId || null,
           quantity: it.quantity,
           unitPrice: price,
           selected: it.selected ?? true,
@@ -509,7 +528,9 @@ async addToCart(userId, productId, quantity = 1, variationId = null) {
     // 🧩 מיזוג לעגלה קיימת
     for (const it of normalized) {
       const existing = cart.items.find(
-        (row) => String(row.productId) === it.productId
+        (row) =>
+          String(row.productId) === it.productId &&
+          String(row.variationId || "") === String(it.variationId || "")
       );
 
       const price = priceMap[it.productId];
@@ -533,6 +554,7 @@ async addToCart(userId, productId, quantity = 1, variationId = null) {
         // מוצר חדש לגמרי לעגלה
         cart.items.push({
           productId: it.productId,
+          variationId: it.variationId || null,
           quantity: it.quantity,
           unitPrice: price,
           selected: it.selected ?? true,
@@ -552,7 +574,7 @@ async addToCart(userId, productId, quantity = 1, variationId = null) {
 
 
 
-  async updateItemQuantity(userId, productId, quantity) {
+  async updateItemQuantity(userId, productId, quantity, variationId = null) {
     // נוודא שכמות היא מספר תקין
     const q = Number(quantity);
     if (!Number.isFinite(q)) {
@@ -565,10 +587,11 @@ async addToCart(userId, productId, quantity = 1, variationId = null) {
     }
 
     const productIdStr = productId.toString();
-
-    // מוצאים את הפריט בעגלה לפי productId בלבד (בלי וריאציות)
+    const variationIdStr = variationId ? String(variationId) : "";
     const item = cart.items.find(
-      (i) => i.productId.toString() === productIdStr
+     (i) =>
+        i.productId.toString() === productIdStr &&
+        String(i.variationId || "") === variationIdStr
     );
 
     if (!item) {
@@ -578,7 +601,11 @@ async addToCart(userId, productId, quantity = 1, variationId = null) {
     // אם הכמות 0 או פחות – נסיר את הפריט מהעגלה
     if (q <= 0) {
       cart.items = cart.items.filter(
-        (i) => i.productId.toString() !== productIdStr
+        (i) =>
+          !(
+            i.productId.toString() === productIdStr &&
+            String(i.variationId || "") === variationIdStr
+          )
       );
     } else {
       // אחרת – נעדכן כמות
@@ -588,7 +615,7 @@ async addToCart(userId, productId, quantity = 1, variationId = null) {
     await cart.save();
 
     const updated = await Cart.findOne(cartQueries.findByUserId(userId))
-      .populate("items.productId");
+      .populate("items.productId").lean({ virtuals: true });
 
     return mapCartToResponse(updated);
   }
