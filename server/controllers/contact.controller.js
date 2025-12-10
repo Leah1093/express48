@@ -3,6 +3,7 @@ import { ContactService } from "../services/contact.service.js";
 export default class ContactController {
   async sendMessage(req, res, next) {
     try {
+      console.log("❤️❤️❤️")
       const contactService = new ContactService();
       const saved = await contactService.handleMessage(req.body);
 

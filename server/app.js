@@ -5,9 +5,11 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
+import { sitemapRouter } from "./router/sitemap.router.js";
 import session from "express-session";
 import passport from "passport";
 import "dotenv/config.js";
+
 
 import { connectDB } from "./config/db.js";
 
@@ -36,6 +38,7 @@ import dotenv from 'dotenv';
 import { productImportRouter } from "./router/productImport.router.js";
 import { sellerOrdersRouter } from "./router/sellerOrders.router.js";
 
+import zapFeedRoutes from "./router/zapFeedRoutes.js";
 
 
 
@@ -50,14 +53,35 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// DB
-connectDB();
-app.use(cors({
-  origin: ["http://localhost:5173", 'https://affirmatively-unparenthesised-brandon.ngrok-free.dev'],
+connectDB()
+  .then(() => {
+    console.log("✅ MongoDB connected");
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection failed", err);
+    process.exit(1);
+  });
+
+// CORS middleware - must be before all other middleware
+const corsOptions = {
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://affirmatively-unparenthesised-brandon.ngrok-free.dev",
+    "https://express48.com",
+    "https://express48.co.il",
+    "https://www.express48.com",
+    "https://www.express48.co.il",
+    // ואם יש דומיין של CloudFront – גם אותו:
+    "https://<הדומיין-של-CloudFront-אם-יש>"
+  ],
+
   credentials: true,
   methods: ["GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization","X-Requested-With"],
-}));
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+};
+
+app.use(cors(corsOptions));
 
 // CORS – תשאירי כי הפרונט ב־5173 והשרת ב־8080
 app.use(
@@ -82,17 +106,18 @@ app.use("/search", searchRouter);
 
 app.use(passport.initialize());
 app.use(passport.session());
+app.use("/", sitemapRouter); // חשוב לפני errorHandler
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-app.get("/", (req, res) => {
-  res.send("Express48 API is running 🚀");
+app.use((req, res, next) => {
+  console.log("➡️ NEW REQUEST:", req.method, req.url);
+  next();
 });
+// Routes
+app.use('/entrance', entranceRouter);
+app.use('/password', passwordRouter);
+app.use('/contact', contactRouter);
 
-// ----- ראוטים רגילים -----
-app.use("/entrance", entranceRouter);
-app.use("/password", passwordRouter);
-app.use("/contact", contactRouter);
 app.use("/user", userRouter);
 app.use("/auth", googleAuthRouter);
 app.use("/marketplace", marketplaceRouter)
@@ -116,7 +141,6 @@ app.use("/addresses", addressRoutes);
 app.use("/orders", orderRoutes);
 app.use("/coupons", couponsRoutes);
 app.use('/payments/tranzila', tranzilaRouter);
-
 app.use("/uploads", uploadRoutes);
 app.use("/seller/products", sellerProductsRouter);
 app.use("/seller/orders", sellerOrdersRouter);
@@ -131,6 +155,7 @@ app.use("/payments/tranzila", tranzilaRouter);
 
 // error handler – תמיד בסוף
 app.use(errorHandler);
+app.use("/", zapFeedRoutes);
 
 
 const PORT = process.env.PORT || 8080;

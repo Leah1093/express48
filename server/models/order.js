@@ -4,6 +4,8 @@ import mongoose from "mongoose";
   quantity: { type: Number, required: true, min: 1 },
   price: { type: Number, required: true }, // מחיר ליחידה או סכום כולל
   priceAfterDiscount: { type: Number, default: null }, // מחיר אחרי הנחה
+  variationId: {type: String,default: null,},
+  variationAttributes: {type: Map,of: String,default: undefined,},
 });
 
 const orderSchema = new mongoose.Schema(

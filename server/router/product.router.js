@@ -10,7 +10,7 @@ productRouter.get("/search", productController.searchProducts);
 productRouter.get("/popular-searches", productController.getPopularSearches);
 
 // חשוב: לפני /:slug
-productRouter.get("/by-category", productController.getByFullSlug);
+productRouter.get("/by-category/:fullSlug", productController.getByFullSlug);
 
 
 // מוצר בודד לפי slug

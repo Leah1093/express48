@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import mongoose from "mongoose";
 import { CustomError } from "../utils/CustomError.js";
-import { Product } from "../models/product.js";
+import { Product } from "../models/Product.js";
 import { Category } from "../models/category.js";
 
 // ---------- helpers ----------
