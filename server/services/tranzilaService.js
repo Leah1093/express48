@@ -43,10 +43,6 @@ export class TranzilaService {
       throw new CustomError('Total must be greater than zero', 400);
     }
 
-    const safeOrderId = String(orderId)
-      .replace(/[^A-Za-z0-9_-]/g, '')
-      .slice(0, 64);
-
     // סניטיזציה של מזהה ההזמנה (WAF/URL-safe)
     const safeOrderId = String(orderId)
       .replace(/[^A-Za-z0-9_-]/g, '')

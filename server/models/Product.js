@@ -127,30 +127,6 @@ const VariationAttributeSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const VariationTermSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },          // ה־id שאת מייצרת ב־crypto.randomUUID
-    label: { type: String, required: true },       // "ורוד" / "L" / "256GB"
-    priceType: {
-      type: String,
-      enum: ["none", "addon", "override"],
-      default: "none",
-    },
-    price: { type: Number },                       // תוספת / מחיר סופי (אופציונלי)
-    images: { type: [String], default: [] },       // 👈 כאן התמונות למונח
-  },
-  { _id: false } // אין צורך ב-_id נוסף, יש לך id משלך
-);
-const VariationAttributeSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },        // slug: "color" / "size" / "storage"
-    displayName: { type: String, required: true }, // "צבע" / "מידה"...
-    terms: { type: [VariationTermSchema], default: [] },
-  },
-  { _id: false }
-);
-
-
 
 
 const DiscountSchema = new mongoose.Schema({
