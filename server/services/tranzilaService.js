@@ -44,7 +44,7 @@ export class TranzilaService {
     const safeBaseUrl = baseUrl.replace(/\/+$/, ''); // להוריד / בסוף אם יש
     const postUrl = `${safeBaseUrl}/payments/tranzila/webhook`;
 
-    const url = new URL(`https://direct.tranzila.co.il/${terminal}/iframe.php`);
+    const url = new URL(`https://direct.tranzila.com/${terminal}/iframe.php`);
 
     // סכום וחיוב
     url.searchParams.set('sum', String(total));
