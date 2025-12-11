@@ -1,6 +1,6 @@
 // services/zapFeedService.js
 import { Product } from "../models/Product.js";
-import { Category } from "../models/Category.js";
+import { Category } from "../models/category.js";
 
 const BASE_SITE_URL = "https://www.express48.co.il";      // אתר החנות
 const BASE_API_URL =
