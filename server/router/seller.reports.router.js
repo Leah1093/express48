@@ -22,4 +22,12 @@ router.get(
   controller.productDetails.bind(controller)
 );
 
+// דשבורד - סיכום כללי עם גרפים
+router.get(
+  "/dashboard/metrics",
+  authMiddleware,
+  requireRoles("seller", "admin"),
+  controller.dashboardMetrics.bind(controller)
+);
+
 export { router as sellerReportsRouter };

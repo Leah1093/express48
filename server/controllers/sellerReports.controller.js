@@ -60,4 +60,33 @@ export class SellerReportsController {
       next(err);
     }
   }
+
+  async dashboardMetrics(req, res, next) {
+    try {
+      const role =
+        req.auth?.role ||
+        (Array.isArray(req.auth?.roles) ? req.auth.roles[0] : null);
+      const sellerId = req.auth?.sellerId;
+
+      if (role !== "seller" && role !== "admin") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
+      if (!sellerId) {
+        return res.status(400).json({ error: "Missing sellerId" });
+      }
+
+      const { from, to } = req.query;
+
+      const result = await service.getDashboardMetrics({
+        sellerId,
+        from,
+        to,
+      });
+
+      return res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
 }
