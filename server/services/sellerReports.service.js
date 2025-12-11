@@ -1,9 +1,9 @@
 // src/services/sellerReports.service.js
 import mongoose from "mongoose";
 import { Order } from "../models/order.js";
+import { Product } from "../models/Product.js";
 import { SellerProductsService } from "./sellerProducts.service.js";
 
-// שירות המוצרים של המוכר – כדי להביא את רשימת המוצרים
 const productsService = new SellerProductsService();
 
 const toDate = (v) => {
@@ -167,6 +167,204 @@ export class SellerReportsService {
     return {
       productId: String(productId),
       items: rows,
+    };
+  }
+
+  // --- דשבורד - סיכום כללי ---
+  async getDashboardMetrics({ sellerId, from, to }) {
+    const dFrom = toDate(from);
+    const dTo = toDate(to);
+
+    const dateFilter = {};
+    if (dFrom || dTo) {
+      dateFilter.orderDate = {};
+      if (dFrom) dateFilter.orderDate.$gte = dFrom;
+      if (dTo) dateFilter.orderDate.$lte = dTo;
+    }
+
+    // קודם - קבל את כל מוצרי המוכר
+    const sellerProducts = await Product.find({
+      sellerId: new mongoose.Types.ObjectId(String(sellerId)),
+      isDeleted: false,
+    }).select("_id");
+
+    const productIds = sellerProducts.map((p) => p._id);
+
+    if (productIds.length === 0) {
+      // אין מוצרים - אין הזמנות
+      return {
+        totalOrders: 0,
+        totalRevenue: 0,
+        activeProductsCount: 0,
+        topProducts: [],
+        ordersByStatus: [],
+        revenueByDate: [],
+      };
+    }
+
+    // 1. סה"כ הזמנות והכנסות - חפש הזמנות עם מוצרים של המוכר
+    const orderStats = await Order.aggregate([
+      {
+        $match: {
+          "items.productId": { $in: productIds },
+          ...dateFilter,
+        },
+      },
+      {
+        $unwind: "$items",
+      },
+      {
+        $match: {
+          "items.productId": { $in: productIds },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalOrders: { $sum: 1 },
+          totalRevenue: { $sum: "$items.price" },
+        },
+      },
+    ]);
+
+    const { totalOrders = 0, totalRevenue = 0 } = orderStats[0] || {};
+
+    // 2. מוצרים פעילים
+    const activeProductsCount = await Product.countDocuments({
+      sellerId: new mongoose.Types.ObjectId(String(sellerId)),
+      isDeleted: false,
+    });
+
+    // 3. Top 5 מוצרים בהכנסות - חפש את שם המוצר מה-Product collection
+    const topProducts = await Order.aggregate([
+      {
+        $match: {
+          "items.productId": { $in: productIds },
+          ...dateFilter,
+        },
+      },
+      {
+        $unwind: "$items",
+      },
+      {
+        $match: {
+          "items.productId": { $in: productIds },
+        },
+      },
+      {
+        $group: {
+          _id: "$items.productId",
+          soldQuantity: { $sum: "$items.quantity" },
+          totalRevenue: { $sum: "$items.price" },
+        },
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "productInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$productInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $sort: { totalRevenue: -1 },
+      },
+      {
+        $limit: 5,
+      },
+      {
+        $project: {
+          _id: 0,
+          productId: "$_id",
+          productTitle: "$productInfo.title",
+          soldQuantity: 1,
+          totalRevenue: 1,
+        },
+      },
+    ]);
+
+    // 4. סטטוס הזמנות
+    const ordersByStatus = await Order.aggregate([
+      {
+        $match: {
+          "items.productId": { $in: productIds },
+          ...dateFilter,
+        },
+      },
+      {
+        $unwind: "$items",
+      },
+      {
+        $match: {
+          "items.productId": { $in: productIds },
+        },
+      },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          status: "$_id",
+          count: 1,
+        },
+      },
+    ]);
+
+    // 5. הכנסות לפי תאריך
+    const revenueByDate = await Order.aggregate([
+      {
+        $match: {
+          "items.productId": { $in: productIds },
+          ...dateFilter,
+        },
+      },
+      {
+        $unwind: "$items",
+      },
+      {
+        $match: {
+          "items.productId": { $in: productIds },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$orderDate" },
+          },
+          revenue: { $sum: "$items.price" },
+          orders: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id",
+          revenue: 1,
+          orders: 1,
+        },
+      },
+    ]);
+
+    return {
+      totalOrders,
+      totalRevenue,
+      activeProductsCount,
+      topProducts,
+      ordersByStatus,
+      revenueByDate,
     };
   }
 }

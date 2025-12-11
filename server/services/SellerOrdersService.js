@@ -1,6 +1,6 @@
 import { CustomError } from "../utils/CustomError.js";
 import { Order } from "../models/order.js";
-import { Product } from "../models/product.js";
+import { Product } from "../models/Product.js";
 
 const ALLOWED_STATUSES = [
   "pending",

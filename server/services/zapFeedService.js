@@ -1,5 +1,6 @@
 // services/zapFeedService.js
 import { Product } from "../models/Product.js";
+import { Category } from "../models/category.js";
 
 // כתובת בסיס של האתר (אפשר לשנות ל-co.il / com איך שצריך)
 const BASE_SITE_URL =
