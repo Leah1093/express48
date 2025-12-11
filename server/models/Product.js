@@ -305,6 +305,8 @@ const productSchema = new mongoose.Schema({
 productSchema.index({ storeId: 1, sku: 1 }, { unique: true, sparse: true });
 productSchema.index({ storeId: 1, slug: 1 }, { unique: true, sparse: true });
 productSchema.index({ storeId: 1, gtin: 1 }, { unique: true, sparse: true });
+// CRITICAL: Unique index for variation SKUs to prevent race conditions
+productSchema.index({ storeId: 1, "variations.sku": 1 }, { unique: true, sparse: true });
 
 productSchema.index({ title: "text", brand: "text", model: "text", description: "text" });
 

@@ -357,4 +357,40 @@ export default class SellerProductsController {
       next(err);
     }
   }
+
+  /**
+   * Validate SKU uniqueness
+   * POST /seller/validate-sku
+   */
+  async validateSku(req, res, next) {
+    try {
+      const storeId = req.auth?.storeId || null;
+      const { sku, excludeProductId } = req.body || {};
+
+      if (!sku || !storeId) {
+        return res.status(400).json({ error: "Missing sku or storeId" });
+      }
+
+      try {
+        // This will throw CustomError if SKU is not unique
+        await service.assertSkuUnique(
+          sku,
+          storeId,
+          null, // excludeVariationId
+          excludeProductId || null // excludeProductId
+        );
+
+        // If no error thrown, SKU is unique
+        return res.json({ isUnique: true });
+      } catch (err) {
+        if (err?.message?.includes("already exists")) {
+          return res.json({ isUnique: false });
+        }
+        throw err;
+      }
+    } catch (err) {
+      console.error("validateSku error:", err);
+      next(err);
+    }
+  }
 }
