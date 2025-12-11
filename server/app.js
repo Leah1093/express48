@@ -154,9 +154,8 @@ app.use("/seller/reports", sellerReportsRouter);
 app.use("/payments/tranzila", tranzilaRouter);
 
 // error handler – תמיד בסוף
-app.use(errorHandler);
 app.use("/", zapFeedRoutes);
-
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 8080;
 dotenv.config();

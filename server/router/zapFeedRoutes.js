@@ -1,30 +1,30 @@
 // router/zapFeedRoutes.js
-import express from "express";
+import { Router } from "express";
 import {
+  buildZapCategoryIndex,
   buildZapFeedXml,
-  buildZapCategoriesXml,
 } from "../services/zapFeedService.js";
 
-const router = express.Router();
+const router = Router();
 
-// פיד מוצרים (אופציונלי: ?category=fullSlug)
-router.get("/zap-feed.xml", async (req, res, next) => {
+// עמוד רשימת קטגוריות – זה הקישור הראשי שאת נותנת ל-ZAP
+router.get("/zap", async (req, res, next) => {
   try {
-    const categoryFullSlug = req.query.category || null;
-    const xml = await buildZapFeedXml({ categoryFullSlug });
-    res.header("Content-Type", "application/xml; charset=utf-8");
-    res.send(xml);
+    const html = await buildZapCategoryIndex();
+    res.type("html").send(html);
   } catch (err) {
     next(err);
   }
 });
 
-// פיד TREE של קטגוריות
-router.get("/zap-tree.xml", async (req, res, next) => {
+// הפיד עצמו – כללי או לפי קטגוריה
+router.get("/zap-feed.xml", async (req, res, next) => {
   try {
-    const xml = await buildZapCategoriesXml();
-    res.header("Content-Type", "application/xml; charset=utf-8");
-    res.send(xml);
+    const { category } = req.query;
+    const xml = await buildZapFeedXml({
+      categoryKey: category || null,
+    });
+    res.type("application/xml").send(xml);
   } catch (err) {
     next(err);
   }

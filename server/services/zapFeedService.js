@@ -1,12 +1,24 @@
 // services/zapFeedService.js
 import { Product } from "../models/Product.js";
-import { Category } from "../models/Category.js";
 
-const BASE_SITE_URL = "https://www.express48.co.il";      // אתר החנות
-const BASE_API_URL =
-  process.env.ZAP_BASE_API_URL || "https://api.express48.co.il"; // כתובת API לפרודקשן
+// כתובת בסיס של האתר (אפשר לשנות ל-co.il / com איך שצריך)
+const BASE_SITE_URL =
+  process.env.PUBLIC_SITE_URL || "https://express48.co.il";
 
-// המרת טקסט לבטוח ל-XML
+// רשימת קטגוריות לזאפ
+export const ZAP_CATEGORIES = [
+  { key: "gaming", label: "ציוד גיימינג" },
+  { key: "tools", label: "כלי עבודה" },
+  { key: "home", label: "בית" },
+  { key: "car", label: "רכב" },
+  { key: "electrical-products", label: "מוצרי חשמל" },
+  { key: "computers-and-cellphones", label: "מחשבים וסלולר" },
+  { key: "cleaning", label: "ניקיון" },
+  { key: "sound", label: "סאונד" },
+  { key: "watches", label: "שעונים" },
+];
+
+// בריחת תווים ל-XML
 function xmlEscape(str = "") {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -16,24 +28,42 @@ function xmlEscape(str = "") {
     .replace(/'/g, "&apos;");
 }
 
-// קיצור טקסט לאורך מקסימלי
+// קיצור טקסט
 function shortText(str = "", max = 255) {
   const s = String(str).replace(/\s+/g, " ").trim();
   return s.length <= max ? s : s.slice(0, max - 1).trim() + "…";
 }
 
-// =========================
-// מיפוי מוצר בודד ל-ZAP
-// =========================
-function mapProductToZapXml(product) {
-  // slug של החנות (shry וכו)
-  const storeSlug =
-    product.storeId?.slug || product.storeId?.storeSlug || "shry";
+/**
+ * איסוף טקסט קטגוריה ממוצר – מכל השדות האפשריים.
+ * אם יש אצלך שמות אחרים, תוסיפי פה.
+ */
+function getProductCategoryText(product) {
+  const parts = [];
 
-  // כתובת המוצר באתר
+  if (product.category) parts.push(product.category);
+  if (product.categoryName) parts.push(product.categoryName);
+  if (product.categoryFullSlug) parts.push(product.categoryFullSlug);
+  if (product.categorySlug) parts.push(product.categorySlug);
+  if (Array.isArray(product.categories)) parts.push(...product.categories);
+  if (Array.isArray(product.categoryPath)) parts.push(...product.categoryPath);
+
+  return parts.join(" ").toLowerCase();
+}
+
+/**
+ * מיפוי מוצר לבלוק XML – לפי השמות ש-ZAP ביקשו
+ * product_url, product_name, shipment_cost, delivery_time וכו'
+ */
+function mapProductToZapXml(product) {
+  const storeSlug =
+    product.storeId && typeof product.storeId === "object"
+      ? product.storeId.slug || product.storeId.storeSlug || "express48"
+      : "express48";
+
   const productUrl = `${BASE_SITE_URL}/products/${storeSlug}/${product.slug}`;
 
-  const productName = shortText(product.title || "מוצר", 80);
+  const name = shortText(product.title || "מוצר", 80);
   const model = product.model || "";
   const details = shortText(
     product.metaDescription || product.description || "",
@@ -58,11 +88,7 @@ function mapProductToZapXml(product) {
       : 0;
 
   const manufacturer = product.brand || "";
-
-  // אחריות – גם משך וגם מי נותן, כפי שביקשו
-  const baseWarranty = product.warranty || "12 חודשים אחריות";
-  const warrantyProvider = product.supplier || product.brand || "היבואן";
-  const warranty = `${baseWarranty} ע\"י ${warrantyProvider}`;
+  const warranty = product.warranty || "";
 
   const image =
     (Array.isArray(product.images) && product.images[0]) ||
@@ -70,82 +96,161 @@ function mapProductToZapXml(product) {
     "";
 
   return `
-  <product>
-    <product_url>${xmlEscape(productUrl)}</product_url>
-    <product_name>${xmlEscape(productName)}</product_name>
-    <model>${xmlEscape(model)}</model>
-    <details>${xmlEscape(details)}</details>
-    <catalog_number>${xmlEscape(catalogNumber)}</catalog_number>
-    <product_code>${xmlEscape(productCode)}</product_code>
-    <currency>${xmlEscape(currency)}</currency>
-    <price>${price}</price>
-    <shipment_cost>${shipmentCost}</shipment_cost>
-    <delivery_time>${deliveryTime}</delivery_time>
-    <manufacturer>${xmlEscape(manufacturer)}</manufacturer>
-    <warranty>${xmlEscape(warranty)}</warranty>
-    <image>${xmlEscape(image)}</image>
-    <tax></tax>
-  </product>`;
+    <product>
+      <product_url>${xmlEscape(productUrl)}</product_url>
+      <product_name>${xmlEscape(name)}</product_name>
+      <model>${xmlEscape(model)}</model>
+      <details>${xmlEscape(details)}</details>
+      <catalog_number>${xmlEscape(catalogNumber)}</catalog_number>
+      <productcode>${xmlEscape(productCode)}</productcode>
+      <currency>${xmlEscape(currency)}</currency>
+      <price>${price}</price>
+      <shipment_cost>${shipmentCost}</shipment_cost>
+      <delivery_time>${deliveryTime}</delivery_time>
+      <manufacturer>${xmlEscape(manufacturer)}</manufacturer>
+      <warranty>${xmlEscape(warranty)}</warranty>
+      <image>${xmlEscape(image)}</image>
+      <tax></tax>
+    </product>`;
 }
 
-// =========================
-// פיד מוצרים (עם סינון קטגוריה אופציונלי)
-// =========================
-export async function buildZapFeedXml(options = {}) {
-  const { categoryFullSlug = null } = options;
+/**
+ * סינון מוצרים לפי קטגוריית ZAP
+ */
+function filterByZapCategory(products, categoryKey) {
+  if (!categoryKey) return products;
 
-  const query = {
+  const key = String(categoryKey).toLowerCase();
+
+  const filtered = products.filter((p) => {
+    const text = getProductCategoryText(p);
+    if (!text) return false;
+
+    switch (key) {
+      case "gaming":
+        return text.includes("גיימינג") || text.includes("gaming");
+
+      case "tools":
+        return (
+          text.includes("כלי עבודה") ||
+          text.includes("כלים") ||
+          text.includes("tools")
+        );
+
+      case "home":
+        return text.includes("בית") || text.includes("home");
+
+      case "car":
+        return text.includes("רכב") || text.includes("car");
+
+      case "electrical-products":
+        return (
+          text.includes("חשמל") ||
+          text.includes("מוצרי חשמל") ||
+          text.includes("electrical")
+        );
+
+      case "computers-and-cellphones":
+        return (
+          text.includes("מחשב") ||
+          text.includes("מחשבים") ||
+          text.includes("סלולרי") ||
+          text.includes("טלפון") ||
+          text.includes("cell") ||
+          text.includes("mobile")
+        );
+
+      case "cleaning":
+        return text.includes("ניקיון") || text.includes("clean");
+
+      case "sound":
+        return (
+          text.includes("סאונד") ||
+          text.includes("אודיו") ||
+          text.includes("רמקול") ||
+          text.includes("sound")
+        );
+
+      case "watches":
+        return text.includes("שעון") || text.includes("watch");
+
+      default:
+        return true;
+    }
+  });
+
+  // אם לא נמצא שום דבר – כדי שלא יהיה פיד ריק, נחזיר את כולם
+  return filtered.length ? filtered : products;
+}
+
+/**
+ * בניית פיד XML – לכל האתר או לקטגוריה
+ */
+export async function buildZapFeedXml({ categoryKey = null } = {}) {
+  const products = await Product.find({
     isDeleted: false,
     status: "published",
     visibility: "public",
     "price.amount": { $gt: 0 },
-  };
-
-  if (categoryFullSlug) {
-    query.categoryFullSlug = categoryFullSlug;
-  }
-
-  const products = await Product.find(query)
+  })
     .populate("storeId", "slug storeSlug")
     .lean();
 
-  const itemsXml = products.map(mapProductToZapXml).join("\n");
+  const filtered = filterByZapCategory(products, categoryKey);
+  const itemsXml = filtered.map(mapProductToZapXml).join("\n");
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <store>
   <products>
 ${itemsXml}
   </products>
 </store>`;
-
-  return xml;
 }
 
-// =========================
-// פיד TREE של קטגוריות
-// =========================
-export async function buildZapCategoriesXml() {
-  const categories = await Category.find({ isActive: true })
-    .sort({ depth: 1, order: 1, name: 1 })
-    .lean();
+/**
+ * עמוד אינדקס – רשימת קטגוריות עם לינקים ל-XML
+ */
+export async function buildZapCategoryIndex() {
+  const linksHtml = ZAP_CATEGORIES.map((cat) => {
+    return `
+      <li>
+        <a href="/zap-feed.xml?category=${cat.key}">
+          ${cat.label} (${cat.key})
+        </a>
+      </li>`;
+  }).join("\n");
 
-  const itemsXml = categories
-    .map((cat) => {
-      const categoryUrl = `${BASE_API_URL}/zap-feed.xml?category=${encodeURIComponent(
-        cat.fullSlug
-      )}`;
-      return `
-  <category>
-    <category_name>${xmlEscape(cat.name)}</category_name>
-    <category_url>${xmlEscape(categoryUrl)}</category_url>
-  </category>`;
-    })
-    .join("\n");
+  return `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <title>Express48 – ZAP Feed Categories</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; line-height: 1.6; }
+    h1 { font-size: 24px; margin-bottom: 16px; }
+    ul { list-style: none; padding: 0; }
+    li { margin: 8px 0; }
+    a { color: #0074d9; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code { background:#f5f5f5; padding:2px 4px; border-radius:3px; }
+  </style>
+</head>
+<body>
+  <h1>פיד ZAP – רשימת קטגוריות</h1>
+  <p>
+    לחיצה על כל קטגוריה תפתח קובץ XML בפורמט של ZAP
+    עם כל המוצרים השייכים לאותה קטגוריה.
+  </p>
+  <ul>
+${linksHtml}
+  </ul>
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<categories>
-${itemsXml}
-</categories>`;
+  <hr />
 
-  return xml;
+  <p>
+    פיד כללי (כל המוצרים): <br />
+    <a href="/zap-feed.xml"><code>/zap-feed.xml</code></a>
+  </p>
+</body>
+</html>`;
 }

@@ -23,7 +23,7 @@ export class TranzilaService {
    * בניית URL ל-iframenew.php של טרנזילה
    * משתמשים ב-supplier + myid כמו בדוגמה שקיבלת מהם
    */
-  static buildIframeUrl({ orderId, items, terminal, customerInfo }) {
+  static buildIframeUrl({ orderId, items, terminal, customerInfo, baseUrl }) {
     if (!orderId) {
       throw new CustomError('Missing orderId', 400);
     }
