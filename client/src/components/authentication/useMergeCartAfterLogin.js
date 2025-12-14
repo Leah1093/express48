@@ -11,7 +11,6 @@ export default function useMergeCartAfterLogin() {
 
   const mergeCartAfterLogin = async (userId) => {
     const localCart = getLocalCart();
-    console.log("📦 localCart:", localCart);
 
     if (localCart.length > 0) {
       const itemsToMerge = localCart.map((item) => ({

@@ -24,7 +24,6 @@ export default function ProductDetails({
   };
 
   useEffect(() => {
-    console.log("Product details:", product);
   }, []);
 
   // מסיר תגיות HTML מהתיאור

@@ -3,11 +3,12 @@ import mongoose from "mongoose";
 import { Order } from "../models/order.js";
 import { CustomError } from "../utils/CustomError.js";
 import { Product } from "../models/Product.js";
+import { Address } from "../models/address.js";
 
 export class OrderService {
   async createOrder(userId, data) {
     try {
-      const { addressId, notes, items } = data;
+      const { addressId, guestAddress, notes, items } = data;
 
       if (!items || items.length === 0) {
         throw new CustomError("Order must contain at least one item", 400);
@@ -24,9 +25,36 @@ export class OrderService {
         0
       );
 
+      // טיפול בכתובת - אם יש guestAddress, ניצור כתובת זמנית
+      let finalAddressId = addressId;
+      if (!addressId && guestAddress) {
+        // יצירת כתובת זמנית לאורח
+        const tempAddress = new Address({
+          userId: null, // אורח
+          fullName: guestAddress.fullName,
+          phone: guestAddress.phone,
+          country: guestAddress.country || "IL",
+          city: guestAddress.city,
+          street: guestAddress.street,
+          houseNumber: guestAddress.houseNumber,
+          apartment: guestAddress.apartment,
+          zip: guestAddress.zip,
+          notes: guestAddress.notes || "",
+          isDefault: false,
+        });
+        await tempAddress.save();
+        finalAddressId = tempAddress._id;
+      }
+
+      // אם אין כתובת בכלל - שגיאה
+      if (!finalAddressId && !guestAddress) {
+        throw new CustomError("Address is required", 400);
+      }
+
       const order = new Order({
-        userId,
-        addressId,
+        userId: userId || null, // null לאורחים
+        addressId: finalAddressId || null,
+        guestAddress: guestAddress || undefined, // שמירת כתובת ישירה גם אם יצרנו Address
         items,
         notes: notes || "",
         totalAmount,
