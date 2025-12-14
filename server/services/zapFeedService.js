@@ -115,74 +115,99 @@ function mapProductToZapXml(product) {
     </product>`;
 }
 
-/**
- * סינון מוצרים לפי קטגוריית ZAP
- */
 function filterByZapCategory(products, categoryKey) {
   if (!categoryKey) return products;
 
   const key = String(categoryKey).toLowerCase();
 
-  const filtered = products.filter((p) => {
-    const text = getProductCategoryText(p);
-    if (!text) return false;
+  return products.filter((p) => {
+    const categoryText = [
+      p.category,            
+      p.categoryName,            
+      p.mainCategoryName,       
+      p.categoryFullSlug,      
+      Array.isArray(p.categories)
+        ? p.categories.map((c) => c.name || c.slug || "").join(" ")
+        : "",
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    // אם אין לנו כלום על הקטגוריה – המוצר לא יכנס לאף קטגוריית ZAP
+    if (!categoryText) return false;
 
     switch (key) {
       case "gaming":
-        return text.includes("גיימינג") || text.includes("gaming");
+        return (
+          categoryText.includes("גיימינג") ||
+          categoryText.includes("gaming")
+        );
 
       case "tools":
         return (
-          text.includes("כלי עבודה") ||
-          text.includes("כלים") ||
-          text.includes("tools")
+          categoryText.includes("כלי עבודה") ||
+          categoryText.includes("כלים") ||
+          categoryText.includes("tools")
         );
 
       case "home":
-        return text.includes("בית") || text.includes("home");
+        return (
+          categoryText.includes("בית") ||
+          categoryText.includes("home")
+        );
 
       case "car":
-        return text.includes("רכב") || text.includes("car");
+        return (
+          categoryText.includes("רכב") ||
+          categoryText.includes("car")
+        );
 
       case "electrical-products":
         return (
-          text.includes("חשמל") ||
-          text.includes("מוצרי חשמל") ||
-          text.includes("electrical")
+          categoryText.includes("מוצרי חשמל") ||
+          categoryText.includes("חשמל") ||
+          categoryText.includes("electrical")
         );
 
       case "computers-and-cellphones":
         return (
-          text.includes("מחשב") ||
-          text.includes("מחשבים") ||
-          text.includes("סלולרי") ||
-          text.includes("טלפון") ||
-          text.includes("cell") ||
-          text.includes("mobile")
+          categoryText.includes("מחשב") ||
+          categoryText.includes("מחשבים") ||
+          categoryText.includes("סלולרי") ||
+          categoryText.includes("טלפון") ||
+          categoryText.includes("cell") ||
+          categoryText.includes("phone")
         );
 
       case "cleaning":
-        return text.includes("ניקיון") || text.includes("clean");
+        return (
+          categoryText.includes("ניקיון") ||
+          categoryText.includes("clean")
+        );
 
       case "sound":
         return (
-          text.includes("סאונד") ||
-          text.includes("אודיו") ||
-          text.includes("רמקול") ||
-          text.includes("sound")
+          categoryText.includes("סאונד") ||
+          categoryText.includes("רמקול") ||
+          categoryText.includes("אודיו") ||
+          categoryText.includes("sound") ||
+          categoryText.includes("audio")
         );
 
       case "watches":
-        return text.includes("שעון") || text.includes("watch");
+        return (
+          categoryText.includes("שעון") ||
+          categoryText.includes("שעונים") ||
+          categoryText.includes("watch")
+        );
 
       default:
-        return true;
+        return false;
     }
   });
-
-  // אם לא נמצא שום דבר – כדי שלא יהיה פיד ריק, נחזיר את כולם
-  return filtered.length ? filtered : products;
 }
+
 
 /**
  * בניית פיד XML – לכל האתר או לקטגוריה
