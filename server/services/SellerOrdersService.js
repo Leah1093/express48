@@ -11,7 +11,6 @@ const ALLOWED_STATUSES = [
   "paid",
 ];
 
-
 export class SellerOrdersService {
   /**
    * @param {Object} params
@@ -34,9 +33,7 @@ export class SellerOrdersService {
       return [];
     }
 
-    const productIdSet = new Set(
-      sellerProducts.map((p) => p._id.toString())
-    );
+    const productIdSet = new Set(sellerProducts.map((p) => p._id.toString()));
 
     const productMap = new Map(
       sellerProducts.map((p) => [p._id.toString(), p])
@@ -71,6 +68,7 @@ export class SellerOrdersService {
         select: "username email phone",
       })
       .lean();
+      
 
     // 4) מיפוי להזמנות עם פריטים רק של המוכר
     let mapped = rawOrders.map((order) => {
@@ -88,7 +86,14 @@ export class SellerOrdersService {
         return {
           productId: it.productId.toString(),
           quantity: it.quantity,
-          price: it.price,
+          price:
+            typeof it.priceAfterDiscount === "number"
+              ? it.priceAfterDiscount
+              : it.price,
+          variationId: it.variationId
+            ? it.variationId.toString?.() ?? it.variationId
+            : undefined,
+          variationAttributes: it.variationAttributes ?? undefined,
           productSnapshot: {
             title: product?.title,
             sku: product?.sku,
@@ -105,11 +110,7 @@ export class SellerOrdersService {
 
       const buyerName = user.username || user.email || undefined;
 
-      const fullAddress = [
-        addr.street,
-        addr.city,
-        addr.zip,
-      ]
+      const fullAddress = [addr.street, addr.city, addr.zip]
         .filter(Boolean)
         .join(", ");
 
@@ -177,55 +178,47 @@ export class SellerOrdersService {
   /**
    * עדכון סטטוס הזמנה ע"י מוכר
    */
-async updateOrderStatusForSeller({ sellerId, orderId, status }) {
-  if (!sellerId) {
-    throw new CustomError("לא נמצא מזהה מוכר בחשבון", 403);
-  }
-
-  if (!orderId) {
-    throw new CustomError("חסר מזהה הזמנה", 400);
-  }
-
-  if (!ALLOWED_STATUSES.includes(status)) {
-    throw new CustomError("סטטוס לא חוקי", 400);
-  }
-
-  // 1) מוצרים של המוכר
-  const sellerProducts = await Product.find(
-    { sellerId },
-    { _id: 1 }
-  ).lean();
-
-  if (!sellerProducts.length) {
-    throw new CustomError("אין למוכר זה מוצרים במערכת", 404);
-  }
-
-  const productIdSet = new Set(
-    sellerProducts.map((p) => p._id.toString())
-  );
-
-  // 2) עדכון ישיר של סטטוס להזמנה שמכילה מוצר של המוכר
-  const updated = await Order.findOneAndUpdate(
-    {
-      _id: orderId,
-      "items.productId": { $in: Array.from(productIdSet) },
-    },
-    {
-      $set: { status },
-    },
-    {
-      new: true,
-      runValidators: false, // ⚠️ לא מריצים ולידציה מלאה כדי לא ליפול על addressId חסר
+  async updateOrderStatusForSeller({ sellerId, orderId, status }) {
+    if (!sellerId) {
+      throw new CustomError("לא נמצא מזהה מוכר בחשבון", 403);
     }
-  ).lean();
 
-  if (!updated) {
-    throw new CustomError(
-      "לא נמצאה הזמנה למוכר זה עם המוצר המבוקש",
-      404
-    );
+    if (!orderId) {
+      throw new CustomError("חסר מזהה הזמנה", 400);
+    }
+
+    if (!ALLOWED_STATUSES.includes(status)) {
+      throw new CustomError("סטטוס לא חוקי", 400);
+    }
+
+    // 1) מוצרים של המוכר
+    const sellerProducts = await Product.find({ sellerId }, { _id: 1 }).lean();
+
+    if (!sellerProducts.length) {
+      throw new CustomError("אין למוכר זה מוצרים במערכת", 404);
+    }
+
+    const productIdSet = new Set(sellerProducts.map((p) => p._id.toString()));
+
+    // 2) עדכון ישיר של סטטוס להזמנה שמכילה מוצר של המוכר
+    const updated = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        "items.productId": { $in: Array.from(productIdSet) },
+      },
+      {
+        $set: { status },
+      },
+      {
+        new: true,
+        runValidators: false, // ⚠️ לא מריצים ולידציה מלאה כדי לא ליפול על addressId חסר
+      }
+    ).lean();
+
+    if (!updated) {
+      throw new CustomError("לא נמצאה הזמנה למוכר זה עם המוצר המבוקש", 404);
+    }
+
+    return { success: true };
   }
-
-  return { success: true };
-}
 }
