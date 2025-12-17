@@ -5,7 +5,8 @@ const addressSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
+      default: null, // null לאורחים
     },
 
     // לא חובה במונגוס – חובה ב-UI

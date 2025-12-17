@@ -202,10 +202,32 @@ export class TranzilaController {
       const orderService = new OrderService();
       const order = await orderService.getByOrderId(orderId);
 
+      // תמיכה באורחים - אם יש guestAddress, נשתמש בו
+      let customerEmail = '';
+      let customerName = 'לקוח';
+      let customerPhone = '';
+
+      if (order?.userId) {
+        // משתמש מחובר
+        customerEmail = order.userId?.email || req.user?.email || '';
+        customerName = order.userId?.username || req.user?.username || 'לקוח';
+        customerPhone = order.userId?.phone || req.user?.phone || '';
+      } else if (order?.guestAddress) {
+        // אורח - נשתמש בכתובת האורח
+        customerEmail = order.guestAddress?.email || '';
+        customerName = order.guestAddress?.fullName || 'לקוח';
+        customerPhone = order.guestAddress?.phone || '';
+      } else {
+        // fallback
+        customerEmail = req.user?.email || '';
+        customerName = req.user?.username || 'לקוח';
+        customerPhone = req.user?.phone || '';
+      }
+
       const customerInfo = {
-        email: order?.userId?.email || req.user?.email || '',
-        name: order?.userId?.username || req.user?.username || 'לקוח',
-        phone: order?.userId?.phone || req.user?.phone || '',
+        email: customerEmail,
+        name: customerName,
+        phone: customerPhone,
       };
 
       const { iframeUrl, amount } = TranzilaService.buildIframeUrl({
