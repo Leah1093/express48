@@ -156,7 +156,7 @@ export class OrderService {
       const order = await Order.findOne(query)
         .populate("items.productId", "title price")
         .populate("addressId")
-        .populate("userId", "username email");
+        .populate("userId", "username email phone firstName lastName mobile");
 
       if (!order) {
         throw new CustomError("Order not found", 404);
@@ -224,7 +224,7 @@ export class OrderService {
       const order = await Order.findOne(query)
         .populate("items.productId", "title price")
         .populate("addressId")
-        .populate("userId", "username email");
+        .populate("userId", "username email phone firstName lastName mobile");
 
       return order;
     } catch (err) {
@@ -261,10 +261,6 @@ export class OrderService {
   // מסמנת הזמנה כ"paid" ומעדכנת מלאי ומספר רכישות
  async markPaid(orderIdOrCode, paymentInfo = {}) {
   try {
-    console.log("[OrderService] markPaid CALLED with:", {
-      orderIdOrCode,
-      paymentInfo,
-    });
 
     // נחפש גם לפי _id של מונגו וגם לפי orderId טקסטואלי (ORD-123...)
     const query = mongoose.isValidObjectId(orderIdOrCode)
@@ -281,16 +277,6 @@ export class OrderService {
       throw new CustomError("Order not found", 404);
     }
 
-    console.log("[OrderService] order BEFORE update:", {
-      id: order._id,
-      status: order.status,
-      payment: order.payment,
-      items: order.items.map((it) => ({
-        productId: it.productId,
-        quantity: it.quantity,
-        variationId: it.variationId,
-      })),
-    });
 
     // אם כבר שולם – לא עושים שוב
     if (order.payment?.status === "paid") {
@@ -396,10 +382,7 @@ export class OrderService {
       paymentInfo,
     });
 
-    console.log(
-      "[OrderService] Order marked as paid and inventory updated:",
-      order._id
-    );
+    // Order marked as paid and inventory updated successfully
 
     return order;
   } catch (err) {

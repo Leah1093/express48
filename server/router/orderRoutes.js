@@ -21,7 +21,7 @@
 import { Router } from "express";
 import { OrderController } from "../controllers/orderController.js";
 import { authMiddleware } from "../middlewares/auth.js";
-import { authOptional } from "../middlewares/authOptional.js";
+import { authOptionalWithAuth } from "../middlewares/authOptionalWithAuth.js";
 import { validate } from "../middlewares/validate.js";
 import {
   updateStatusSchema,
@@ -58,8 +58,8 @@ if (process.env.NODE_ENV !== "production") {
   });
 }
 
-// יצירת הזמנה - אפשרות לאורחים (authOptional)
-router.post("/", authOptional, validate(createOrderSchema), controller.create);
+// יצירת הזמנה - אם יש טוקן משתמש ב-authMiddleware, אחרת אורח
+router.post("/", authOptionalWithAuth, validate(createOrderSchema), controller.create);
 
 // שאר הפעולות - רק למשתמשים מחוברים
 router.use(authMiddleware);

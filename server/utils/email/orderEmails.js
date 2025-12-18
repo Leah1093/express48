@@ -57,13 +57,18 @@ function buildOrderHtml({
   const orderId = order._id?.toString() || "";
   const createdAt = formatOrderDate(order.createdAt);
 
+  // שם לקוח - קודם firstName/lastName, אחרת username, אחרת fullName מהכתובת
+  // וודא שאנחנו משתמשים בנתונים הנכונים
   const customerName =
-    user?.firstName || user?.lastName
+    (user?.firstName || user?.lastName)
       ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
-      : user?.username || user?.name || "";
+      : (user?.username || user?.name || address?.fullName || "");
 
-  const customerEmail = user?.email || "";
-  const customerPhone = address?.phone || user?.phone || user?.mobile || "";
+  // אימייל - קודם מ-user, אחרת מ-address (guestAddress)
+  const customerEmail = (user && user.email) ? user.email : (address?.email || "");
+  // טלפון - קודם מ-user, אחרת מ-address
+  const customerPhone = (user && (user.phone || user.mobile)) ? (user.phone || user.mobile) : (address?.phone || "");
+  
 
   const title =
     mode === "customer" ? "תודה על ההזמנה שלך" : "התקבלה הזמנה חדשה באתר";
@@ -93,8 +98,19 @@ function buildOrderHtml({
       <div style="margin-top:4px;font-size:14px;color:#111">
         <div>${address.fullName || customerName || ""}</div>
         <div>${address.street || ""} ${address.houseNumber || ""}</div>
-        <div>${address.city || ""} ${address.zipCode || ""}</div>
+        <div>${address.city || ""} ${address.zip || address.zipCode || ""}</div>
         <div>${address.phone || ""}</div>
+        ${address.notes ? `<div style="margin-top:8px;font-size:13px;color:#666;font-style:italic;">הערה: ${address.notes}</div>` : ""}
+      </div>
+    `
+    : "";
+
+  // הערה למשלוח מההזמנה
+  const orderNotesHtml = order?.notes
+    ? `
+      <div style="margin-top:16px;padding:12px;background:#f9f9f9;border-radius:6px;border-right:3px solid #ff6500;">
+        <h4 style="margin:0 0 6px 0;font-size:14px;color:#111;font-weight:600;">הערה למשלוח:</h4>
+        <p style="margin:0;font-size:13px;color:#333;line-height:1.5;">${order.notes}</p>
       </div>
     `
     : "";
@@ -251,6 +267,8 @@ function buildOrderHtml({
           כתובת משלוח
         </h3>
         ${addressHtml}
+        
+        ${orderNotesHtml}
 
         <!-- טבלת פרטי הזמנה -->
         <h3 style="margin:24px 0 10px 0;font-size:15px;color:#111;">
@@ -297,8 +315,42 @@ export async function sendOrderCreatedEmails(order) {
   try {
     if (!order) return;
 
-    const user = order.userId || {};
-    const address = order.addressId || {};
+    // תמיכה באורחים - אם אין userId, נשתמש ב-guestAddress
+    // user יכול להיות אובייקט populate או null
+    let user = {};
+    if (order.userId) {
+      if (typeof order.userId === 'object' && order.userId._id) {
+        // userId הוא אובייקט populate - יש לנו את כל הנתונים
+        user = order.userId;
+      } else {
+        // userId הוא רק ID - נצטרך לשלוף את הנתונים, אבל בינתיים נשתמש ב-guestAddress
+        user = {};
+      }
+    }
+    
+    const guestAddress = order.guestAddress || {};
+    
+    // כתובת - קודם addressId (אם יש populate), אחרת guestAddress
+    let address = {};
+    if (order.addressId && typeof order.addressId === 'object' && order.addressId._id) {
+      // addressId הוא אובייקט populate
+      address = order.addressId;
+    } else if (order.addressId && typeof order.addressId === 'string') {
+      // addressId הוא רק ID - נשתמש ב-guestAddress אם יש
+      address = guestAddress;
+    } else {
+      // אין addressId - נשתמש ב-guestAddress
+      address = guestAddress;
+    }
+    
+    // אם יש guestAddress עם שדות ו-אין addressId populate - נשתמש בו
+    // (רק לאורחים - אם יש משתמש מחובר עם addressId, לא נחליף)
+    if (!order.addressId || (typeof order.addressId === 'string' && !address._id)) {
+      if (guestAddress && (guestAddress.fullName || guestAddress.city || guestAddress.street)) {
+        address = guestAddress;
+      }
+    }
+    
     const items = Array.isArray(order.items) ? order.items : [];
 
     const rawProductIds = items.map((it) => it.productId).filter(Boolean);
@@ -331,9 +383,44 @@ export async function sendOrderCreatedEmails(order) {
     const subjectCustomer = `תודה על ההזמנה שלך (מספר ${orderId})`;
     const subjectAdmin = `התקבלה הזמנה חדשה באתר (מספר ${orderId})`;
 
+    // יצירת אובייקט user משולב - משתמש מחובר או אורח
+    // אם user הוא אובייקט populate, יש לנו את כל הנתונים - נשתמש בו ישירות
+    // אם לא, נשתמש ב-guestAddress
+    let customerUser = {};
+    
+    // בדיקה אם user הוא אובייקט populate (יש לו _id או email/username)
+    const isPopulatedUser = user && typeof user === 'object' && (user._id || user.email || user.username);
+    
+    if (isPopulatedUser) {
+      // משתמש מחובר עם populate - נשתמש בנתונים שלו ישירות
+      // חשוב: נשתמש ב-user כמו שהוא, לא נשנה אותו
+      customerUser = {
+        ...user, // כל הנתונים מהמשתמש
+        email: user.email || null,
+        username: user.username || null,
+        phone: user.phone || user.mobile || null,
+        firstName: user.firstName || null,
+        lastName: user.lastName || null,
+        mobile: user.mobile || null,
+        name: user.name || user.username || null,
+      };
+    } else {
+      // אורח - נשתמש ב-guestAddress
+      customerUser = {
+        email: guestAddress?.email || null,
+        username: guestAddress?.fullName || null,
+        phone: guestAddress?.phone || address?.phone || null,
+        firstName: null,
+        lastName: null,
+        mobile: null,
+        name: guestAddress?.fullName || null,
+      };
+    }
+    
+
     const htmlCustomer = buildOrderHtml({
       order,
-      user,
+      user: customerUser,
       address,
       items,
       totalAmount,
@@ -343,7 +430,7 @@ export async function sendOrderCreatedEmails(order) {
 
     const htmlAdmin = buildOrderHtml({
       order,
-      user,
+      user: customerUser,
       address,
       items,
       totalAmount,
@@ -351,12 +438,16 @@ export async function sendOrderCreatedEmails(order) {
       productMap,
     });
 
-    if (user?.email) {
+    // שליחת מייל ללקוח - משתמש מחובר או אורח (אם יש email)
+    const customerEmail = user?.email || guestAddress?.email;
+    if (customerEmail) {
       await sendEmail({
-        to: user.email,
+        to: customerEmail,
         subject: subjectCustomer,
         html: htmlCustomer,
       });
+    } else {
+      console.warn("[orderEmails] No customer email found for order", orderId);
     }
 
     const adminTo = ADMIN_EMAIL || process.env.EMAIL_USER;

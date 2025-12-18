@@ -28,6 +28,7 @@ console.log(token)
       sellerId: p.sellerId || null,
       ...p,
     };
+console.log( req.user)
 
     // השלמת sellerId אם חסר ולמשתמש יש role של מוכר
     const isSeller = req.user.role === "seller" || (req.user.roles || []).includes("seller");

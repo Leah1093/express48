@@ -11,7 +11,9 @@ export class OrderController {
       // תמיכה באורחים - req.user יכול להיות null
       const userId = req.user?.userId || null;
       const { couponCode, ...orderPayload } = req.body;
-
+console.log("userId",userId)
+console.log("req.body",req.body)
+console.log("orderPayload",orderPayload)
       const order = await orderService.createOrder(userId, orderPayload);
       
       // קופונים רק למשתמשים מחוברים
