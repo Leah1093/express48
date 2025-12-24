@@ -14,14 +14,18 @@ export class OrderService {
         if (typeof it.price !== "number" || typeof it.quantity !== "number") {
           throw new CustomError("Each item must have price and quantity", 400);
         }
+        // שדות נוספים כמו affiliateUser / affiliateRefRaw ייכנסו אוטומטית לפי הסכמה
       }
 
-      const totalAmount = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
+      const totalAmount = items.reduce(
+        (sum, it) => sum + it.price * it.quantity,
+        0
+      );
 
       const order = new Order({
         userId,
         addressId,
-        items,
+        items, // כאן יכולים להיות גם affiliateUser / affiliateRefRaw
         notes: notes || "",
         totalAmount,
       });
@@ -108,7 +112,7 @@ export class OrderService {
         .populate("items.productId", "title price")
         .populate("addressId")
         .populate("userId", "username email");
-      
+
       return order;
     } catch (err) {
       throw new CustomError("Failed to fetch order by ID", 500);
@@ -121,19 +125,35 @@ export class OrderService {
       if (!order) {
         throw new CustomError("Order not found", 404);
       }
-
+      if (order.payment?.status === "paid" || order.status === "paid") {
+        return order;
+      }
       order.payment = {
-        status: 'paid',
-        gateway: paymentDetails.gateway || 'tranzila',
+        status: "paid",
+        gateway: paymentDetails.gateway || "tranzila",
         transactionId: paymentDetails.transaction_index,
         paidAt: new Date(),
-        details: paymentDetails
+        details: paymentDetails,
       };
-
-      order.status = 'paid';
+      order.status = "paid";
+      // עדכון מלאי ורכישות
+      for (const item of order.items) {
+        const product = await import("../models/product.js").then(m => m.Product.findById(item.productId));
+        if (product) {
+          if (item.variationId) {
+            const variation = product.variations.id(item.variationId);
+            if (variation) {
+              variation.stock = Math.max(0, (variation.stock || 0) - item.quantity);
+              variation.purchases = (variation.purchases || 0) + item.quantity;
+            }
+          }
+          product.stock = Math.max(0, (product.stock || 0) - item.quantity);
+          product.purchases = (product.purchases || 0) + item.quantity;
+          await product.save();
+        }
+      }
       await order.save();
-      
-      console.log('[OrderService] Order marked as paid:', orderId);
+      console.log("[OrderService] Order marked as paid:", orderId);
       return order;
     } catch (err) {
       if (err instanceof CustomError) throw err;
@@ -154,13 +174,13 @@ export class OrderService {
 
       order.gatewayLog.push({
         timestamp: new Date(),
-        ...eventData
+        ...eventData,
       });
 
       await order.save();
       return order;
     } catch (err) {
-      console.error('[OrderService] Failed to log gateway event:', err);
+      console.error("[OrderService] Failed to log gateway event:", err);
       return null;
     }
   }

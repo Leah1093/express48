@@ -19,18 +19,30 @@ const cartItemSchema = new mongoose.Schema({
   unitPrice: {
     type: Number,
     required: true
-  }, // חדש
+  }, // מחיר ליחידה בזמן ההוספה
   snapshot: {
     attributes: { type: Map, of: String }, // צבע, מידה וכו'
     images: [String], // רק התמונות של הווריאציה בזמן ההוספה
     price: Number,    // המחיר בזמן ההוספה (לחשבונית יציבה)
     discount: { type: Object }, // אם צריך לשמר הנחה ספציפית
   },
+
+  // 🔹 שיווק שותפים – מי הביא את המוצר הזה לעגלה
+  affiliateUser: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',      // אותו ref כמו בשדה userId הראשי
+    default: null,
+  },
+  // ערך גולמי שהגיע מהפרונט (?ref=...), אם תרצי לוגים/דיבוג
+  affiliateRefRaw: {
+    type: String,
+    default: null,
+  },
+
   selected: {
     type: Boolean,
-    default: true  // ✅ כל מוצר חדש נבחר אוטומטית
-  } // חדש: נבחר לתשלום או לא
-
+    default: true  // כל מוצר חדש נבחר אוטומטית לתשלום
+  }
 });
 
 const cartSchema = new mongoose.Schema({

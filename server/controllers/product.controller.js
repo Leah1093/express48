@@ -16,7 +16,7 @@ export class ProductController {
   getAllProducts = async (req, res, next) => {
     try {
       const products = await productService.getAllProductsService();
-      res.json( products );
+      res.json({ items: products, meta: { total: products.length } });
     } catch (err) {
       next(new CustomError("שגיאה בשליפת מוצרים", 500));
     }
@@ -56,7 +56,7 @@ export class ProductController {
       const pageNum = Math.max(1, Number(req.query.page) || 1);
       const perPage = Math.min(100, Math.max(1, Number(req.query.limit) || 24));
 
-      // שימי לב: השדה צריך להתאים לסכמה שלך!
+      // שימי לב: השדה צריך להתאים לסchema שלך!
       // אם את שומרת fullSlug בשדה product.categoryFullSlug:
       const filter = {
         isDeleted: false,
@@ -120,7 +120,8 @@ export class ProductController {
         limit: Number(limit) || 24,
         sort,
       });
-      res.json(result);
+      // ודא שהפורמט תואם ל-client
+      res.json({ items: result.items || result, meta: result.meta || { total: (result.items || result).length } });
     } catch (err) {
       next(
         err instanceof CustomError

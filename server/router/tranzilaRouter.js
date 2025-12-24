@@ -1,4 +1,3 @@
-
 // server/router/tranzilaRouter.js
 import { Router } from 'express';
 import bodyParser from 'body-parser';
@@ -21,6 +20,12 @@ router.post(
   bodyParser.urlencoded({ extended: false }),
   TranzilaController.webhook
 );
+
+/**
+ * POST /payments/tranzila/confirm
+ * אישור תשלום מהפרונט (idempotent)
+ */
+router.post('/confirm', TranzilaController.confirm);
 
 // אופציונלי – debug לבדוק שהנתיב עובד
 router.get('/debug', (req, res) => {

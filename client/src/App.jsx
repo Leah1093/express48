@@ -85,6 +85,9 @@ import ThankYou from "./components/payments/pages/ThankYou";
 import Cancelled from "./components/payments/pages/Cancelled";
 import MockPay from "./components/payments/pages/MockPay";
 
+// ⭐ חדש: ייבוא פונקציה ששומרת את ה-ref מה-URL
+import { saveReferralFromUrl } from "./lib/affiliateRef";
+
 function App() {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -102,6 +105,11 @@ function App() {
   } = useGetCurrentUserQuery(undefined, {
     skip: !!user,
   });
+
+  // ⭐ חדש: לשמור ref מה-URL (אם יש) בטעינת האפליקציה
+  useEffect(() => {
+    saveReferralFromUrl();
+  }, []);
 
   // רק לראות שה-API URL מוגדר
   useEffect(() => {
@@ -154,7 +162,6 @@ function App() {
           <Route path="products" element={<ProductsPage />} />
 
           {/* עמוד מוצר לפי קטגוריה+סלאג */}
-
           <Route
             path="/products/by-category/*"
             element={<ProductsByCategoryPage />}
@@ -168,10 +175,14 @@ function App() {
 
           {/* מועדפים וקטגוריות */}
           <Route path="/favorites" element={<FavoritesList />} />
-          <Route path="/categories/manage" element={<CategoryManagementPage />} />
-
-          <Route path="/categories/ManagmentCategory" element={<ManageRootCategories />} />
-
+          <Route
+            path="/categories/manage"
+            element={<CategoryManagementPage />}
+          />
+          <Route
+            path="/categories/ManagmentCategory"
+            element={<ManageRootCategories />}
+          />
 
           {/* זרימת קנייה */}
           <Route element={<CartLayout />}>
@@ -210,7 +221,6 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/account" element={<AccountLayout />}>
-            {/* ברירת מחדל – הפרופיל שלי */}
             <Route index element={<Profile />} />
             <Route path="profile" element={<Profile />} />
             <Route path="orders" element={<Orders />} />
@@ -220,11 +230,6 @@ function App() {
             <Route path="payments" element={<Payments />} />
             <Route path="customerService" element={<CustomerService />} />
             <Route path="policy-security" element={<PolicySecurity />} />
-
-            {/* אם תרצי עמוד נפרד לדאשבורד: */}
-            {/* <Route path="dashboard" element={<Dashboard />} /> */}
-            {/* אם תרצי עמוד לוגאאוט נפרד: */}
-            {/* <Route path="logout" element={<Logout />} /> */}
           </Route>
 
           {/* מוכר / אדמין */}
@@ -263,7 +268,7 @@ function App() {
             <Route path="coupons" element={<CouponForm />} />
           </Route>
 
-          {/* זרימת תשלום לדוגמה (לא חלק מעגלת הקניות, כדי לא להתנגש) */}
+          {/* זרימת תשלום לדוגמה */}
           <Route path="/pay/checkout" element={<Checkout />} />
           <Route path="/pay/success" element={<ThankYou />} />
           <Route path="/pay/cancel" element={<Cancelled />} />

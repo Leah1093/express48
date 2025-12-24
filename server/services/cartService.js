@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Cart } from "../models/cart.js";
 import { Product } from "../models/product.js";
 import { cartQueries } from "../mongoQueries/cartQueries.js";
@@ -14,8 +15,37 @@ export class CartService {
     return cart || { userId, items: [] };
   }
 
-  async addToCart(userId, productId, variationId = null, quantity = 1) {
+  /**
+   * הוספה לעגלה
+   * @param {ObjectId} userId - המשתמש המחובר
+   * @param {ObjectId} productId - המוצר
+   * @param {ObjectId|null} variationId - וריאציה (אם יש)
+   * @param {number} quantity - כמות
+   * @param {string|null} affiliateRef - מזהה שהגיע מה-?ref= בקישור (userId של המפיץ)
+   */
+  async addToCart(
+    userId,
+    productId,
+    variationId = null,
+    quantity = 1,
+    affiliateRef = null
+  ) {
     let cart = await Cart.findOne(cartQueries.findByUserId(userId));
+
+    // 🔹 הכנה ללוגיקת שיווק שותפים
+    let affiliateUser = null;
+    let affiliateRefRaw = null;
+
+    if (affiliateRef) {
+      affiliateRefRaw = String(affiliateRef);
+
+      // אם זה ObjectId תקין, ולא אותו משתמש שקונה – נשמור אותו
+      if (mongoose.Types.ObjectId.isValid(affiliateRefRaw)) {
+        if (!userId || String(userId) !== affiliateRefRaw) {
+          affiliateUser = new mongoose.Types.ObjectId(affiliateRefRaw);
+        }
+      }
+    }
 
     // --- ✨ טיפול במוצרים עם וריאציה ✨ ---
     if (variationId) {
@@ -31,6 +61,10 @@ export class CartService {
       const snapshot = {
         attributes: variation.attributes,
         images: variation.images,
+        image: Array.isArray(variation.images) && variation.images.length > 0 ? variation.images[0] : undefined,
+        title: prod.title,
+        brand: prod.brand,
+        shortDescription: prod.shortDescription || prod.description || "",
         price: unitPrice,
         discount: variation.discount || null,
       };
@@ -38,7 +72,17 @@ export class CartService {
       if (!cart) {
         cart = new Cart({
           userId,
-          items: [{ productId, variationId, quantity, unitPrice, snapshot }],
+          items: [
+            {
+              productId,
+              variationId,
+              quantity,
+              unitPrice,
+              snapshot,
+              affiliateUser,
+              affiliateRefRaw,
+            },
+          ],
         });
       } else {
         // בודקים אם כבר יש את אותו מוצר + אותה וריאציה
@@ -50,6 +94,7 @@ export class CartService {
 
         if (existingItem) {
           existingItem.quantity += quantity;
+          // בכוונה לא משנים affiliateUser כדי לא "לגנוב" קרדיט משיתוף קודם
         } else {
           cart.items.push({
             productId,
@@ -57,6 +102,8 @@ export class CartService {
             quantity,
             unitPrice,
             snapshot,
+            affiliateUser,
+            affiliateRefRaw,
           });
         }
       }
@@ -78,6 +125,10 @@ export class CartService {
     const snapshot = {
       attributes: {}, // אין וריאציות
       images: prod.images || [],
+      image: Array.isArray(prod.images) && prod.images.length > 0 ? prod.images[0] : undefined,
+      title: prod.title,
+      brand: prod.brand,
+      shortDescription: prod.shortDescription || prod.description || "",
       price: unitPrice,
       discount: prod.discount || null,
     };
@@ -85,7 +136,16 @@ export class CartService {
     if (!cart) {
       cart = new Cart({
         userId,
-        items: [{ productId, quantity, unitPrice, snapshot }],
+        items: [
+          {
+            productId,
+            quantity,
+            unitPrice,
+            snapshot,
+            affiliateUser,
+            affiliateRefRaw,
+          },
+        ],
       });
     } else {
       const existingItem = cart.items.find(
@@ -93,8 +153,16 @@ export class CartService {
       );
       if (existingItem) {
         existingItem.quantity += quantity;
+        // גם כאן – שומרים את ה-affiliate המקורי אם היה
       } else {
-        cart.items.push({ productId, quantity, unitPrice, snapshot });
+        cart.items.push({
+          productId,
+          quantity,
+          unitPrice,
+          snapshot,
+          affiliateUser,
+          affiliateRefRaw,
+        });
       }
     }
 
