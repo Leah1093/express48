@@ -23,12 +23,12 @@ const orderSchema = new mongoose.Schema(
     totalAmount: { type: Number, required: true }, // סכום הזמנה
     discountedAmount: { type: Number, default: null }, // אחרי הנחה
     notes: { type: String, default: "" },
-
+    affiliateRef: { type: String, default: null },
     items: [orderItemSchema],
 
     status: {
       type: String,
-      enum: ["pending", "approved", "canceled", "returned", "completed", "paid"],
+      enum: ["pending", "processing", "shipped", "delivered", "canceled", "returned"],
       default: "pending",
     },
 

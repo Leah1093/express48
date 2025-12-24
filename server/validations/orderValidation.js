@@ -3,6 +3,7 @@ import { z } from "zod";
 export const createOrderSchema = z.object({
   addressId: z.string().min(1, "נדרשת כתובת"),
   notes: z.string().optional(),
+  affiliateRef: z.string().min(1).optional(),
   items: z
     .array(
       z.object({
