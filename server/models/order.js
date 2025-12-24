@@ -17,8 +17,22 @@ const orderSchema = new mongoose.Schema(
       default: () => `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       // לדוגמה: ORD-1706781234567-532
     },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    addressId: { type: mongoose.Schema.Types.ObjectId, ref: "Address", required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false, default: null },
+    addressId: { type: mongoose.Schema.Types.ObjectId, ref: "Address", required: false, default: null },
+    
+    // שדות כתובת ישירים לאורחים (אם addressId לא מסופק)
+    guestAddress: {
+      fullName: { type: String, trim: true },
+      phone: { type: String, trim: true },
+      email: { type: String, trim: true },
+      country: { type: String, trim: true, default: "IL" },
+      city: { type: String, trim: true },
+      street: { type: String, trim: true },
+      houseNumber: { type: String, trim: true },
+      apartment: { type: String, trim: true },
+      zip: { type: String, trim: true },
+      notes: { type: String, trim: true, default: "" },
+    },
 
     totalAmount: { type: Number, required: true }, // סכום הזמנה
     discountedAmount: { type: Number, default: null }, // אחרי הנחה

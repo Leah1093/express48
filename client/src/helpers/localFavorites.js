@@ -37,7 +37,6 @@ export function saveGuestFavorites(favorites) {
 
 // הוספה
 export function addGuestFavorite(product) {
-    console.log("product in addGuestFavorite:", product);
     const current = getGuestFavorites();
 
     const exists = current.some(fav => fav.productId === product._id);

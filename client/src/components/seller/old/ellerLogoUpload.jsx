@@ -112,7 +112,6 @@ export default function SellerLogoUpload({ onUploaded }) {
 
       {preview && (
         <div className="flex items-center gap-3">
-          {console.log("1111  ",preview)}
           <img
             src={preview}
 

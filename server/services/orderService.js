@@ -5,11 +5,13 @@ import { CustomError } from "../utils/CustomError.js";
 import { Product } from "../models/Product.js";
 import { AffiliateProfile } from "../models/AffiliateProfile.js";
 import { AffiliateCommission } from "../models/AffiliateProfile.js";
+import { Address } from "../models/address.js";
 
 export class OrderService {
   async createOrder(userId, data) {
     try {
-      const { addressId, notes, items, affiliateRef } = data;
+
+      const { addressId, guestAddress, notes, items , affiliateRef} = data;
 
       if (!items || items.length === 0) {
         throw new CustomError("Order must contain at least one item", 400);
@@ -43,9 +45,36 @@ export class OrderService {
         }
       }
 
+      // טיפול בכתובת - אם יש guestAddress, ניצור כתובת זמנית
+      let finalAddressId = addressId;
+      if (!addressId && guestAddress) {
+        // יצירת כתובת זמנית לאורח
+        const tempAddress = new Address({
+          userId: null, // אורח
+          fullName: guestAddress.fullName,
+          phone: guestAddress.phone,
+          country: guestAddress.country || "IL",
+          city: guestAddress.city,
+          street: guestAddress.street,
+          houseNumber: guestAddress.houseNumber,
+          apartment: guestAddress.apartment,
+          zip: guestAddress.zip,
+          notes: guestAddress.notes || "",
+          isDefault: false,
+        });
+        await tempAddress.save();
+        finalAddressId = tempAddress._id;
+      }
+
+      // אם אין כתובת בכלל - שגיאה
+      if (!finalAddressId && !guestAddress) {
+        throw new CustomError("Address is required", 400);
+      }
+
       const order = new Order({
-        userId,
-        addressId,
+        userId: userId || null, // null לאורחים
+        addressId: finalAddressId || null,
+        guestAddress: guestAddress || undefined, // שמירת כתובת ישירה גם אם יצרנו Address
         items,
         notes: notes || "",
         totalAmount,
@@ -148,7 +177,7 @@ export class OrderService {
       const order = await Order.findOne(query)
         .populate("items.productId", "title price")
         .populate("addressId")
-        .populate("userId", "username email");
+        .populate("userId", "username email phone firstName lastName mobile");
 
       if (!order) {
         throw new CustomError("Order not found", 404);
@@ -217,7 +246,7 @@ export class OrderService {
       const order = await Order.findOne(query)
         .populate("items.productId", "title price")
         .populate("addressId")
-        .populate("userId", "username email");
+        .populate("userId", "username email phone firstName lastName mobile");
 
       return order;
     } catch (err) {
@@ -253,11 +282,7 @@ export class OrderService {
   // ---- פונקציה בשביל Tranzila ----
   // מסמנת הזמנה כ"paid" ומעדכנת מלאי ומספר רכישות
   async markPaid(orderIdOrCode, paymentInfo = {}) {
-    try {
-      console.log("[OrderService] markPaid CALLED with:", {
-        orderIdOrCode,
-        paymentInfo,
-      });
+  try {
 
       // נחפש גם לפי _id של מונגו וגם לפי orderId טקסטואלי (ORD-123...)
       const query = mongoose.isValidObjectId(orderIdOrCode)
@@ -435,11 +460,6 @@ export class OrderService {
         event: "paid",
         paymentInfo,
       });
-
-      console.log(
-        "[OrderService] Order marked as paid and inventory updated:",
-        order._id
-      );
 
       return order;
     } catch (err) {

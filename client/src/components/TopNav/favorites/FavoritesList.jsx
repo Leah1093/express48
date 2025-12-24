@@ -102,7 +102,6 @@ export default function FavoritesList() {
 
             <div className="grid gap-4">
                 {normalizedFavorites.map((fav) => {
-                     console.log("fav", fav);
                 return (
                     <div
                         key={fav.id}

@@ -36,7 +36,6 @@ function ProductsList() {
 
   // לבדיקה: מה באמת חוזר מהשרת
   console.log("productsApi raw data:", data);
-  console.log("normalized products:", products);
 
   return (
     <>

@@ -233,6 +233,18 @@ function mapCartToResponse(cartDoc) {
       });
     }
 
+    // אם הכמות בעגלה גדולה מהמלאי - נוסיף issue
+    if (typeof stock === "number" && stock >= 0 && item.quantity > stock) {
+      issues.push({
+        type: "QUANTITY_ADJUSTED",
+        productId:
+          product._id?.toString?.() ||
+          item.productId?.toString?.() ||
+          "",
+        message: `הכמות בעגלה עודכנה ל-${stock} יחידות (המלאי הזמין).`,
+      });
+    }
+
     return {
       id: item._id.toString(),
       productId:
@@ -281,14 +293,70 @@ function mapCartToResponse(cartDoc) {
 
 
 export class CartService {
-  async getCart(userId) {
-    console.log("✅✅✅")
-    const cart = await Cart.findOne(cartQueries.findByUserId(userId))
-      .populate("items.productId")
-       .lean()
+  /**
+   * מעדכן כמות בעגלה לפי מלאי זמין
+   * אם הכמות בעגלה גדולה מהמלאי - מעדכן למלאי המקסימלי
+   */
+  async syncCartQuantityWithStock(cart) {
+    if (!cart || !cart.items || cart.items.length === 0) {
+      return false; // אין מה לעדכן
+    }
 
+    let wasUpdated = false;
+
+    for (const item of cart.items) {
+      if (!item.productId) continue;
+
+      // שליפת המוצר העדכני
+      const product = await Product.findById(item.productId);
+      if (!product) continue;
+
+      // חישוב מלאי זמין
+      let availableStock = typeof product.stock === "number" ? product.stock : 0;
+
+      // אם יש וריאציה - נשתמש במלאי שלה
+      if (item.variationId && Array.isArray(product.variations)) {
+        const variationIdStr = String(item.variationId);
+        const variation = product.variations.find(
+          (v) => String(v._id) === variationIdStr
+        );
+        if (variation && typeof variation.stock === "number") {
+          availableStock = variation.stock;
+        }
+      }
+
+      // אם הכמות בעגלה גדולה מהמלאי - נעדכן
+      if (item.quantity > availableStock && availableStock >= 0) {
+        item.quantity = Math.max(0, availableStock);
+        wasUpdated = true;
+      }
+    }
+
+    // אם היה עדכון - נשמור
+    if (wasUpdated) {
+      await cart.save();
+    }
+
+    return wasUpdated;
+  }
+
+  async getCart(userId) {
+    // שליפת העגלה (לא lean כדי שנוכל לעדכן)
+    const cart = await Cart.findOne(cartQueries.findByUserId(userId))
+      .populate("items.productId");
+
+    if (!cart) {
+      return mapCartToResponse(null);
+    }
+
+    // עדכון כמות לפי מלאי זמין
+    await this.syncCartQuantityWithStock(cart);
+
+    // המרה ל-lean אחרי העדכון
+    const cartLean = cart.toObject();
+    
     // במקום להחזיר את המסמך כמו שהוא – ממפים ל-CartResponse
-    return mapCartToResponse(cart);
+    return mapCartToResponse(cartLean);
   }
 
 

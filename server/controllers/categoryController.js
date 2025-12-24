@@ -135,7 +135,6 @@ export class CategoryController {
       const roots = await Category.find({ parent: null })
         .sort({ createdAt: 1 })
         .lean();
-      console.log(roots)
 
       res.json(roots);
     } catch (e) {

@@ -8,11 +8,16 @@ const orderService = new OrderService();
 export class OrderController {
   async create(req, res, next) {
     try {
-      const userId = req.user.userId;
+      // תמיכה באורחים - req.user יכול להיות null
+      const userId = req.user?.userId || null;
       const { couponCode, ...orderPayload } = req.body;
-
-      const order = await orderService.createOrder(req.user.userId, orderPayload);
-      if (couponCode) {
+console.log("userId",userId)
+console.log("req.body",req.body)
+console.log("orderPayload",orderPayload)
+      const order = await orderService.createOrder(userId, orderPayload);
+      
+      // קופונים רק למשתמשים מחוברים
+      if (couponCode && userId) {
         try {
           const coupon = await couponService.findByCode(couponCode.trim());
           if (coupon) {
@@ -30,7 +35,12 @@ export class OrderController {
             err
           );
         }
+      } else if (couponCode && !userId) {
+        console.warn(
+          "OrderController.create: coupon code provided by guest, ignoring"
+        );
       }
+      
       res.status(201).json(order);
     } catch (err) {
       next(err);
