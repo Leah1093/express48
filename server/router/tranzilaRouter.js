@@ -1,4 +1,3 @@
-
 // server/router/tranzilaRouter.js
 import { Router } from 'express';
 import bodyParser from 'body-parser';
@@ -13,14 +12,28 @@ const router = Router();
 router.post('/iframe-url', TranzilaController.startIframe);
 
 /**
+ * POST /payments/tranzila/hosted-fields/start
+ * חדש - מחזיר thtk + נתונים לפרונט
+ */
+router.post('/hosted-fields/start', TranzilaController.startHostedFields);
+
+/**
  * POST /payments/tranzila/webhook
  * כתובת שחוזרת מטרנזילה אחרי תשלום (אם הגדרת אצלם)
+ * מאפשרים גם JSON וגם urlencoded
  */
 router.post(
   '/webhook',
   bodyParser.urlencoded({ extended: false }),
+  bodyParser.json({ limit: '1mb' }),
   TranzilaController.webhook
 );
+
+/**
+ * POST /payments/tranzila/confirm
+ * אישור תשלום מהפרונט (idempotent)
+ */
+router.post('/confirm', TranzilaController.confirm);
 
 // אופציונלי – debug לבדוק שהנתיב עובד
 router.get('/debug', (req, res) => {
@@ -29,4 +42,3 @@ router.get('/debug', (req, res) => {
 });
 
 export default router;
-

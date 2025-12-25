@@ -62,38 +62,83 @@ export class TranzilaController {
         terminal,
         customerInfo,
       });
-      res.json({ iframeUrl, amount });
 
+      res.json({ iframeUrl, amount });
     } catch (err) {
       next(err);
     }
   }
 
-   static async webhook(req, res) {
-
+  /**
+   * Hosted Fields - endpoint חדש שמחזיר thtk + params לפרונט
+   * POST /payments/tranzila/hosted-fields/start
+   */
+  static async startHostedFields(req, res, next) {
     try {
-      // טרנזילה שולחים form-urlencoded → bodyParser.urlencoded כבר מטפל בזה
-      const payload = req.body || {};
-      console.log("[TRZ][WEBHOOK] RAW PAYLOAD:", payload);
+      const payload = req.validated ?? req.body ?? {};
+      const { orderId, items } = payload;
 
-      // בד"כ השדות האלה מגיעים מטרנזילה
-      const orderid =
-        payload.orderid || payload.orderId || payload.OrderId;
-      const respCode =
-        payload.Response || payload.response;
-
-      console.log("[TRZ][WEBHOOK] parsed:", { orderid, respCode });
-
-      const orderService = new OrderService();
-
-      if (!orderid) {
-        console.warn("[TRZ][WEBHOOK] missing orderid in payload");
-        return res.status(200).send("OK");
+      if (!orderId) throw new CustomError('Missing orderId', 400);
+      if (!Array.isArray(items) || items.length === 0) {
+        throw new CustomError('No items selected', 400);
       }
 
-      // אם אין קוד תשובה – רק מתעדים
+      const baseUrl = process.env.BASE_URL;
+      if (!baseUrl) throw new CustomError('Payment configuration missing', 500);
+
+      const amount = TranzilaService.calcTotal(items);
+      const { thtk, terminalName } = await TranzilaService.createHostedFieldsHandshake({ amount });
+
+      const notifyUrl = `${baseUrl.replace(/\/+$/, '')}/payments/tranzila/webhook`;
+
+      res.json({
+        thtk,
+        amount,
+        terminalName,
+        notifyUrl,
+        orderId,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async webhook(req, res) {
+    try {
+      // שילוב לוגיקה: תמיכה גם ב-guestAddress, גם ב-response מהמיין, גם ב-logGatewayEvent, גם ב-sendOrderCreatedEmails
+      const payload = req.validated ?? req.body ?? {};
+      // תמיכה בכל סוגי השדות
+      const orderid =
+        payload.orderid ||
+        payload.orderId ||
+        payload.OrderId ||
+        payload?.transaction_response?.orderid ||
+        payload?.transaction_response?.orderId;
+
+      const respCode =
+        payload.Response ||
+        payload.response ||
+        payload?.transaction_response?.processor_response_code ||
+        payload?.transaction_response?.response ||
+        payload?.transaction_response?.Response;
+
+      const { transaction_index, sum, currency } = payload;
+      console.log('[TRZ][WEBHOOK] got:', {
+        orderid,
+        transaction_index,
+        sum,
+        currency,
+        respCode,
+        keys: Object.keys(payload),
+      });
+      const orderService = new OrderService();
+      const order = await orderService.getByOrderId(orderid).catch(() => null);
+      if (!orderid || !order) {
+        console.warn('[TRZ][WEBHOOK] order not found or missing orderid:', orderid);
+        return res.status(200).send('OK');
+      }
+      // בדיקת קוד תשובה
       if (!respCode) {
-        console.warn("[TRZ][WEBHOOK] missing Response code", { orderid });
         await orderService
           .logGatewayEvent(orderid, {
             gateway: "tranzila",
@@ -103,16 +148,24 @@ export class TranzilaController {
           .catch(() => {});
         return res.status(200).send("OK");
       }
-
-      // ✅ "000" = עסקה מאושרת לפי טרנזילה
+      // בדיקת סכום (לא חובה אבל טוב ללוג)
+      try {
+        const orderTotal = Number(order.totalAmount ?? order.total ?? 0);
+        if (sum && isFinite(orderTotal) && Number(sum) !== orderTotal) {
+          console.warn('[TRZ][WEBHOOK] amount mismatch', {
+            orderid,
+            sum,
+            orderTotal,
+          });
+        }
+      } catch {}
+      // בדיקת אישור
       const isApproved = String(respCode) === "000";
-
       if (!isApproved) {
-        console.warn("[TRZ][WEBHOOK] not approved:", {
+        console.warn('[TRZ][WEBHOOK] not approved:', {
           orderid,
           respCode,
         });
-
         await orderService
           .logGatewayEvent(orderid, {
             gateway: "tranzila",
@@ -123,25 +176,9 @@ export class TranzilaController {
           .catch(() => {});
         return res.status(200).send("OK");
       }
-
-      // עד כאן רק בדיקה. מכאן – העסקה מאושרת ✔
-
-      // שולפים את ההזמנה
-      const existing = await orderService
-        .getByOrderId(orderid)
-        .catch(() => null);
-
-      if (!existing) {
-        console.warn("[TRZ][WEBHOOK] order not found:", orderid);
-        return res.status(200).send("OK");
-      }
-
       // אם כבר שולם – לא מסמנים שוב
-      if (existing.payment?.status === "paid") {
-        console.log(
-          "[TRZ][WEBHOOK] order already paid, skipping:",
-          orderid
-        );
+      if (order.payment?.status === 'paid') {
+        console.log('[TRZ][WEBHOOK] order already paid, skipping:', orderid);
         await orderService
           .logGatewayEvent(orderid, {
             gateway: "tranzila",
@@ -151,45 +188,66 @@ export class TranzilaController {
           .catch(() => {});
         return res.status(200).send("OK");
       }
-
-      // 👇 כאן קורה בפועל:
-      // - סימון ההזמנה כ-paid
-      // - עדכון מלאי
-      // - הגדלת purchases
+      // סימון ההזמנה כ-paid
       await orderService.markPaid(orderid, {
         gateway: "tranzila",
         payload,
         responseCode: respCode,
       });
-
-      console.log(
-        "[TRZ][WEBHOOK] markPaid done for order:",
-        orderid
-      );
-
-      // שליחת מיילים – משתמשת ב-fullOrder עם populate
+      // שליחת מיילים אחרי תשלום
       try {
         const fullOrder = await orderService.getByOrderId(orderid);
         if (fullOrder) {
           await sendOrderCreatedEmails(fullOrder);
         } else {
-          console.warn(
-            "[TRZ][WEBHOOK] no order found for emails:",
-            orderid
-          );
+          console.warn('[TRZ][WEBHOOK] no order found for emails:', orderid);
         }
-      } catch (mailErr) {
-        console.error(
-          "[TRZ][WEBHOOK] sendOrderCreatedEmails error:",
-          mailErr
-        );
+      } catch (e) {
+        console.error('[TRZ][WEBHOOK] Failed to send order emails', e);
       }
-
-      return res.status(200).send("OK");
+      return res.status(200).send('OK');
     } catch (e) {
       console.error("[TRZ][WEBHOOK][ERR]", e);
-      // לטרנזילה תמיד מחזירים 200 כדי שלא יחזרו שוב ושוב
       return res.status(200).send("OK");
+    }
+  }
+
+  static async confirm(req, res, next) {
+    try {
+      const { orderId, transaction_index, responseCode, raw } = req.body;
+      if (!orderId || !transaction_index) {
+        return res.status(400).json({ success: false, message: 'Missing orderId or transaction_index' });
+      }
+      const orderService = new OrderService();
+      const order = await orderService.getByOrderId(orderId).catch(() => null);
+      if (!order) {
+        return res.status(404).json({ success: false, message: 'Order not found' });
+      }
+      if (order.payment?.status === 'paid') {
+        return res.json({ success: true, message: 'Order already paid', orderId });
+      }
+      // אימות בסיסי
+      if (responseCode && responseCode !== '000') {
+        return res.status(400).json({ success: false, message: 'Payment not approved', responseCode });
+      }
+      await orderService.markPaid(orderId, {
+        gateway: 'tranzila',
+        transaction_index,
+        responseCode,
+        raw,
+      });
+      // שליחת מיילים אחרי תשלום
+      try {
+        const fullOrder = await orderService.getByOrderId(orderId);
+        if (fullOrder) {
+          await sendOrderCreatedEmails(fullOrder);
+        }
+      } catch (e) {
+        console.error('[TRZ][CONFIRM] Failed to send order emails', e);
+      }
+      return res.json({ success: true, message: 'Payment confirmed', orderId });
+    } catch (err) {
+      next(err);
     }
   }
 }

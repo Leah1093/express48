@@ -1,8 +1,9 @@
 // server/utils/email/orderEmails.js
 
 import { sendEmail } from "./sendEmail.js";
-import { Product } from "../../models/Product.js";
-const ADMIN_EMAIL = process.env.ADMIN_ORDERS_EMAIL || "orders@express48.co.il";
+import { Product } from "../../models/Product.js;";
+import { Order } from '../../models/order.js';
+const ADMIN_EMAIL = process.env.ADMIN_ORDERS_EMAIL || process.env.ADMIN_EMAIL || "orders@express48.co.il";
 
 function formatOrderDate(date) {
   if (!date) return "";
@@ -22,22 +23,18 @@ function safeNumber(n, fallback = 0) {
 function getItemUnitPrice(it, productDoc) {
   if (typeof it.price === "number") return it.price;
   if (typeof it.priceAfterDiscount === "number") return it.priceAfterDiscount;
-
   if (productDoc?.price && typeof productDoc.price.amount === "number") {
     return productDoc.price.amount;
   }
-
   return 0;
 }
 
-// סה"כ הזמנה
 function calcOrderTotal(items = [], productMap = new Map()) {
   return items.reduce((sum, it) => {
     const productKey =
       it.productId && it.productId._id
         ? String(it.productId._id)
         : String(it.productId);
-
     const product = productMap.get(productKey) || null;
     const qty = safeNumber(it.quantity, 0);
     const unitPrice = getItemUnitPrice(it, product);
@@ -45,25 +42,22 @@ function calcOrderTotal(items = [], productMap = new Map()) {
   }, 0);
 }
 
-function buildOrderHtml({
-  order,
-  user,
-  address,
-  items,
-  totalAmount,
-  mode,
-  productMap,
-}) {
+function buildOrderHtml({ order, user, address, items, totalAmount, mode, productMap }) {
   const orderId = order._id?.toString() || "";
   const createdAt = formatOrderDate(order.createdAt);
 
+  // שם לקוח - קודם firstName/lastName, אחרת username, אחרת fullName מהכתובת
+  // וודא שאנחנו משתמשים בנתונים הנכונים
   const customerName =
-    user?.firstName || user?.lastName
+    (user?.firstName || user?.lastName)
       ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
-      : user?.username || user?.name || "";
+      : (user?.username || user?.name || address?.fullName || "");
 
-  const customerEmail = user?.email || "";
-  const customerPhone = address?.phone || user?.phone || user?.mobile || "";
+  // אימייל - קודם מ-user, אחרת מ-address (guestAddress)
+  const customerEmail = (user && user.email) ? user.email : (address?.email || "");
+  // טלפון - קודם מ-user, אחרת מ-address
+  const customerPhone = (user && (user.phone || user.mobile)) ? (user.phone || user.mobile) : (address?.phone || "");
+  
 
   const title =
     mode === "customer" ? "תודה על ההזמנה שלך" : "התקבלה הזמנה חדשה באתר";
@@ -93,8 +87,19 @@ function buildOrderHtml({
       <div style="margin-top:4px;font-size:14px;color:#111">
         <div>${address.fullName || customerName || ""}</div>
         <div>${address.street || ""} ${address.houseNumber || ""}</div>
-        <div>${address.city || ""} ${address.zipCode || ""}</div>
+        <div>${address.city || ""} ${address.zip || address.zipCode || ""}</div>
         <div>${address.phone || ""}</div>
+        ${address.notes ? `<div style="margin-top:8px;font-size:13px;color:#666;font-style:italic;">הערה: ${address.notes}</div>` : ""}
+      </div>
+    `
+    : "";
+
+  // הערה למשלוח מההזמנה
+  const orderNotesHtml = order?.notes
+    ? `
+      <div style="margin-top:16px;padding:12px;background:#f9f9f9;border-radius:6px;border-right:3px solid #ff6500;">
+        <h4 style="margin:0 0 6px 0;font-size:14px;color:#111;font-weight:600;">הערה למשלוח:</h4>
+        <p style="margin:0;font-size:13px;color:#333;line-height:1.5;">${order.notes}</p>
       </div>
     `
     : "";
@@ -251,6 +256,8 @@ function buildOrderHtml({
           כתובת משלוח
         </h3>
         ${addressHtml}
+        
+        ${orderNotesHtml}
 
         <!-- טבלת פרטי הזמנה -->
         <h3 style="margin:24px 0 10px 0;font-size:15px;color:#111;">
@@ -293,16 +300,39 @@ function buildOrderHtml({
   `;
 }
 
-export async function sendOrderCreatedEmails(order) {
+export async function sendOrderCreatedEmails(orderOrId) {
   try {
-    if (!order) return;
-
-    const user = order.userId || {};
-    const address = order.addressId || {};
+    let order = orderOrId;
+    if (!order || typeof order !== 'object' || !order.items) {
+      // אם קיבלנו רק orderId - נטען מהמסד
+      order = await Order.findById(orderOrId).populate('userId').populate('addressId');
+      if (!order) return;
+    }
+    // תמיכה באורחים - אם אין userId, נשתמש ב-guestAddress
+    let user = {};
+    if (order.userId) {
+      if (typeof order.userId === 'object' && order.userId._id) {
+        user = order.userId;
+      } else {
+        user = {};
+      }
+    }
+    const guestAddress = order.guestAddress || {};
+    let address = {};
+    if (order.addressId && typeof order.addressId === 'object' && order.addressId._id) {
+      address = order.addressId;
+    } else if (order.addressId && typeof order.addressId === 'string') {
+      address = guestAddress;
+    } else {
+      address = guestAddress;
+    }
+    if (!order.addressId || (typeof order.addressId === 'string' && !address._id)) {
+      if (guestAddress && (guestAddress.fullName || guestAddress.city || guestAddress.street)) {
+        address = guestAddress;
+      }
+    }
     const items = Array.isArray(order.items) ? order.items : [];
-
     const rawProductIds = items.map((it) => it.productId).filter(Boolean);
-
     const productIds = [
       ...new Set(
         rawProductIds.map((pid) => {
@@ -311,54 +341,73 @@ export async function sendOrderCreatedEmails(order) {
         })
       ),
     ];
-
     let productMap = new Map();
     if (productIds.length) {
       const products = await Product.find({
         _id: { $in: productIds },
       }).select("title name images image price");
-
       productMap = new Map(products.map((p) => [p._id.toString(), p]));
     }
-
     const totalAmount =
       typeof order.totalAmount === "number"
         ? order.totalAmount
         : calcOrderTotal(items, productMap);
-
     const orderId = order._id?.toString() || "";
-
     const subjectCustomer = `תודה על ההזמנה שלך (מספר ${orderId})`;
     const subjectAdmin = `התקבלה הזמנה חדשה באתר (מספר ${orderId})`;
-
+    let customerUser = {};
+    const isPopulatedUser = user && typeof user === 'object' && (user._id || user.email || user.username);
+    if (isPopulatedUser) {
+      customerUser = {
+        ...user,
+        email: user.email || null,
+        username: user.username || null,
+        phone: user.phone || user.mobile || null,
+        firstName: user.firstName || null,
+        lastName: user.lastName || null,
+        mobile: user.mobile || null,
+        name: user.name || user.username || null,
+      };
+    } else {
+      customerUser = {
+        email: guestAddress?.email || null,
+        username: guestAddress?.fullName || null,
+        phone: guestAddress?.phone || address?.phone || null,
+        firstName: null,
+        lastName: null,
+        mobile: null,
+        name: guestAddress?.fullName || null,
+      };
+    }
     const htmlCustomer = buildOrderHtml({
       order,
-      user,
+      user: customerUser,
       address,
       items,
       totalAmount,
       mode: "customer",
       productMap,
     });
-
     const htmlAdmin = buildOrderHtml({
       order,
-      user,
+      user: customerUser,
       address,
       items,
       totalAmount,
       mode: "admin",
       productMap,
     });
-
-    if (user?.email) {
+    // שליחת מייל ללקוח - משתמש מחובר או אורח (אם יש email)
+    const customerEmail = user?.email || guestAddress?.email;
+    if (customerEmail) {
       await sendEmail({
-        to: user.email,
+        to: customerEmail,
         subject: subjectCustomer,
         html: htmlCustomer,
       });
+    } else {
+      console.warn("[orderEmails] No customer email found for order", orderId);
     }
-
     const adminTo = ADMIN_EMAIL || process.env.EMAIL_USER;
     if (adminTo) {
       await sendEmail({
@@ -367,7 +416,6 @@ export async function sendOrderCreatedEmails(order) {
         html: htmlAdmin,
       });
     }
-
     console.log("[orderEmails] sent order emails for", orderId);
   } catch (err) {
     console.error("[orderEmails] sendOrderCreatedEmails ERROR:", err);

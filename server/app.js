@@ -47,6 +47,8 @@ import { errorHandler } from "./middlewares/errorHandler.js";
 
 import "./config/googleOAuth.config.js";
 import { sellerReportsRouter } from "./router/seller.reports.router.js";
+import { affiliateRouter } from "./router/affiliate.routes.js";
+import { affiliatePayoutAdminRouter } from "./router/affiliatePayoutAdmin.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -145,6 +147,10 @@ app.use("/uploads", uploadRoutes);
 app.use("/seller/products", sellerProductsRouter);
 app.use("/seller/orders", sellerOrdersRouter);
 app.use("/seller/reports", sellerReportsRouter);
+
+app.use("/affiliate", affiliateRouter);
+app.use("/affiliate", affiliatePayoutAdminRouter);
+
 
 
 

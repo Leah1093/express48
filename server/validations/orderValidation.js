@@ -14,30 +14,31 @@ const guestAddressSchema = z.object({
   notes: z.string().optional(),
 });
 
-export const createOrderSchema = z.object({
-  addressId: z.string().optional(), // אופציונלי - אם לא מסופק, צריך guestAddress
-  guestAddress: guestAddressSchema.optional(), // אופציונלי - אם לא מסופק, צריך addressId
-  notes: z.string().optional(),
-  couponCode: z.string().optional(),
-  items: z
-    .array(
-      z.object({
-        productId: z.string().min(1, "נדרש מזהה מוצר"),
-        quantity: z.number().min(1, "כמות חייבת להיות לפחות 1"),
-        price: z.number().min(0, "מחיר חייב להיות חיובי"),
-        priceAfterDiscount: z.number().min(0).optional(),
-        variationId: z.string().nullable().optional(),
-        variationAttributes: z.record(z.string(), z.string()).optional(),
-      })
-    )
-    .min(1, "חייב להיות לפחות מוצר אחד"),
-}).refine(
-  (data) => data.addressId || data.guestAddress,
-  {
+export const createOrderSchema = z
+  .object({
+    addressId: z.string().optional(), // אם לא מסופק, צריך guestAddress
+    guestAddress: guestAddressSchema.optional(), // אם לא מסופק, צריך addressId
+    notes: z.string().optional(),
+    couponCode: z.string().optional(),
+    affiliateRef: z.string().min(1).optional(),
+
+    items: z
+      .array(
+        z.object({
+          productId: z.string().min(1, "נדרש מזהה מוצר"),
+          quantity: z.number().min(1, "כמות חייבת להיות לפחות 1"),
+          price: z.number().min(0, "מחיר חייב להיות חיובי"),
+          priceAfterDiscount: z.number().min(0).optional(),
+          variationId: z.string().nullable().optional(),
+          variationAttributes: z.record(z.string(), z.string()).optional(),
+        })
+      )
+      .min(1, "חייב להיות לפחות מוצר אחד"),
+  })
+  .refine((data) => data.addressId || data.guestAddress, {
     message: "נדרש addressId או guestAddress",
     path: ["addressId"],
-  }
-);
+  });
 
 export const updateStatusSchema = z.object({
   status: z.enum([

@@ -1,17 +1,25 @@
-// server/utils/email/sendEmail.js
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
-
 dotenv.config();
 
-// טרנספורטר כללי – אותו עיקרון כמו באיפוס סיסמה
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// יצירת טרנספורטר דינמי: אם יש SMTP_HOST נשתמש בו, אחרת gmail
+const transporter = process.env.SMTP_HOST
+  ? nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    })
+  : nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: pSrocess.env.EMAIL_PASS,
+      },
+    });
 
 /**
  * שליחת מייל בסיסית
@@ -24,18 +32,15 @@ export async function sendEmail({ to, subject, text, html }) {
   if (!subject) {
     throw new Error("sendEmail: 'subject' is required");
   }
-
-  const from = '"noreply" <noreply@express48.co.il>';
-
+  // עדיפות לכתובת מה-ENV, אחרת noreply דיפולטי
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.EMAIL_USER || '"noreply" <noreply@express48.co.il>';
   const mailOptions = {
     from,
     to,
     subject,
-    // אם יש html – נשתמש בו; אם לא, נשלח text
     text: text || (html ? undefined : ""),
     html: html || undefined,
   };
-
   const info = await transporter.sendMail(mailOptions);
   console.log("[sendEmail] sent:", {
     to,

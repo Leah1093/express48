@@ -1,6 +1,6 @@
 import { productService } from "../services/product.service.js";
 import { CustomError } from "../utils/CustomError.js";
-import { Product } from "../models/Product.js";
+import { Product } from "../model/Product.js";
 
 export class ProductController {
   async getNewProducts(req, res, next) {
@@ -13,19 +13,16 @@ export class ProductController {
     }
   }
 
-
   getAllProducts = async (req, res, next) => {
     try {
       const { page = 1, limit = 24, sort } = req.query;
-
       const result = await productService.getAllProductsService({
         page: Number(page) || 1,
         limit: Number(limit) || 24,
         sort,
       });
-
-      res.json(result);
-
+      // ודא שהפורמט תואם ל-client
+      res.json({ items: result.items || result, meta: result.meta || { total: (result.items || result).length } });
     } catch (err) {
       next(
         err instanceof CustomError
@@ -34,8 +31,6 @@ export class ProductController {
       );
     }
   };
-
-
 
   searchProducts = async (req, res, next) => {
     try {
@@ -72,7 +67,7 @@ export class ProductController {
       const pageNum = Math.max(1, Number(req.query.page) || 1);
       const perPage = Math.min(100, Math.max(1, Number(req.query.limit) || 24));
 
-      // שימי לב: השדה צריך להתאים לסכמה שלך!
+      // שימי לב: השדה צריך להתאים לסchema שלך!
       // אם את שומרת fullSlug בשדה product.categoryFullSlug:
       const filter = {
         isDeleted: false,
@@ -129,22 +124,19 @@ export class ProductController {
   getByFullSlug = async (req, res, next) => {
     try {
       console.log("cate ❤️❤️")
-
       const { fullSlug } = req.params;       // /products/by-category/:fullSlug
       const { page = 1, limit = 24, sort } = req.query;
-
       if (!fullSlug) {
         return next(new CustomError("fullSlug חובה", 400));
       }
-
       const result = await productService.getByFullSlugService({
         fullSlug,
         page: Number(page) || 1,
         limit: Number(limit) || 24,
         sort,
       });
-
-      res.json(result);
+      // ודא שהפורמט תואם ל-client
+      res.json({ items: result.items || result, meta: result.meta || { total: (result.items || result).length } });
     } catch (err) {
       next(
         err instanceof CustomError

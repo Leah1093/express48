@@ -15,18 +15,34 @@ export const getCart = async (req, res, next) => {
 export const addToCart = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const { productId, quantity,variationId } = req.body;
+    // מיזוג: שמור גם affiliateRef אם קיים, וגם סדר פרמטרים נכון
+    const {
+      productId,
+      variationId,
+      quantity,
+      affiliateRef = null, // 👈 מגיע מהפרונט (אם יש ref)
+    } = req.body;
 
-    console.log("productId:", productId, "quantity:", quantity , variationId);
+    console.log(
+      "productId:",
+      productId,
+      "variationId",
+      variationId,
+      "quantity:",
+      quantity,
+      "affiliateRef:",
+      affiliateRef
+    );
 
+    // מיזוג: סדר פרמטרים נכון, תמיכה ב-affiliateRef, החזרת CartResponse מלא
     const cartResponse = await cartService.addToCart(
       userId,
       productId,
+      variationId,
       quantity,
-      variationId || null
+      affiliateRef // 👈 מועבר לסרביס
     );
 
-    // ה-service כבר מחזיר CartResponse מלא
     res.json(cartResponse);
   } catch (err) {
     next(err);
@@ -48,14 +64,14 @@ export const removeFromCart = async (req, res, next) => {
 export const removeProductCompletely = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const { productId, variationId } = req.body;
+    // מיזוג: תמיכה ב-variationId=null, החזרת CartResponse מלא
+    const { productId, variationId = null } = req.body;
 
     const cartResponse = await cartService.removeProductCompletely(
       userId,
       productId,
-      variationId ?? null
+      variationId
     );
-
     res.status(200).json(cartResponse);
   } catch (err) {
     next(err);
@@ -89,6 +105,7 @@ export const mergeLocalCart = async (req, res, next) => {
 export const updateItemQuantity = async (req, res, next) => {
   try {
     const userId = req.user.userId;
+    // מיזוג: סדר פרמטרים נכון, החזרת CartResponse מלא
     const { productId, quantity, variationId } = req.body;
 
     console.log("userId:", userId);

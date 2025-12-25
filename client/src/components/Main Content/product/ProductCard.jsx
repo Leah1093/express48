@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addItemAsync } from "../../../redux/thunks/cartThunks";
 import { addGuestItem } from "../../../redux/slices/guestCartSlice";
@@ -10,18 +10,49 @@ const ProductCard = React.memo(({ product, favorites }) => {
   const user = useSelector((state) => state.user.user);
   const navigate = useNavigate();
 
+  const [copied, setCopied] = useState(false); // חדש - סטטוס "הועתק"
+
   const handleAddToCart = (event) => {
     event.stopPropagation();
     if (user) {
-      dispatch(addItemAsync({productId:product._id}));
+      dispatch(addItemAsync({ productId: product._id }));
     } else {
-      dispatch(addGuestItem({product}));
+      dispatch(addGuestItem({ product }));
+    }
+  };
+
+  // פונקציה שמייצרת את הלינק למוצר
+  const getProductUrl = () => {
+    const base = window.location.origin; // לדוגמה: https://express48.co.il
+    return `${base}/products/${product.storeId.slug}/${product.slug}`;
+  };
+
+  // הלינק שמועתק בפועל - אם המשתמש מחובר מוסיפים ref
+  const getAffiliateUrl = () => {
+    const url = getProductUrl();
+    if (user && user._id) {
+      return `${url}?ref=${user._id}`;
+    }
+    return url;
+  };
+
+  const handleCopyLink = async (e) => {
+    e.stopPropagation(); // חשוב - שלא יעשה navigate לכרטיס
+    try {
+      const link = getAffiliateUrl();
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("בעיה בהעתקת הקישור", err);
     }
   };
 
   return (
     <div
-      onClick={() => navigate(`/products/${product.storeId.slug}/${product.slug}`)}
+      onClick={() =>
+        navigate(`/products/${product.storeId.slug}/${product.slug}`)
+      }
       className="group relative flex flex-row bg-white rounded-[16px] shadow-lg w-full max-w-[383px] h-[218px] cursor-pointer transition hover:shadow-xl overflow-hidden"
       dir="rtl"
     >
@@ -42,17 +73,26 @@ const ProductCard = React.memo(({ product, favorites }) => {
         <div>
           <div
             className="text-[16px] font-semibold text-black leading-tight mb-1 break-words line-clamp-2"
-            style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
             title={product.title}
           >
             {product.title}
           </div>
-          <div className="text-[14px] font-semibold text-black mb-1">{product.price.amount} ₪</div>
-          <div className="text-[13px] text-[#141414] opacity-70 mb-2">משלוח חינם - מסירה 7 ימים</div>
+          <div className="text-[14px] font-semibold text-black mb-1">
+            {product.price.amount} ₪
+          </div>
+          <div className="text-[13px] text-[#141414] opacity-70 mb-2">
+            משלוח חינם - מסירה 7 ימים
+          </div>
         </div>
 
         <div className="flex flex-row items-center gap-2 mt-2">
-          {/* כפתור מועדפים — בלי עטיפה חיצונית */}
+          {/* כפתור מועדפים */}
           <FavoriteButton
             productId={product._id}
             product={product}
@@ -63,11 +103,23 @@ const ProductCard = React.memo(({ product, favorites }) => {
           {/* הוספה לסל */}
           <button
             className="flex-1 bg-black text-white text-[14px] font-semibold rounded-[8px] h-[40px] transition hover:bg-[#222]"
-            onClick={(e) => { e.stopPropagation(); handleAddToCart(e); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAddToCart(e);
+            }}
           >
             הוספה לסל
           </button>
         </div>
+
+        {/* כפתור העתקת קישור */}
+        <button
+          type="button"
+          onClick={handleCopyLink}
+          className="mt-2 text-[12px] text-[#FF6500] underline text-right"
+        >
+          {copied ? "הקישור הועתק" : "העתקת קישור למוצר"}
+        </button>
       </div>
     </div>
   );

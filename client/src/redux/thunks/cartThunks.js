@@ -114,6 +114,9 @@ import * as api from '../cartAPI';
 import { mergeCartService } from "../../services/cartService";
 import axios from 'axios';
 
+// ⭐ חדש: לייבא את הפונקציה שמחזירה את ה-ref השמור
+import { getSavedReferral } from "../../lib/affiliateRef";
+
 export const loadCart = createAsyncThunk('cart/', async () => {
   const res = await api.fetchCart();
   return res.data.items;
@@ -122,10 +125,16 @@ export const loadCart = createAsyncThunk('cart/', async () => {
 export const addItemAsync = createAsyncThunk(
   'cart/addItem',
   async ({ productId, variationId = null, quantity = 1 }) => {
-    const res = await api.addToCart(productId, variationId, quantity);
+    // ⭐ חדש: לקרוא את ה-ref מה-localStorage (אם יש)
+    const affiliateRef = getSavedReferral();
+
+    // 👇 וכאן אנחנו שולחים אותו ל-API
+    const res = await api.addToCart(productId, variationId, quantity, affiliateRef);
     return res.data.items;
   }
 );
+
+// שאר ה-thunks שלך נשארים כמו שהם ↓↓↓
 
 export const removeItemAsync = createAsyncThunk(
   'cart/removeItem',
@@ -204,7 +213,6 @@ export const toggleSelectAllThunk = createAsyncThunk(
         { selected },
         { withCredentials: true }
       );
-      // נשאיר כאן res.data כמו שהיה אצלך, אם הסלייס מצפה ל-items עדכני בהתאם
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);

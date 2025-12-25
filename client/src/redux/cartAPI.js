@@ -6,9 +6,28 @@ const API = axios.create({
 });
 
 export const fetchCart = () => API.get('/');
-export const addToCart = (productId,variationId, quantity = 1) => API.post('/add', { productId,variationId,quantity });
-export const removeFromCart = (productId) => API.delete('/remove', { data: { productId } });
-export const removeProductCompletely = (productId,variationId) => API.delete('/remove-completely', { data: { productId,variationId } });
-export const clearCart = () => API.delete('/clear');
-export const updateItemQuantity = (productId,variationId, quantity) => API.put("/update-quantity", { productId,variationId, quantity });
 
+// ⭐ מעודכן – תומך ב-affiliateRef
+export const addToCart = (
+  productId,
+  variationId = null,
+  quantity = 1,
+  affiliateRef = null
+) =>
+  API.post('/add', {
+    productId,
+    variationId,
+    quantity,
+    affiliateRef,
+  });
+
+export const removeFromCart = (productId) =>
+  API.delete('/remove', { data: { productId } });
+
+export const removeProductCompletely = (productId, variationId) =>
+  API.delete('/remove-completely', { data: { productId, variationId } });
+
+export const clearCart = () => API.delete('/clear');
+
+export const updateItemQuantity = (productId, variationId, quantity) =>
+  API.put('/update-quantity', { productId, variationId, quantity });
