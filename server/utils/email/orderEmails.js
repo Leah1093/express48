@@ -1,7 +1,7 @@
 // server/utils/email/orderEmails.js
 
 import { sendEmail } from "./sendEmail.js";
-import { Product } from "../../models/Product.js;";
+import { Product } from "../../models/Product.js";
 import { Order } from '../../models/order.js';
 const ADMIN_EMAIL = process.env.ADMIN_ORDERS_EMAIL || process.env.ADMIN_EMAIL || "orders@express48.co.il";
 

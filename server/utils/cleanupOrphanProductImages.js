@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import { Product } from "../models/product.modeis.js";
+import { Product } from "../models/Product.js";
 export async function cleanupOrphanProductImages(productId) {
   const baseDir = path.join("uploads", "products", String(productId));
 

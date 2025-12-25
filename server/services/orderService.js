@@ -2,7 +2,7 @@
 import mongoose from "mongoose";
 import { Order } from "../models/order.js";
 import { CustomError } from "../utils/CustomError.js";
-import { Product } from "../model/Product.js";
+import { Product } from "../models/Product.js";
 import { AffiliateProfile } from "../models/AffiliateProfile.js";
 import { AffiliateCommission } from "../models/AffiliateProfile.js";
 import { Address } from "../models/address.js";
