@@ -123,15 +123,13 @@ export class ProductImportService {
         }
 
         try {
-          console.log("CSV IMPORT DEBUG: row", rowNumber, row);
+          console.log("CSV IMPORT DEBUG: row", rowNumber, "title:", row.title, "price:", row.price);
 
           const productDoc = await this.mapRowToProductDoc({
             row,
             sellerId,
             storeId,
           });
-
-          console.log("CSV IMPORT DEBUG: productDoc before save =", productDoc);
 
           // ✅ כאן מריצים את כל הולידציות של המודל (כמו בטופס רגיל)
           const product = new Product(productDoc);
@@ -198,7 +196,7 @@ export class ProductImportService {
 
     const titleEn = (row.titleEn || "").trim();
 
-    // ----- מחיר (price.amount) – לא חובה בייבוא -----
+    // ----- מחיר (price.amount) – חובה בייבוא -----
     const rawPrice =
       row.price !== undefined && row.price !== null
         ? row.price
@@ -206,18 +204,24 @@ export class ProductImportService {
         ? row["price.amount"]
         : "";
 
+    if (!rawPrice || String(rawPrice).trim() === "") {
+      throw new CustomError("מחיר הוא שדה חובה ולא יכול להיות ריק", 400);
+    }
+
     let priceNumber = 0;
 
-    if (rawPrice !== "" && rawPrice !== null && rawPrice !== undefined) {
-      const priceClean = String(rawPrice).replace(/,/g, "").trim();
+    const priceClean = String(rawPrice).replace(/,/g, "").trim();
+    const parsed = Number(priceClean);
 
-      const parsed = Number(priceClean);
-
-      if (!Number.isNaN(parsed) && parsed >= 0) {
-        priceNumber = parsed;
-      }
-      // אם זה לא מספר תקין – לא זורקים שגיאה, פשוט נשאר 0
+    if (Number.isNaN(parsed)) {
+      throw new CustomError(`מחיר לא תקין: "${rawPrice}" (חייב להיות מספר)`, 400);
     }
+
+    if (parsed < 0) {
+      throw new CustomError(`מחיר לא יכול להיות שלילי: ${parsed}`, 400);
+    }
+
+    priceNumber = parsed;
 
     // ----- מלאי -----
     const stockNumber = Number(row.stock ?? 0);
