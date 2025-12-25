@@ -1,6 +1,10 @@
+import { Product } from "../models/Product.js";
 import { productService } from "../services/product.service.js";
 import { CustomError } from "../utils/CustomError.js";
+<<<<<<< HEAD
 import { Product } from "../models/product.js";
+=======
+>>>>>>> f645000a4cdcde3064dc8c0387fa9fa6885e0fb0
 
 export class ProductController {
   async getNewProducts(req, res, next) {
