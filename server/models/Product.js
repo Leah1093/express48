@@ -222,6 +222,7 @@ const productSchema = new mongoose.Schema({
   purchases: { type: Number, default: 0 },
 
   specs: { type: Map, of: String, default: {} },
+  specsText: { type: String, default: "", maxlength: 5000 },
   images: { type: [String], default: [] },
   video: { type: String, default: "" },
 
