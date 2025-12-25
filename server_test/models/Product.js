@@ -262,7 +262,8 @@ const productSchema = new mongoose.Schema({
 // ---------- Indexes ----------
 productSchema.index({ storeId: 1, sku: 1 }, { unique: true, sparse: true });
 productSchema.index({ storeId: 1, slug: 1 }, { unique: true, sparse: true });
-productSchema.index({ storeId: 1, gtin: 1 }, { unique: true, sparse: true });
+// GTIN is optional - don't enforce unique constraint since many products don't have GTIN
+productSchema.index({ gtin: 1 }, { sparse: true }); // Just a lookup index, not unique
 productSchema.index({ title: "text", brand: "text", model: "text", description: "text" });
 
 // חיפוש עברית — אינדקסים פשוטים
@@ -270,6 +271,41 @@ productSchema.index({ title_he_plain: 1 });
 productSchema.index({ brand_he_plain: 1 });
 productSchema.index({ description_he_plain: 1 });
 productSchema.index({ model_he_plain: 1 });
+
+// Drop old problematic indexes after model is created
+const dropOldIndexes = async () => {
+  try {
+    const collection = mongoose.connection.collection('products');
+    const indexes = await collection.getIndexes();
+    
+    // List of old index names to drop
+    const oldIndexNames = [
+      'storeId_1_gtin_1',  // old unique index
+      'storeId_1_gtin_1_unique'
+    ];
+    
+    for (const indexName of oldIndexNames) {
+      if (indexes[indexName]) {
+        await collection.dropIndex(indexName);
+        console.log(`✅ Dropped old index: ${indexName}`);
+      }
+    }
+  } catch (err) {
+    if (err.code !== 27) { // 27 = index not found
+      console.log('Note: Could not drop old indexes (may not exist):', err.message);
+    }
+  }
+};
+
+// Call after connecting to MongoDB
+if (mongoose.connection.readyState === 1) {
+  dropOldIndexes();
+} else {
+  // If not connected yet, wait for connection
+  mongoose.connection.once('connected', () => {
+    dropOldIndexes();
+  });
+}
 
 // ---------- Middleware ----------
 // חישוב מלאי כולל + inStock
@@ -350,15 +386,28 @@ productSchema.pre("save", function (next) {
   }
   next();
 });
+productSchema.pre("save", function (next) {
+  // Ensure GTIN is never null - convert to undefined
+  if (this.gtin === null) {
+    this.gtin = undefined;
+  } else if (typeof this.gtin === "string") {
+    const trimmed = this.gtin.trim();
+    if (!trimmed) {
+      this.gtin = undefined;
+    }
+  }
+  next();
+});
+
 productSchema.pre("validate", function (next) {
-  // אם gtin ריק/לא תקין – אל תאחסן בכלל (ייתר את ההתנגשות באינדקס ה-sparse)
-  if (typeof this.gtin === "string" && this.gtin.trim() === "") {
+  // Ensure GTIN is never null - convert to undefined
+  if (this.gtin === null) {
+    this.gtin = undefined;
+  } else if (typeof this.gtin === "string" && this.gtin.trim() === "") {
     this.gtin = undefined;
   }
-  // אם יש ערך אך לא עומד ברגקס – גם נסיר (או תחליט לזרוק שגיאה)
   if (this.gtin && !/^[0-9]{8,14}$/.test(this.gtin)) {
     this.invalidate("gtin", "GTIN לא חוקי");
-    // או: this.gtin = undefined;  // אם מעדיפים לאחסן בלי GTIN במקום לזרוק שגיאה
   }
   next();
 });

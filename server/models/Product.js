@@ -200,6 +200,7 @@ const productSchema = new mongoose.Schema({
   sellerSku: { type: String, default: "" },
 
   model: { type: String, default: "" },
+  manufacturerCode: { type: String, default: "" },
 
   currency: { type: String, default: "ILS" },
   price: { type: PriceSchema, required: true },
@@ -217,6 +218,12 @@ const productSchema = new mongoose.Schema({
 
   stock: { type: Number, default: 0 },
   inStock: { type: Boolean, default: false },
+  
+  // Inventory thresholds
+  inventory: {
+    lowStockThreshold: { type: Number, min: 0 },
+    warningThreshold: { type: Number, min: 0 },
+  },
 
   views: { type: Number, default: 0 },
   purchases: { type: Number, default: 0 },
@@ -305,9 +312,45 @@ const productSchema = new mongoose.Schema({
 
 productSchema.index({ storeId: 1, sku: 1 }, { unique: true, sparse: true });
 productSchema.index({ storeId: 1, slug: 1 }, { unique: true, sparse: true });
-productSchema.index({ storeId: 1, gtin: 1 }, { unique: true, sparse: true });
+// GTIN is optional - don't enforce unique constraint since many products don't have GTIN
+productSchema.index({ gtin: 1 }, { sparse: true }); // Just a lookup index, not unique
 // CRITICAL: Unique index for variation SKUs to prevent race conditions
 productSchema.index({ storeId: 1, "variations.sku": 1 }, { unique: true, sparse: true });
+
+// Drop old problematic indexes after model is created
+const dropOldIndexes = async () => {
+  try {
+    const collection = mongoose.connection.collection('products');
+    const indexes = await collection.getIndexes();
+    
+    // List of old index names to drop
+    const oldIndexNames = [
+      'storeId_1_gtin_1',  // old unique index
+      'storeId_1_gtin_1_unique'
+    ];
+    
+    for (const indexName of oldIndexNames) {
+      if (indexes[indexName]) {
+        await collection.dropIndex(indexName);
+        console.log(`✅ Dropped old index: ${indexName}`);
+      }
+    }
+  } catch (err) {
+    if (err.code !== 27) { // 27 = index not found
+      console.log('Note: Could not drop old indexes (may not exist):', err.message);
+    }
+  }
+};
+
+// Call after connecting to MongoDB
+if (mongoose.connection.readyState === 1) {
+  dropOldIndexes();
+} else {
+  // If not connected yet, wait for connection
+  mongoose.connection.once('connected', () => {
+    dropOldIndexes();
+  });
+}
 
 productSchema.index({ title: "text", brand: "text", model: "text", description: "text" });
 
@@ -387,6 +430,82 @@ productSchema.pre("validate", function (next) {
   next();
 });
 
+// Convert frontend shipping/delivery format to server format
+productSchema.pre("save", function (next) {
+  console.log("💾 Pre-save hook - Before conversion:", {
+    hasShipping: !!this.shipping,
+    shipping: this.shipping ? {
+      weight: this.shipping.weight,
+      weightKg: this.shipping.weightKg,
+      cost: this.shipping.cost,
+      deliveryDays: this.shipping.deliveryDays,
+      dimensions: this.shipping.dimensions,
+    } : undefined,
+    hasDelivery: !!this.delivery,
+    delivery: this.delivery ? {
+      cost: this.delivery.cost,
+      timeDays: this.delivery.timeDays,
+      requiresDelivery: this.delivery.requiresDelivery,
+    } : undefined,
+  });
+
+  if (this.shipping) {
+    // Map weight to weightKg
+    if (this.shipping.weight !== undefined && this.shipping.weightKg === undefined) {
+      console.log("🔄 Converting shipping.weight to shipping.weightKg:", this.shipping.weight);
+      this.shipping.weightKg = this.shipping.weight;
+      delete this.shipping.weight;
+    }
+    
+    // Handle dimensions - ensure they're in the right structure
+    if (this.shipping.dimensions && typeof this.shipping.dimensions === 'object') {
+      if (!this.shipping.dimensions.length) this.shipping.dimensions.length = 0;
+      if (!this.shipping.dimensions.width) this.shipping.dimensions.width = 0;
+      if (!this.shipping.dimensions.height) this.shipping.dimensions.height = 0;
+    }
+  }
+  
+  if (this.shipping && this.shipping.cost !== undefined) {
+    // Move cost to delivery
+    console.log("🔄 Converting shipping.cost to delivery.cost:", this.shipping.cost);
+    if (!this.delivery) this.delivery = {};
+    this.delivery.cost = this.shipping.cost;
+    delete this.shipping.cost;
+  }
+  
+  if (this.shipping && this.shipping.deliveryDays !== undefined) {
+    // Move deliveryDays to delivery.timeDays
+    console.log("🔄 Converting shipping.deliveryDays to delivery.timeDays:", this.shipping.deliveryDays);
+    if (!this.delivery) this.delivery = {};
+    this.delivery.timeDays = this.shipping.deliveryDays;
+    delete this.shipping.deliveryDays;
+  }
+  
+  if (this.shipping && this.shipping.freeShipping !== undefined) {
+    // Handle free shipping flag
+    if (!this.delivery) this.delivery = {};
+    if (this.shipping.freeShipping) {
+      this.delivery.cost = 0;
+    }
+    delete this.shipping.freeShipping;
+  }
+
+  console.log("💾 Pre-save hook - After conversion:", {
+    hasShipping: !!this.shipping,
+    shipping: this.shipping ? {
+      weightKg: this.shipping.weightKg,
+      dimensions: this.shipping.dimensions,
+    } : undefined,
+    hasDelivery: !!this.delivery,
+    delivery: this.delivery ? {
+      cost: this.delivery.cost,
+      timeDays: this.delivery.timeDays,
+    } : undefined,
+  });
+
+  next();
+});
+
 productSchema.pre("validate", function (next) {
   // אם יש וריאציות ואין עדיין ברירת מחדל – נקח את הראשונה
   if (Array.isArray(this.variations) && this.variations.length > 0) {
@@ -424,8 +543,24 @@ productSchema.pre("save", function (next) {
   next();
 });
 
+productSchema.pre("save", function (next) {
+  // Ensure GTIN is never null - convert to undefined
+  if (this.gtin === null) {
+    this.gtin = undefined;
+  } else if (typeof this.gtin === "string") {
+    const trimmed = this.gtin.trim();
+    if (!trimmed) {
+      this.gtin = undefined;
+    }
+  }
+  next();
+});
+
 productSchema.pre("validate", function (next) {
-  if (typeof this.gtin === "string" && this.gtin.trim() === "") {
+  // Ensure GTIN is never null - convert to undefined
+  if (this.gtin === null) {
+    this.gtin = undefined;
+  } else if (typeof this.gtin === "string" && this.gtin.trim() === "") {
     this.gtin = undefined;
   }
   if (this.gtin && !/^[0-9]{8,14}$/.test(this.gtin)) {

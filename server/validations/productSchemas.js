@@ -92,7 +92,7 @@ export const createProductSchema = z.object({
   subCategory: z.string().trim().optional().default(""),
   overview: overviewSchema,
 
-  gtin: z.string().trim().optional().default(""),
+  gtin: z.string().trim().optional().nullable(),
   sku: z.string().trim().optional(),
   model: z.string().trim().optional().default(""),
 

@@ -266,6 +266,24 @@ export class SellerProductsService {
       }
     }
 
+    // Log what's being returned to the frontend
+    console.log("📤 getOne - Returning product to frontend:", {
+      _id: productDoc._id,
+      hasInventory: !!productDoc.inventory,
+      inventory: productDoc.inventory,
+      hasShipping: !!productDoc.shipping,
+      shipping: productDoc.shipping,
+      hasDelivery: !!productDoc.delivery,
+      delivery: productDoc.delivery,
+      hasDiscount: !!productDoc.discount,
+      discount: productDoc.discount,
+      hasSEO: !!(productDoc.metaTitle || productDoc.metaDescription || productDoc.slug),
+      seo: { metaTitle: productDoc.metaTitle, metaDescription: productDoc.metaDescription, slug: productDoc.slug },
+      hasManufacturerCode: !!productDoc.manufacturerCode,
+      manufacturerCode: productDoc.manufacturerCode,
+      visibility: productDoc.visibility,
+    });
+
     // >>> כאן מוסיפים את ה-blocks תמיד לפני ההחזרה
     if (productDoc.overview) {
       productDoc.overview.blocks = Product.buildOverviewBlocksFromLegacy(
@@ -357,6 +375,22 @@ export class SellerProductsService {
         createdBy: actor?.id,
         updatedBy: actor?.id,
       };
+
+      // DEBUG: Log incoming data
+      console.log("📥 createProduct - Incoming data structure:", {
+        hasInventory: !!payload.inventory,
+        inventory: payload.inventory,
+        hasShipping: !!payload.shipping,
+        shipping: payload.shipping,
+        hasDelivery: !!payload.delivery,
+        delivery: payload.delivery,
+        hasDiscount: !!payload.discount,
+        discount: payload.discount,
+        hasSEO: !!(payload.metaTitle || payload.metaDescription || payload.slug),
+        seo: { metaTitle: payload.metaTitle, metaDescription: payload.metaDescription, slug: payload.slug },
+        hasManufacturerCode: !!payload.manufacturerCode,
+        manufacturerCode: payload.manufacturerCode,
+      });
 
       // ========== NEW: VARIATIONS CONFIG & SYNC ==========
       if (payload.variationsConfig || payload.variations) {
