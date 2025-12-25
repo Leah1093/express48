@@ -2,10 +2,31 @@
 import mongoose from "mongoose";
 import { Order } from "../models/order.js";
 import { CustomError } from "../utils/CustomError.js";
-import { Product } from "../model/Product.js";
+import { Product } from "../models/product.js";
 import { AffiliateProfile } from "../models/AffiliateProfile.js";
 import { AffiliateCommission } from "../models/AffiliateProfile.js";
 import { Address } from "../models/address.js";
+
+// פונקציה לנירמול כתובת - כל שדה חייב להיות string
+async function normalizeAddressFields(addressDoc) {
+  if (!addressDoc) return addressDoc;
+  const fields = [
+    "fullName",
+    "phone",
+    "country",
+    "city",
+    "street",
+    "houseNumber",
+    "apartment",
+    "zip",
+    "notes",
+  ];
+  for (const field of fields) {
+    if (addressDoc[field] == null) addressDoc[field] = "";
+    else addressDoc[field] = String(addressDoc[field]);
+  }
+  return addressDoc;
+}
 
 export class OrderService {
   async createOrder(userId, data) {
@@ -40,6 +61,7 @@ export class OrderService {
       }
       // טיפול בכתובת - אם יש guestAddress, ניצור כתובת זמנית
       let finalAddressId = addressId;
+      let addressDoc = null;
       if (!addressId && guestAddress) {
         const tempAddress = new Address({
           userId: null,
@@ -56,6 +78,13 @@ export class OrderService {
         });
         await tempAddress.save();
         finalAddressId = tempAddress._id;
+        addressDoc = await Address.findById(finalAddressId);
+      } else if (addressId) {
+        addressDoc = await Address.findById(addressId);
+      }
+      if (addressDoc) {
+        await normalizeAddressFields(addressDoc);
+        await addressDoc.save();
       }
       if (!finalAddressId && !guestAddress) {
         throw new CustomError("Address is required", 400);
@@ -350,62 +379,22 @@ export class OrderService {
               : 0;
           const commissionAmount = Math.round(baseAmount * rate * 100) / 100;
           if (commissionAmount > 0) {
-            try {
-              await AffiliateCommission.create({
-                orderMongoId: order._id,
-                orderId: order.orderId,
-                affiliateCode: profile.code,
-                baseAmount,
-                commissionRate: rate,
-                commissionAmount,
-                status: "pending",
-              });
-            } catch (e) {
-              const msg = String(e?.message || "");
-              const isDup =
-                e?.code === 11000 ||
-                msg.toLowerCase().includes("duplicate key");
-              if (!isDup) throw e;
-            }
+            const ledgerEntry = new AffiliateCommission({
+              profileId: profile._id,
+              orderId: order._id,
+              amount: commissionAmount,
+              status: "pending",
+              createdAt: now,
+              updatedAt: now,
+            });
+            await ledgerEntry.save();
           }
         }
       }
-      await this.logGatewayEvent(order._id, {
-        gateway: paymentInfo.gateway || "tranzila",
-        event: "paid",
-        paymentInfo,
-      });
       return order;
     } catch (err) {
-      console.error("[OrderService] markPaid error:", err);
       if (err instanceof CustomError) throw err;
       throw new CustomError("Failed to mark order as paid", 500);
-    }
-  }
-
-  async logGatewayEvent(orderId, eventData) {
-    try {
-      const query = mongoose.isValidObjectId(orderId)
-        ? { _id: orderId }
-        : { orderId };
-
-      const order = await Order.findOne(query);
-      if (!order) return null;
-
-      if (!order.gatewayLog) {
-        order.gatewayLog = [];
-      }
-
-      order.gatewayLog.push({
-        timestamp: new Date(),
-        ...eventData,
-      });
-
-      await order.save();
-      return order;
-    } catch (err) {
-      console.error("[OrderService] Failed to log gateway event:", err);
-      return null;
     }
   }
 }

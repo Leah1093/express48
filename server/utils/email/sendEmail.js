@@ -17,7 +17,7 @@ const transporter = process.env.SMTP_HOST
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: pSrocess.env.EMAIL_PASS,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
