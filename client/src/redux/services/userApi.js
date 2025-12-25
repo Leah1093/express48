@@ -6,6 +6,15 @@ export const userApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ["User"],
   endpoints: (builder) => ({
+     // 🔹 רשימת משתמשים (להגבלת קופון ללקוחות ספציפיים)
+    listUsers: builder.query({
+      query: () => ({
+        url: "/user/seller/users", // <<< לכי לפי מה שיש לך בשרת
+        method: "GET",
+      }),
+      providesTags: ["User"],
+    }),
+
     updateProfile: builder.mutation({
       query: (body) => ({
         url: "/user/update-profile",
@@ -26,6 +35,7 @@ export const userApi = createApi({
 });
 
 export const {
+  useListUsersQuery,
   useUpdateProfileMutation,
   useChangePasswordMutation,
 } = userApi;

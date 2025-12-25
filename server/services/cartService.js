@@ -4,363 +4,730 @@ import { Product } from "../models/product.js";
 import { cartQueries } from "../mongoQueries/cartQueries.js";
 import { CustomError } from "../utils/CustomError.js";
 
-const toIdStr = (x) =>
-  typeof x === "object" && x?._id ? String(x._id) : String(x);
+const toIdStr = (x) => (typeof x === 'object' && x?._id ? String(x._id) : String(x));
+function isDiscountActive(discount) {
+  if (!discount) return false;
 
-export class CartService {
-  async getCart(userId) {
-    const cart = await Cart.findOne(cartQueries.findByUserId(userId)).populate(
-      "items.productId"
-    );
-    return cart || { userId, items: [] };
+  const now = new Date();
+
+  if (discount.startsAt) {
+    const starts = new Date(discount.startsAt);
+    if (starts > now) return false;
   }
 
-  /**
-   * הוספה לעגלה
-   * @param {ObjectId} userId - המשתמש המחובר
-   * @param {ObjectId} productId - המוצר
-   * @param {ObjectId|null} variationId - וריאציה (אם יש)
-   * @param {number} quantity - כמות
-   * @param {string|null} affiliateRef - מזהה שהגיע מה-?ref= בקישור (userId של המפיץ)
-   */
-  async addToCart(
-    userId,
-    productId,
-    variationId = null,
-    quantity = 1,
-    affiliateRef = null
+  if (discount.expiresAt) {
+    const expires = new Date(discount.expiresAt);
+    if (expires < now) return false;
+  }
+
+  return true;
+}
+
+function getCurrentPriceFromProduct(product, variationId = null) {
+  if (!product) return 0;
+
+  let base = 0;
+
+  // 1) אם הגיע variationId – ננסה לקחת מחיר מהווריאציה
+  if (
+    variationId &&
+    Array.isArray(product.variations) &&
+    product.variations.length > 0
   ) {
-    let cart = await Cart.findOne(cartQueries.findByUserId(userId));
+    const v = product.variations.find((vv) =>
+      vv._id?.toString?.() === variationId.toString()
+    );
 
-    // 🔹 הכנה ללוגיקת שיווק שותפים
-    let affiliateUser = null;
-    let affiliateRefRaw = null;
-
-    if (affiliateRef) {
-      affiliateRefRaw = String(affiliateRef);
-
-      // אם זה ObjectId תקין, ולא אותו משתמש שקונה – נשמור אותו
-      if (mongoose.Types.ObjectId.isValid(affiliateRefRaw)) {
-        if (!userId || String(userId) !== affiliateRefRaw) {
-          affiliateUser = new mongoose.Types.ObjectId(affiliateRefRaw);
-        }
+    if (v) {
+      if (typeof v._calculatedPrice === "number") {
+        base = v._calculatedPrice;
+      } else if (typeof v.price?.amount === "number") {
+        base = v.price.amount;
       }
     }
+  }
 
-    // --- ✨ טיפול במוצרים עם וריאציה ✨ ---
-    if (variationId) {
-      const prod = await Product.findById(productId);
-      if (!prod) throw new Error("Product not found");
+  // 2) fallback למחיר מוצר רגיל
+  if (base <= 0) {
+    base = typeof product.price?.amount === "number"
+      ? product.price.amount
+      : 0;
+  }
+  // אם עדיין אין מחיר – חוזרים 0
+  if (base <= 0) return 0;
 
-      const variation = prod.variations.id(variationId);
-      if (!variation) throw new Error("Variation not found");
+  const discount = product.discount;
+  if (!discount || !isDiscountActive(discount)) {
+    return Number(base.toFixed(2));
+  }
 
-      let unitPrice = variation.price?.amount || prod.price.amount;
+  // ניקוי טיפשי של פסיק בסוג (כמו "fixed,")
+  const rawType = String(discount.discountType || "").toLowerCase().trim();
+  const type = rawType.replace(/,+$/, ""); // מוריד פסיקים בסוף
 
-      // ✨ בניית snapshot לוריאציה
-      const snapshot = {
-        attributes: variation.attributes,
-        images: variation.images,
-        image: Array.isArray(variation.images) && variation.images.length > 0 ? variation.images[0] : undefined,
-        title: prod.title,
-        brand: prod.brand,
-        shortDescription: prod.shortDescription || prod.description || "",
-        price: unitPrice,
-        discount: variation.discount || null,
-      };
+  const value =
+    typeof discount.discountValue === "number"
+      ? discount.discountValue
+      : Number(discount.discountValue) || 0;
 
-      if (!cart) {
-        cart = new Cart({
-          userId,
-          items: [
-            {
-              productId,
-              variationId,
-              quantity,
-              unitPrice,
-              snapshot,
-              affiliateUser,
-              affiliateRefRaw,
-            },
-          ],
-        });
-      } else {
-        // בודקים אם כבר יש את אותו מוצר + אותה וריאציה
-        const existingItem = cart.items.find(
-          (item) =>
-            item.productId.toString() === productId.toString() &&
-            item.variationId?.toString() === variationId.toString()
+  if (value <= 0) {
+    return base;
+  }
+
+  let finalPrice = base;
+
+  if (type === "percent") {
+    // value = אחוז הנחה
+    finalPrice = base * (1 - value / 100);
+  } else if (type === "fixed") {
+    // value = מחיר סופי קבוע (למשל 650)
+    finalPrice = base - value;
+  } else {
+    // אם הסוג לא מוכר – נשמור על המחיר הרגיל
+    finalPrice = base;
+  }
+
+  if (finalPrice < 0) finalPrice = 0;
+
+  return Number(finalPrice.toFixed(2));
+}
+
+function mapCartToResponse(cartDoc) {
+  if (!cartDoc || !cartDoc.items || cartDoc.items.length === 0) {
+    const now = new Date().toISOString();
+    return {
+      ok: true,
+      items: [],
+      meta: {
+        totalQuantity: 0,
+        subtotal: 0,
+        selectedSubtotal: 0,
+        updatedAt: now,
+      },
+      issues: [],
+    };
+  }
+
+  const issues = [];
+
+  const items = cartDoc.items.map((item) => {
+    const product = item.productId || {};
+    const variationId = item.variationId || null;
+    const variationConfig = product.variationsConfig;
+    const currentPrice = getCurrentPriceFromProduct(product, variationId);
+
+    // אם אין unitPrice (עגלה ישנה) – נניח שהיה כמו הנוכחי
+    const previousPrice =
+      typeof item.unitPrice === "number" ? item.unitPrice : currentPrice;
+
+    if (currentPrice !== previousPrice) {
+      issues.push({
+        type: "PRICE_CHANGED",
+        productId:
+          product._id?.toString?.() ||
+          item.productId?.toString?.() ||
+          "",
+        message: "המחיר של מוצר זה עודכן מאז שהוספת אותו לעגלה.",
+      });
+    }
+
+    // 🔹 חישוב כמות במלאי מהמוצר
+    let stock =
+    
+    typeof product.stock === "number" ? product.stock : undefined;
+
+  // 🔹 נתחיל מתמונה כללית של מוצר
+  let image =
+    Array.isArray(product.images) && product.images.length > 0
+      ? product.images[0]
+      : product.image ||
+        (Array.isArray(product.overview?.images) &&
+        product.overview.images.length > 0
+          ? product.overview.images[0]
+          : undefined);
+
+  // ⭐ פה נכניס לוגיקה לפי וריאציה (אם יש)
+  let variationAttributes;
+
+  if (variationId && Array.isArray(product.variations)) {
+    const v = product.variations.find(
+      (vv) => vv._id?.toString?.() === variationId.toString()
+    );
+
+    if (v) {
+      // אם יש סטוק ספציפי לווריאציה
+      if (typeof v.stock === "number") {
+        stock = v.stock;
+      }
+
+      // אם יש תמונות לווריאציה – נשתמש בהן
+      if (Array.isArray(v.images) && v.images.length > 0) {
+        image = v.images[0];
+      }
+
+      if (
+      v.attributes &&
+      typeof v.attributes === "object" &&
+      variationConfig &&
+      Array.isArray(variationConfig.attributes)
+    ) {
+      const attrs = {};
+
+      Object.entries(v.attributes).forEach(([attrName, rawValue]) => {
+        // מחפשים את ההגדרה עבור ה-attr הזה
+        const cfgAttr = variationConfig.attributes.find(
+          (a) => a.name === attrName
         );
 
-        if (existingItem) {
-          existingItem.quantity += quantity;
-          // בכוונה לא משנים affiliateUser כדי לא "לגנוב" קרדיט משיתוף קודם
-        } else {
-          cart.items.push({
-            productId,
-            variationId,
-            quantity,
-            unitPrice,
-            snapshot,
-            affiliateUser,
-            affiliateRefRaw,
-          });
+        // מה יוצג כלייבל (גודל / צבע)
+        const label = cfgAttr?.displayName || attrName;
+
+        // מה יוצג כערך (XL / שחור)
+        let displayValue = rawValue;
+
+        if (cfgAttr && Array.isArray(cfgAttr.terms)) {
+          const term = cfgAttr.terms.find((t) => t.label === rawValue);
+          if (term) {
+            displayValue = term.label;
+          }
+        }
+
+        attrs[label] = displayValue;
+      });
+
+      variationAttributes = attrs; // לדוגמה: { "גודל": "XL", "צבע": "שחור" }
+    }
+      
+    }
+  }
+
+    // 🔹 האם המוצר אזל מהמלאי
+    const isOutOfStock = typeof stock === "number" && stock <= 0;
+
+    const snapshot = {
+      title: product.title || "",
+      image,
+      brand: product.brand || undefined,
+      shortDescription:
+        product.description || product.overview?.text || undefined,
+      // כאן inStock זה כמות במלאי, כמו שהיה אצלך
+      inStock: stock,
+      priceNow: currentPrice,
+      variationAttributes,
+    };
+
+    // 🔹 ברירת מחדל לבחירה (אם היה שדה selected בעגלה)
+    const baseSelected = item.selected ?? true;
+
+    // 🔹 אם אין מלאי → לא נחשב כבחור
+    const selected = isOutOfStock ? false : baseSelected;
+
+    // (אופציונלי) אפשר גם להוסיף issue מיוחד על חוסר מלאי
+    if (isOutOfStock) {
+      issues.push({
+        type: "OUT_OF_STOCK",
+        productId:
+          product._id?.toString?.() ||
+          item.productId?.toString?.() ||
+          "",
+        message: "המוצר אינו במלאי ולכן לא נבחר לתשלום.",
+      });
+    }
+
+    // אם הכמות בעגלה גדולה מהמלאי - נוסיף issue
+    if (typeof stock === "number" && stock >= 0 && item.quantity > stock) {
+      issues.push({
+        type: "QUANTITY_ADJUSTED",
+        productId:
+          product._id?.toString?.() ||
+          item.productId?.toString?.() ||
+          "",
+        message: `הכמות בעגלה עודכנה ל-${stock} יחידות (המלאי הזמין).`,
+      });
+    }
+
+    return {
+      id: item._id.toString(),
+      productId:
+        product._id?.toString?.() ||
+        item.productId?.toString?.() ||
+        "",
+      quantity: item.quantity,
+      unitPrice: previousPrice,
+      selected,
+      snapshot,
+      variationId: item.variationId || null,
+    };
+  });
+
+  const totalQuantity = items.reduce((sum, it) => sum + it.quantity, 0);
+
+  const subtotal = items.reduce(
+    (sum, it) =>
+      sum + (it.snapshot.priceNow ?? it.unitPrice) * it.quantity,
+    0
+  );
+
+  // כאן כבר משתמשים ב־selected אחרי שביטלנו אותם למוצרים בלי מלאי
+  const selectedSubtotal = items
+    .filter((it) => it.selected)
+    .reduce(
+      (sum, it) =>
+        sum + (it.snapshot.priceNow ?? it.unitPrice) * it.quantity,
+      0
+    );
+
+  const meta = {
+    totalQuantity,
+    subtotal,
+    selectedSubtotal,
+    updatedAt: new Date().toISOString(),
+  };
+
+  return {
+    ok: true,
+    items,
+    meta,
+    issues,
+  };
+}
+
+
+export class CartService {
+  /**
+   * מעדכן כמות בעגלה לפי מלאי זמין
+   * אם הכמות בעגלה גדולה מהמלאי - מעדכן למלאי המקסימלי
+   */
+  async syncCartQuantityWithStock(cart) {
+    if (!cart || !cart.items || cart.items.length === 0) {
+      return false; // אין מה לעדכן
+    }
+
+    let wasUpdated = false;
+
+    for (const item of cart.items) {
+      if (!item.productId) continue;
+
+      // שליפת המוצר העדכני
+      const product = await Product.findById(item.productId);
+      if (!product) continue;
+
+      // חישוב מלאי זמין
+      let availableStock = typeof product.stock === "number" ? product.stock : 0;
+
+      // אם יש וריאציה - נשתמש במלאי שלה
+      if (item.variationId && Array.isArray(product.variations)) {
+        const variationIdStr = String(item.variationId);
+        const variation = product.variations.find(
+          (v) => String(v._id) === variationIdStr
+        );
+        if (variation && typeof variation.stock === "number") {
+          availableStock = variation.stock;
         }
       }
 
-      await cart.save();
-      return await Cart.findOne({ userId }).populate(
-        "items.productId",
-        "title price images"
-      );
-    }
-
-    // --- ✨ זרימה קיימת למוצרים פשוטים ✨ ---
-    const prod = await Product.findById(productId).lean();
-    if (!prod) throw new Error("Product not found");
-
-    let unitPrice = prod.price.amount;
-
-    // ✨ בניית snapshot גם למוצר פשוט
-    const snapshot = {
-      attributes: {}, // אין וריאציות
-      images: prod.images || [],
-      image: Array.isArray(prod.images) && prod.images.length > 0 ? prod.images[0] : undefined,
-      title: prod.title,
-      brand: prod.brand,
-      shortDescription: prod.shortDescription || prod.description || "",
-      price: unitPrice,
-      discount: prod.discount || null,
-    };
-
-    if (!cart) {
-      cart = new Cart({
-        userId,
-        items: [
-          {
-            productId,
-            quantity,
-            unitPrice,
-            snapshot,
-            affiliateUser,
-            affiliateRefRaw,
-          },
-        ],
-      });
-    } else {
-      const existingItem = cart.items.find(
-        (item) => item.productId.toString() === productId.toString()
-      );
-      if (existingItem) {
-        existingItem.quantity += quantity;
-        // גם כאן – שומרים את ה-affiliate המקורי אם היה
-      } else {
-        cart.items.push({
-          productId,
-          quantity,
-          unitPrice,
-          snapshot,
-          affiliateUser,
-          affiliateRefRaw,
-        });
+      // אם הכמות בעגלה גדולה מהמלאי - נעדכן
+      if (item.quantity > availableStock && availableStock >= 0) {
+        item.quantity = Math.max(0, availableStock);
+        wasUpdated = true;
       }
     }
 
-    await cart.save();
-    return await Cart.findOne({ userId }).populate(
-      "items.productId",
-      "title price images"
-    );
+    // אם היה עדכון - נשמור
+    if (wasUpdated) {
+      await cart.save();
+    }
+
+    return wasUpdated;
   }
 
-  async removeFromCart(userId, productId) {
-    // שליפת העגלה של המשתמש
+  async getCart(userId) {
+    // שליפת העגלה (לא lean כדי שנוכל לעדכן)
+    const cart = await Cart.findOne(cartQueries.findByUserId(userId))
+      .populate("items.productId");
+
+    if (!cart) {
+      return mapCartToResponse(null);
+    }
+
+    // עדכון כמות לפי מלאי זמין
+    await this.syncCartQuantityWithStock(cart);
+
+    // המרה ל-lean אחרי העדכון
+    const cartLean = cart.toObject();
+    
+    // במקום להחזיר את המסמך כמו שהוא – ממפים ל-CartResponse
+    return mapCartToResponse(cartLean);
+  }
+
+
+async addToCart(userId, productId, quantity = 1, variationId = null) {
+  // 1) משיג את המוצר
+  const product = await Product.findById(productId).lean();
+  if (!product) {
+    throw new CustomError("המוצר לא נמצא", 404);
+  }
+
+  // 2) מחיר בזמן הוספה לסל (אחרי מבצע, לפי getCurrentPriceFromProduct)
+  const currentPrice = getCurrentPriceFromProduct(product, variationId);
+  const unitPrice = currentPrice; // זה מה שנשמר בעגלה
+
+  // 3) שליפת העגלה
+  let cart = await Cart.findOne({ userId });
+
+  // 4) אם אין עגלה → ליצור חדשה
+  if (!cart) {
+    cart = new Cart({
+      userId,
+      items: [
+        {
+          productId,
+          variationId: variationId || null,
+          quantity,
+          unitPrice,   // המחיר בזמן ההוספה, אחרי כל ההנחות
+          selected: true,
+        },
+      ],
+    });
+
+    await cart.save();
+
+    const populated = await Cart.findOne({ userId }).populate("items.productId");
+    return mapCartToResponse(populated);
+  }
+
+  // 5) אם יש עגלה – בודקים אם המוצר כבר בפנים
+  const existing = cart.items.find(
+    (it) => it.productId.toString() === productId.toString()&&
+      (it.variationId || null) === (variationId || null)
+  );
+
+  if (existing) {
+    // אם את רוצה שהמחיר הטמון בעגלה יתעדכן כשמוסיפים שוב
+    // אפשר לעדכן גם את unitPrice כאן:
+    existing.quantity = quantity;
+    existing.unitPrice = unitPrice; // אופציונלי, אבל מומלץ כדי לשקף מחיר עדכני בעת שינוי כמות
+  } else {
+    cart.items.push({
+      productId,
+      variationId: variationId || null,
+      quantity,
+      unitPrice,
+      selected: true,
+    });
+  }
+
+  // 6) שמירה
+  await cart.save();
+
+  // 7) populate למוצר + עיבוד ל CartResponse
+  const updated = await Cart.findOne({ userId }).populate("items.productId").lean();
+  return mapCartToResponse(updated);
+}
+
+
+
+  async removeFromCart(userId, productId, variationId = null) {
+    // 1) שליפת העגלה
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
     if (!cart) {
       throw new CustomError("Cart not found", 404);
     }
-    // מציאת המוצר בעגלה לפי productId
-    const item = cart.items.find(
-      (item) => item.productId.toString() === productId
-    );
-    // אם לא נמצא פריט מתאים - נחזיר את העגלה כמו שהיא
-    if (!item) {
-      return cart;
-    }
-    if (item.quantity > 1) {
-      // אם יש יותר מאחד - נוריד באחד
-      item.quantity -= 1;
-    } else {
-      // אם יש רק אחד - נסיר את הפריט מהעגלה
-      cart.items = cart.items.filter(
-        (item) => item.productId.toString() !== productId
-      );
-    }
-    // שמירה של השינויים בעגלה
-    await cart.save();
-    return cart;
-  }
 
-  async removeProductCompletely(userId, productId, variationId = null) {
-    // שליפת העגלה של המשתמש
-    const cart = await Cart.findOne(cartQueries.findByUserId(userId));
-    if (!cart) {
-      throw new CustomError("Cart not found", 404);
-    }
+    const productIdStr = productId.toString();
 
-    // סינון כל הפריטים שאינם המוצר הרצוי (כלומר - הסרה מוחלטת)
+    // 2) מציאת הפריט לפי productId
     cart.items = cart.items.filter(
-      (item) =>
+      (it) =>
         !(
-          item.productId.toString() === productId.toString() &&
-          (item.variationId?.toString() || null) ===
-            (variationId?.toString() || null)
+          it.productId.toString() === productIdStr &&
+          String(it.variationId || "") === String(variationId || "")
         )
     );
 
-    // שמירה של השינויים בעגלה
+    // 3) אם לא קיים כזה פריט – מחזירים את העגלה כמו שהיא, אבל כבר כ-CartResponse
+    if (!item) {
+      const populated = await cart.populate("items.productId");
+      return mapCartToResponse(populated).lean();
+    }
+
+    // 4) אם יש יותר מאחד – מורידים כמות
+    if (item.quantity > 1) {
+      item.quantity -= 1;
+    } else {
+      // 5) אם הכמות 1 – מסירים את הפריט לגמרי
+      cart.items = cart.items.filter(
+        (it) =>
+          !(
+            it.productId.toString() === productIdStr &&
+            String(it.variationId || "") === String(variationId || "")
+          )
+      );
+    }
+
+    // 6) שמירה
     await cart.save();
-    return await Cart.findOne({ userId }).populate(
-      "items.productId",
-      "title price images"
-    );
+
+    // 7) שליפה מחדש עם populate + מיפוי ל-CartResponse
+     const updated = await Cart.findOne(
+          cartQueries.findByUserId(userId)
+        ).populate("items.productId");
+    
+    return mapCartToResponse(updated);
+  }
+
+
+  async removeProductCompletely(userId, productId, variationId = null) {
+    // 1) שליפת העגלה של המשתמש
+    const cart = await Cart.findOne(cartQueries.findByUserId(userId));
+    if (!cart) {
+      throw new CustomError("Cart not found", 404);
+    }
+
+    const productIdStr = productId.toString();
+
+  // 2) מחיקת כל הפריטים של אותו productId (הסרה מוחלטת מהעגלה)
+    if (variationId) {
+      // מוחקים רק את הווריאציה הספציפית
+      cart.items = cart.items.filter(
+        (item) =>
+          !(
+            item.productId.toString() === productIdStr &&
+            String(item.variationId || "") === String(variationId || "")
+          )
+      );
+    } else {
+      // מוחקים את כל הווריאציות של המוצר הזה
+      cart.items = cart.items.filter(
+        (item) => item.productId.toString() !== productIdStr
+      );
+    }
+
+    // 3) שמירה של השינויים
+    await cart.save();
+
+    // 4) שליפה מחדש עם populate + החזרה כ-CartResponse
+    const updated = await Cart.findOne(cartQueries.findByUserId(userId))
+      .populate("items.productId");
+
+    return mapCartToResponse(updated);
   }
 
   async clearCart(userId) {
-    const cart = await Cart.findOne(cartQueries.findByUserId(userId));
-    if (cart) {
-      cart.items = [];
-      await cart.save();
+    // 1) שליפת העגלה
+    let cart = await Cart.findOne(cartQueries.findByUserId(userId));
+
+    // 2) אם אין עגלה בכלל – נחזיר תגובה ריקה תקינה
+    if (!cart) {
+      return mapCartToResponse(null);
     }
-    return cart;
+
+    // 3) ניקוי כל הפריטים
+    cart.items = [];
+    await cart.save();
+
+    // 4) שליפה מחדש עם populate (אין פריטים, אבל זה לשמירת אחידות)
+    const updated = await Cart.findOne(cartQueries.findByUserId(userId))
+      .populate("items.productId");
+
+    // 5) המרה ל-CartResponse
+    return mapCartToResponse(updated);
   }
+
 
   async mergeLocalCart(userId, localItems = []) {
     let cart = await Cart.findOne(cartQueries.findByUserId(userId));
 
-    // נרמול קלט
+    // 🔹 נרמול קלט מהפרונט (localStorage)
     const normalized = (Array.isArray(localItems) ? localItems : [])
       .map((it) => ({
         productId: toIdStr(it.productId),
+        variationId: it.variationId ? String(it.variationId) : null,
         quantity: Number(it.quantity ?? 1),
-        selected: Boolean(it.selected),
+        selected: it.selected === undefined ? true : Boolean(it.selected),
       }))
       .filter((it) => it.productId && it.quantity > 0);
 
-    // באצ' מחירים מראש (יעיל ומהיר)
-    const ids = [...new Set(normalized.map((it) => it.productId))];
-    const prods = await Product.find({ _id: { $in: ids } })
-      .select("price")
-      .lean();
-    const priceMap = Object.fromEntries(
-      prods.map((p) => [String(p._id), Number(p.price.amount)])
-    );
+    // אם אין בכלל מה למזג – מחזירים את העגלה כפי שהיא
+    if (normalized.length === 0) {
+      if (!cart) {
+        // אין עגלה בכלל
+        return mapCartToResponse(null);
+      }
+      const populated = await cart.populate("items.productId");
+      return mapCartToResponse(populated);
+    }
 
+    // 🔹 באצ' מחירים מהמוצרים (יעיל)
+    const ids = [...new Set(normalized.map((it) => it.productId))];
+    const prods = await Product.find({ _id: { $in: ids } }).lean();
+
+    const priceMap = Object.fromEntries(prods.map((p) => [String(p._id), p]));
+
+
+    // 🆕 אם אין עגלה – יוצרים אחת חדשה
     if (!cart) {
-      // ✅ עגלה חדשה: לבנות items עם unitPrice, לשמור ולהחזיר
       const itemsWithPrice = normalized.map((it) => {
-        const price = priceMap[it.productId];
-        if (price == null)
+        const product = productMap[it.productId];
+        if (!product) {
           throw new Error(`Product not found: ${it.productId}`);
+        }
+        const price = getCurrentPriceFromProduct(product, it.variationId);
+        if (price == null || Number.isNaN(price)) {
+          throw new Error(`Invalid price for product: ${it.productId}`);
+          // או CustomError אם תרצי
+        }
         return {
           productId: it.productId,
+          variationId: it.variationId || null,
           quantity: it.quantity,
           unitPrice: price,
-          selected: it.selected ?? false,
+          selected: it.selected ?? true,
         };
       });
 
       cart = new Cart({ userId, items: itemsWithPrice });
       await cart.save();
-      return await Cart.findOne({ userId }).populate(
-        "items.productId",
-        "title price images"
-      );
+
+      const populated = await Cart.findOne(cartQueries.findByUserId(userId))
+        .populate("items.productId");
+      return mapCartToResponse(populated);
     }
 
-    // ✅ עגלה קיימת: מיזוג פריטים + השלמת unitPrice כשצריך
+    // 🧩 מיזוג לעגלה קיימת
     for (const it of normalized) {
       const existing = cart.items.find(
-        (row) => String(row.productId) === it.productId
+        (row) =>
+          String(row.productId) === it.productId &&
+          String(row.variationId || "") === String(it.variationId || "")
       );
+
+      const price = priceMap[it.productId];
+      if (price == null || Number.isNaN(price)) {
+        throw new Error(`Product not found or invalid price: ${it.productId}`);
+      }
+
       if (existing) {
-        if (existing.unitPrice == null) {
-          const price = priceMap[it.productId];
-          if (price == null)
-            throw new Error(`Product not found: ${it.productId}`);
+        // אם אין unitPrice ישן – נשלים למחיר הנוכחי
+        if (typeof existing.unitPrice !== "number") {
           existing.unitPrice = price;
         }
+        // מגדילים כמות
         existing.quantity += it.quantity;
-        // עדכון מצב בחירה (שומר TRUE אם אחד מהם נבחר)
-        if (it.selected) existing.selected = true;
+
+        // אם בלוקאל זה מסומן → נסמן גם בעגלה
+        if (it.selected) {
+          existing.selected = true;
+        }
       } else {
-        const price = priceMap[it.productId];
-        if (price == null)
-          throw new Error(`Product not found: ${it.productId}`);
+        // מוצר חדש לגמרי לעגלה
         cart.items.push({
           productId: it.productId,
+          variationId: it.variationId || null,
           quantity: it.quantity,
           unitPrice: price,
-          selected: it.selected ?? false,
+          selected: it.selected ?? true,
         });
       }
     }
 
     await cart.save();
-    return await Cart.findOne({ userId }).populate(
-      "items.productId",
-      "title price images"
-    );
+
+    const updated = await Cart.findOne(cartQueries.findByUserId(userId))
+      .populate("items.productId");
+
+    return mapCartToResponse(updated);
   }
 
-  async updateItemQuantity(userId, productId, variationId = null, quantity) {
+
+
+
+
+  async updateItemQuantity(userId, productId, quantity, variationId = null) {
+    // נוודא שכמות היא מספר תקין
+    const q = Number(quantity);
+    if (!Number.isFinite(q)) {
+      throw new CustomError("Invalid quantity", 400);
+    }
+
     const cart = await Cart.findOne(cartQueries.findByUserId(userId));
     if (!cart) {
       throw new CustomError("Cart not found", 404);
     }
-    // מציאת פריט לפי productId + variationId (אם יש)
+
+    const productIdStr = productId.toString();
+    const variationIdStr = variationId ? String(variationId) : "";
     const item = cart.items.find(
-      (i) =>
-        i.productId.toString() === productId.toString() &&
-        (i.variationId?.toString() || null) ===
-          (variationId?.toString() || null)
+     (i) =>
+        i.productId.toString() === productIdStr &&
+        String(i.variationId || "") === variationIdStr
     );
+
     if (!item) {
       throw new CustomError("Product not found in cart", 404);
     }
-    item.quantity = quantity; // ⬅️ עדכון הכמות
-    await cart.save();
 
-    return await Cart.findOne({ userId }).populate(
-      "items.productId",
-      "title price images"
-    );
-  }
-
-  async toggleItemSelected(userId, itemId, selected) {
-    console.log("👉 מה התקבל:", itemId, selected);
-
-    const cart = await Cart.findOneAndUpdate(
-      { userId: userId, "items._id": itemId },
-      { $set: { "items.$.selected": selected } },
-      { new: true }
-    ).populate("items.productId");
-    if (!cart) {
-      throw new Error("Cart not found or item not found");
+    // אם הכמות 0 או פחות – נסיר את הפריט מהעגלה
+    if (q <= 0) {
+      cart.items = cart.items.filter(
+        (i) =>
+          !(
+            i.productId.toString() === productIdStr &&
+            String(i.variationId || "") === variationIdStr
+          )
+      );
     } else {
-      console.log("cart", cart);
+      // אחרת – נעדכן כמות
+      item.quantity = q;
     }
 
-    return cart;
+    await cart.save();
+
+    const updated = await Cart.findOne(cartQueries.findByUserId(userId))
+      .populate("items.productId").lean({ virtuals: true });
+
+    return mapCartToResponse(updated);
+  }
+
+
+  async toggleItemSelected(userId, itemId, selected) {
+    const isSelected = Boolean(selected);
+
+    // מעדכן את הפריט הספציפי לפי ה-_id של ה-item (CartItem.id בצד לקוח)
+    const cart = await Cart.findOneAndUpdate(
+      { ...cartQueries.findByUserId(userId), "items._id": itemId },
+      { $set: { "items.$.selected": isSelected } },
+      { new: true }
+    ).populate("items.productId");
+
+    if (!cart) {
+      throw new CustomError("Cart not found or item not found", 404);
+    }
+
+    return mapCartToResponse(cart);
   }
 
   async toggleSelectAll(userId, selected) {
-    const cart = await Cart.findOneAndUpdate(
-      { userId },
-      { $set: { "items.$[].selected": selected } }, // מעדכן את כולם בבת אחת
-      { new: true }
-    ).populate("items.productId");
+    const isSelected = Boolean(selected);
 
-    return cart;
+    let cart = await Cart.findOne(cartQueries.findByUserId(userId));
+
+    // אם אין עגלה – נחזיר תגובה ריקה תקינה
+    if (!cart) {
+      return mapCartToResponse(null);
+    }
+
+    // מעדכן את כל הפריטים בבת אחת
+    cart.items.forEach((item) => {
+      item.selected = isSelected;
+    });
+
+    await cart.save();
+
+    const updated = await Cart.findOne(cartQueries.findByUserId(userId))
+      .populate("items.productId");
+
+    return mapCartToResponse(updated);
   }
+
 }

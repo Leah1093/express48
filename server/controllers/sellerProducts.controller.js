@@ -34,7 +34,12 @@ function pickAllowedUpdate(body = {}) {
     "status",
     "sellerSku",
     "variations",
-    "categoryId", // זה מה שהפרונט ישלח
+    "category",
+    "categoryId", 
+    "variationsConfig",  
+    "defaultVariationId",
+    "warranty"
+
   ];
 
   const out = {};
@@ -161,6 +166,12 @@ export default class SellerProductsController {
 
       // לבן את גוף הבקשה
       const data = pickAllowedUpdate(req.body || {});
+      
+      console.log("📝 UPDATE REQUEST for product:", id);
+      console.log("📤 Raw body fields:", Object.keys(req.body || {}));
+      console.log("📋 Allowed data after filter:", Object.keys(data));
+      console.log("📌 Category value in request:", req.body?.category);
+      console.log("📌 Category value after filter:", data?.category);
 
       if (data?.discount) {
         // נרמול תאריכים (אם הגיעו כמחרוזת)
@@ -343,6 +354,42 @@ export default class SellerProductsController {
       }
 
       // כל שאר השגיאות – middleware מרכזי
+      next(err);
+    }
+  }
+
+  /**
+   * Validate SKU uniqueness
+   * POST /seller/validate-sku
+   */
+  async validateSku(req, res, next) {
+    try {
+      const storeId = req.auth?.storeId || null;
+      const { sku, excludeProductId } = req.body || {};
+
+      if (!sku || !storeId) {
+        return res.status(400).json({ error: "Missing sku or storeId" });
+      }
+
+      try {
+        // This will throw CustomError if SKU is not unique
+        await service.assertSkuUnique(
+          sku,
+          storeId,
+          null, // excludeVariationId
+          excludeProductId || null // excludeProductId
+        );
+
+        // If no error thrown, SKU is unique
+        return res.json({ isUnique: true });
+      } catch (err) {
+        if (err?.message?.includes("already exists")) {
+          return res.json({ isUnique: false });
+        }
+        throw err;
+      }
+    } catch (err) {
+      console.error("validateSku error:", err);
       next(err);
     }
   }

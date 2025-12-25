@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import Category from "../models/category.js";
 import { CustomError } from "../utils/CustomError.js";
-import { Product } from "../models/product.js";
+import { Product } from "../models/Product.js";
 
 function isValidObjectId(id) {
   return typeof id === "string" && mongoose.Types.ObjectId.isValid(id);

@@ -1,9 +1,8 @@
-import { Product } from "../models/product.js";
+import { Product } from "../models/Product.js";
 import { CustomError } from "../utils/CustomError.js";
 
 import { SearchLog } from "../models/SearchLog.js";
 import CategoryModel, { Category } from "../models/category.js"; // לפי הנתיב שלך
-
 
 // פונקציית עזר
 function isNewProduct(publishedAt) {
@@ -13,7 +12,7 @@ function isNewProduct(publishedAt) {
 }
 
 class ProductService {
-  async listNewProducts(limit = 12) {
+  async listNewProducts(limit = 24) {
     if (typeof limit !== "number" || limit <= 0) {
       throw new CustomError("Limit must be a positive number", 400);
     }
@@ -24,20 +23,23 @@ class ProductService {
     try {
       const query = {
         status: "published",
-        publishedAt: { $gte: twelveDaysAgo }
+        publishedAt: { $gte: twelveDaysAgo },
       };
 
       const products = await Product.find(query)
         .sort({ publishedAt: -1 })
         .limit(limit)
-        .select("title images price currency slug _id storeId discount publishedAt")
+        .select(
+          "title images price currency slug _id storeId discount publishedAt variations variationsConfig"
+        )
         .lean({ virtuals: true });
 
       return products.map((p) => {
-
         const { finalAmount, baseAmount, savedAmount, hasDiscount } =
           Product.hydrate(p).getEffectivePricing();
-
+        const hasVariations = !!(
+          p.variationsConfig?.attributes?.length && p.variations?.length
+        );
         return {
           _id: p._id,
           title: p.title,
@@ -49,66 +51,147 @@ class ProductService {
           discountValue: hasDiscount ? savedAmount : 0,
           hasDiscount,
 
-          isNew: p.publishedAt ? isNewProduct(p.publishedAt) : false
+          isNew: p.publishedAt ? isNewProduct(p.publishedAt) : false,
+          // 👇 חדש:
+          hasVariations,
+          variationsConfig: p.variationsConfig,
+          variations: p.variations,
         };
       });
     } catch (err) {
-      throw new CustomError(err.message || "Error listing new products", err.status || 500);
+      throw new CustomError(
+        err.message || "Error listing new products",
+        err.status || 500
+      );
     }
   }
 
-  getAllProductsService = async () => {
-    try {
-      const products = await Product.find({}).populate("storeId");
-      if (!products) throw new CustomError("No products found", 404);
-      return products;
-    } catch (err) {
-      throw new CustomError(err.message || "Error fetching products", err.status || 500);
-    }
-  };
+  async getByFullSlugService({ fullSlug, page = 1, limit = 24, sort }) {
+    const p = Math.max(1, Number(page) || 1);
+    const l = Math.min(100, Math.max(1, Number(limit) || 24));
+    const skip = (p - 1) * l;
+
+    const base = String(fullSlug || "").trim();
+    const escaped = base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const filter = {
+      isDeleted: false,
+      status: "published",
+      $or: [
+        { categoryFullSlug: base },
+        { categoryFullSlug: { $regex: `^${escaped}/` } },
+      ],
+    };
+
+    const sortStage = sort || { updatedAt: -1 };
+
+    const [items, total] = await Promise.all([
+      Product.find(filter)
+        .sort(sortStage)
+        .skip(skip)
+        .limit(l)
+        .select({
+          _id: 1,
+          slug: 1,
+          title: 1,
+          storeId: 1,
+          images: 1,
+          currency: 1,
+          price: 1,
+          discount: 1,
+          description: 1,
+          variations: 1,
+          variationsConfig: 1,
+        })
+        .populate("storeId", "slug") // נקבל storeId.slug
+        .lean(),
+      Product.countDocuments(filter),
+    ]);
+
+    const pages = Math.ceil(total / l) || 1;
+
+    return {
+      items,
+      meta: {
+        page: p,
+        pages,
+        total,
+        limit: l,
+      },
+    };
+  }
 
   async getProductBySlugService(slug) {
-    return Product.findOne({ slug, isDeleted: false, status: "published" }).lean();
+    return Product.findOne({
+      slug,
+      isDeleted: false,
+      status: "published",
+    }).lean();
   }
 
-async getByFullSlugService({ fullSlug, page = 1, limit = 24, sort }) {
-  const p = Math.max(1, Number(page) || 1);
-  const l = Math.min(100, Math.max(1, Number(limit) || 24));
-  const skip = (p - 1) * l;
+  // services/product.service.js
 
-  const base = String(fullSlug || "").trim();
-  const escaped = base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // בריחה לרג׳קס
-  const filter = {
-    isDeleted: false,
-    status: "published",
-    $or: [
-      { categoryFullSlug: base },
-      { categoryFullSlug: { $regex: `^${escaped}/` } }, // כל תתי־הענפים
-    ],
+  getAllProductsService = async ({ page = 1, limit = 24, sort } = {}) => {
+    try {
+      const p = Math.max(1, Number(page) || 1);
+      const l = Math.min(100, Math.max(1, Number(limit) || 24));
+      const skip = (p - 1) * l;
+
+      const filter = {
+        isDeleted: false,
+        status: "published",
+      };
+
+      const sortStage = sort || { updatedAt: -1 };
+
+      const [items, total] = await Promise.all([
+        Product.find(filter)
+          .sort(sortStage)
+          .skip(skip)
+          .limit(l)
+          .select({
+            _id: 1,
+            slug: 1,
+            title: 1,
+            storeId: 1,
+            images: 1,
+            currency: 1,
+            price: 1,
+            discount: 1,
+            description: 1,
+            stock: 1,
+            inStock: 1,
+            brand:1,
+            defaultVariationId: 1,
+            variations: 1,
+            variationsConfig: 1,
+
+          })
+          .populate("storeId", "slug") // נקבל storeId.slug
+          .lean(),
+        Product.countDocuments(filter),
+      ]);
+
+      const pages = Math.ceil(total / l) || 1;
+      return {
+        items,
+        meta: {
+          page: p,
+          pages,
+          total,
+          limit: l,
+        },
+      };
+    } catch (err) {
+      console.error("[getAllProductsService] error:", err);
+      throw err instanceof CustomError
+        ? err
+        : new CustomError(
+            err.message || "Error fetching products",
+            err.status || 500
+          );
+    }
   };
-
-  const sortStage = sort || { updatedAt: -1 };
-
-  const [items, total] = await Promise.all([
-    Product.find(filter)
-      .sort(sortStage)
-      .skip(skip)
-      .limit(l)
-      .select({ description: 0 })
-      .lean(),
-    Product.countDocuments(filter),
-  ]);
-
-  return {
-    items,
-    page: p,
-    limit: l,
-    total,
-    hasMore: skip + items.length < total,
-  };
-}
-
-
 
   searchProductsService = async ({ search, page = 1, limit = 20 }) => {
     const p = Math.max(1, Number(page) || 1);
@@ -119,14 +202,14 @@ async getByFullSlugService({ fullSlug, page = 1, limit = 24, sort }) {
     if (search && search.trim()) {
       const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const normalizeHebrew = (str = "") => {
-        const FINAL_MAP = { "ך": "כ", "ם": "מ", "ן": "נ", "ף": "פ", "ץ": "צ" };
+        const FINAL_MAP = { ך: "כ", ם: "מ", ן: "נ", ף: "פ", ץ: "צ" };
         let s = String(str)
           .replace(/[\u0591-\u05C7]/g, "")
           .replace(/[\u05F3\u05F4'"]/g, "")
           .replace(/[^\u0590-\u05FF0-9A-Za-z\s-]/g, " ")
           .replace(/\s+/g, " ")
           .trim();
-        s = s.replace(/[ךםןףץ]/g, ch => FINAL_MAP[ch] || ch);
+        s = s.replace(/[ךםןףץ]/g, (ch) => FINAL_MAP[ch] || ch);
         return s.toLowerCase();
       };
       const q = escapeRegex(search.trim());
@@ -149,7 +232,6 @@ async getByFullSlugService({ fullSlug, page = 1, limit = 24, sort }) {
     }
 
     try {
-
       if (search && search.trim()) {
         await SearchLog.findOneAndUpdate(
           { term: search.trim().toLowerCase() },
@@ -164,9 +246,18 @@ async getByFullSlugService({ fullSlug, page = 1, limit = 24, sort }) {
         .populate("storeId");
 
       const total = await Product.countDocuments(match);
-      return { items: products, page: p, limit: l, total, hasNextPage: skip + products.length < total };
+      return {
+        items: products,
+        page: p,
+        limit: l,
+        total,
+        hasNextPage: skip + products.length < total,
+      };
     } catch (err) {
-      throw new CustomError(err.message || "Error searching products", err.status || 500);
+      throw new CustomError(
+        err.message || "Error searching products",
+        err.status || 500
+      );
     }
   };
 
@@ -179,10 +270,12 @@ async getByFullSlugService({ fullSlug, page = 1, limit = 24, sort }) {
 
       return terms;
     } catch (err) {
-      throw new CustomError(err.message || "Error fetching popular searches", err.status || 500);
+      throw new CustomError(
+        err.message || "Error fetching popular searches",
+        err.status || 500
+      );
     }
   };
-
 }
 
 export const productService = new ProductService();

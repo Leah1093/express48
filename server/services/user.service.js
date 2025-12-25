@@ -11,5 +11,12 @@ export class UserService {
         return user;
     }
 
+     // 🔹 לקוחות רגילים (role: "user")
+    async listCustomers() {
+        const users = await User.find({ role: 'user' })
+            .select('_id email username phone role'); // רק השדות שצריך לפרונט
+        return users;
+    }
+
    
 }

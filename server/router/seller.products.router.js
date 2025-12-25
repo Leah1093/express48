@@ -55,5 +55,13 @@ sellerProductsRouter.patch(
   sellerProductsController.updateStatus
 );
 
+// Validation endpoints
+sellerProductsRouter.post(
+  "/validate-sku",
+  authMiddleware,
+  requireRoles("seller", "admin"),
+  sellerProductsController.validateSku
+);
+
 
 export { sellerProductsRouter };

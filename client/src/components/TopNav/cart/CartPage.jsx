@@ -15,7 +15,6 @@ export default function CartPage() {
   const user = useSelector((state) => state.user.user);
   const rawItems = useSelector(selectCartItems);
   const navigate = useNavigate();
-  console.log("rawItems מה־redux:", rawItems);
 
   const dispatch = useDispatch();
 

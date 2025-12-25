@@ -1,8 +1,9 @@
 import crypto from "crypto";
 import mongoose from "mongoose";
 import { CustomError } from "../utils/CustomError.js";
-import { Product } from "../models/product.js";
+import { Product } from "../models/Product.js";
 import { Category } from "../models/category.js";
+import { generateTermId, generateVariationSku, getVariationSignature } from "../utils/variations.js";
 
 // ---------- helpers ----------
 const sortMap = {
@@ -91,6 +92,8 @@ function parseDeletedFlag(flag = "active") {
   const f = String(flag).toLowerCase();
   return ["active", "deleted", "all"].includes(f) ? f : "active";
 }
+
+// Variation helpers are now imported from ../utils/variations.js
 
 // ---------- service ----------
 export class SellerProductsService {
@@ -295,6 +298,26 @@ export class SellerProductsService {
     let payload = { ...rest };
     let patch = { ...rest };
 
+    // Check if main product SKU is being changed
+    if (rest.sku && rest.sku !== doc.sku) {
+      await this.assertSkuUnique(rest.sku, doc.storeId, null, doc._id);
+    }
+
+    // ========== NEW: VARIATIONS CONFIG & SYNC ==========
+    if (rest.variationsConfig || rest.variations) {
+      const processed = await this.processVariationsData({
+        variationsConfig: rest.variationsConfig,
+        variations: rest.variations,
+        existingProduct: doc,
+        baseSku: rest.sku || doc.sku,
+        storeId: doc.storeId,
+      });
+
+      patch.variationsConfig = processed.variationsConfig;
+      patch.variations = processed.variations;
+    }
+    // ================================================
+
     // אם שולחים categoryId חדש, נעדכן ממנו את כל שדות הקטגוריה
     if (categoryId) {
       const merged = {
@@ -334,6 +357,21 @@ export class SellerProductsService {
         createdBy: actor?.id,
         updatedBy: actor?.id,
       };
+
+      // ========== NEW: VARIATIONS CONFIG & SYNC ==========
+      if (payload.variationsConfig || payload.variations) {
+        const processed = await this.processVariationsData({
+          variationsConfig: payload.variationsConfig,
+          variations: payload.variations,
+          existingProduct: {},
+          baseSku: payload.sku,
+          storeId: payload.storeId,
+        });
+
+        payload.variationsConfig = processed.variationsConfig;
+        payload.variations = processed.variations;
+      }
+      // ================================================
 
       if (categoryId) {
         payload = await this.applyCategoryToProductPayload(payload, categoryId);
@@ -482,6 +520,213 @@ export class SellerProductsService {
       })),
     };
   }
+
+  // ========== VARIATIONS METHODS ==========
+
+  /**
+   * Check SKU uniqueness within store
+   */
+  async assertSkuUnique(sku, storeId, excludeVariationId = null, excludeProductId = null) {
+    if (!sku || !storeId) return;
+
+    const query = {
+      storeId: new mongoose.Types.ObjectId(String(storeId)),
+      isDeleted: false,
+      $or: [{ sku: sku }, { "variations.sku": sku }],
+    };
+
+    // Exclude the current product being updated
+    if (excludeProductId) {
+      query._id = { $ne: new mongoose.Types.ObjectId(String(excludeProductId)) };
+    }
+
+    const existing = await Product.findOne(query);
+    if (existing) {
+      // Check if it's the current variation being updated
+      if (excludeVariationId) {
+        const isCurrentVariation = existing.variations?.some(
+          (v) =>
+            v._id?.toString() === excludeVariationId && v.sku === sku
+        );
+        if (isCurrentVariation) return;
+      }
+      throw new CustomError(`SKU "${sku}" already exists in this store`, 409);
+    }
+  }
+
+  /**
+   * Ensure variationsConfig structure is valid
+   */
+  syncVariationsConfig(config) {
+    if (!config) return { priceRule: "base", attributes: [] };
+
+    const attributes = (config.attributes || []).map((attr) => ({
+      name: attr.name || "",
+      displayName: attr.displayName || attr.name || "",
+      terms: (attr.terms || []).map((term) => ({
+        id: term.id || generateTermId(),
+        label: term.label || "",
+        priceType:
+          ["none", "addon", "override"].includes(term.priceType) ?
+          term.priceType :
+          "none",
+        price: term.price ?? null,
+        images: Array.isArray(term.images) ? term.images : [],
+      })),
+    }));
+
+    return {
+      priceRule: config.priceRule || "base",
+      attributes,
+    };
+  }
+
+  /**
+   * Apply term pricing/images to variation if matching
+   */
+  applyConfigPricingToVariation({ variationData, config }) {
+    const variation = { ...variationData };
+
+    // Find matching terms and apply overrides
+    for (const attr of config.attributes || []) {
+      const varAttrValue = variation.attributes?.[attr.name];
+
+      const matchingTerm = attr.terms?.find((t) => t.label === varAttrValue);
+
+      if (matchingTerm) {
+        // 1. Apply price override if set
+        if (
+          matchingTerm.priceType === "override" &&
+          typeof matchingTerm.price === "number"
+        ) {
+          variation.price = {
+            amount: matchingTerm.price,
+          };
+        }
+
+        // 2. Merge images from term (don't overwrite)
+        if (matchingTerm.images?.length > 0) {
+          const existing = new Set(variation.images || []);
+          matchingTerm.images.forEach((img) => existing.add(img));
+          variation.images = Array.from(existing);
+        }
+      }
+    }
+
+    return variation;
+  }
+
+  /**
+   * Main processor: sync variations config & auto-update variations
+   */
+  async processVariationsData({
+    variationsConfig,
+    variations,
+    existingProduct,
+    baseSku,
+    storeId,
+  }) {
+    // 1. Sync variationsConfig structure
+    let syncedConfig = this.syncVariationsConfig(variationsConfig);
+
+    // 2. Get valid attribute names from config
+    let validAttrNames = new Set(
+      (syncedConfig.attributes || []).map((attr) => attr.name)
+    );
+
+    // 3. Discover any attributes in variations that aren't in config (new types added in edit)
+    if (variations && Array.isArray(variations)) {
+      for (const varData of variations) {
+        const varAttrs = varData.attributes || {};
+        for (const attrName of Object.keys(varAttrs)) {
+          if (!validAttrNames.has(attrName)) {
+            console.log(`Adding new variation attribute to config: ${attrName}`);
+            syncedConfig.attributes.push({
+              name: attrName,
+              displayName: attrName,
+              terms: [],
+            });
+            validAttrNames.add(attrName);
+          }
+        }
+      }
+    }
+
+    // 4. Process variations array
+    const processedVariations = [];
+    const usedSignatures = new Set();
+
+    if (variations && Array.isArray(variations)) {
+      for (const varData of variations) {
+        // 4a. Clean orphaned attributes (not in config)
+        const cleanedAttrs = {};
+        const originalAttrs = varData.attributes || {};
+
+        for (const [attrName, attrValue] of Object.entries(originalAttrs)) {
+          if (validAttrNames.has(attrName)) {
+            cleanedAttrs[attrName] = attrValue;
+          } else {
+            console.warn(
+              `Removed orphaned variation attribute: ${attrName}="${attrValue}" ` +
+              `(not found in config)`
+            );
+          }
+        }
+
+        // 4b. Skip empty variations (all attributes were orphaned)
+        if (Object.keys(cleanedAttrs).length === 0) {
+          console.warn(
+            `Skipping variation with no valid attributes - variation ID: ${varData._id}`
+          );
+          continue; // Skip this variation
+        }
+
+        // 4c. Check for duplicates
+        const signature = getVariationSignature(cleanedAttrs);
+
+        if (usedSignatures.has(signature)) {
+          console.warn(`Duplicate variation signature ignored: ${signature}`);
+          continue; // Skip duplicate
+        }
+
+        usedSignatures.add(signature);
+
+        // Update varData with cleaned attributes for further processing
+        varData.attributes = cleanedAttrs;
+
+        // 4d. Handle SKU
+        let sku = varData.sku;
+
+        if (!sku || sku.trim() === "") {
+          // Auto-generate if empty
+          sku = generateVariationSku(baseSku, varData.attributes || {});
+        }
+
+        // 4e. Check uniqueness (only for new or modified SKUs)
+        const existingVar = existingProduct?.variations?.find(
+          (v) => v._id?.toString() === varData._id
+        );
+
+        if (!existingVar || existingVar.sku !== sku) {
+          await this.assertSkuUnique(sku, storeId, varData._id, existingProduct?._id);
+        }
+
+        // 4f. Apply pricing from config to variation
+        const processed = this.applyConfigPricingToVariation({
+          variationData: varData,
+          config: syncedConfig,
+        });
+
+        processed.sku = sku;
+        processedVariations.push(processed);
+      }
+    }
+
+    return {
+      variationsConfig: syncedConfig,
+      variations: processedVariations,
+    };
+  }
 }
 
 // ---------- test hooks ----------
@@ -498,4 +743,7 @@ export const __testables = {
   toDate,
   parseDeletedFlag,
   assertObjectId,
+  getVariationSignature,
+  generateVariationSku,
+  generateTermId,
 };

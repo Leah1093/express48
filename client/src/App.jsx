@@ -78,12 +78,14 @@ import PolicySecurity from "./components/account/PolicySecurity.jsx";
 import CustomerService from "./components/account/CustomerService.jsx";
 import ManageRootCategories from "./components/Categories/ManageRootCategories.jsx";
 import SellerOrdersPanel from "./components/seller/orders/components/SellerOrdersPanel.js";
+import { SellerCouponsPage } from "./components/seller/coupons/components/SellerCouponsPage.js";
 
 // זרימת תשלום לדוגמה (Altcha / Mock)
 import Checkout from "./components/payments/pages/Checkout";
 import ThankYou from "./components/payments/pages/ThankYou";
 import Cancelled from "./components/payments/pages/Cancelled";
 import MockPay from "./components/payments/pages/MockPay";
+import { SellerReportsPage } from "./components/seller/reports/components/SellerReportsPage.js";
 
 // ⭐ חדש: ייבוא פונקציה ששומרת את ה-ref מה-URL
 import { saveReferralFromUrl } from "./lib/affiliateRef";
@@ -204,7 +206,7 @@ function App() {
           <Route path="/faq" element={<Faq />} />
           <Route path="/bestSellers" element={<BestSellers />} />
           <Route path="/careers" element={<Careers />} />
-          <Route path="/coupons" element={<Coupons />} />
+          <Route path="/coupons" element={<SellerCouponsPage />} />
           <Route path="/guides" element={<Guides />} />
           <Route path="/support" element={<Support />} />
           <Route path="/marketplace" element={<MarketplaceInfo />} />
@@ -264,8 +266,8 @@ function App() {
             </Route>
             <Route path="orders" element={<SellerOrdersPanel />} />
             <Route path="reviews" element={<Reviews />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="coupons" element={<CouponForm />} />
+            <Route path="reports" element={<SellerReportsPage />} />
+            <Route path="coupons" element={<SellerCouponsPage />} />
           </Route>
 
           {/* זרימת תשלום לדוגמה */}

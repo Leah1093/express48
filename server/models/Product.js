@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { Counter } from "./counter.js"; 
+import { Counter } from "./counter.js";
 import { getAllowedVariationKeysForCategory } from "../config/variationAttributes.js";
 
 function slugifyEn(str = "") {
@@ -26,8 +26,8 @@ function toMaxLen(s, n) {
 const FINAL_MAP = { "ך": "כ", "ם": "מ", "ן": "נ", "ף": "פ", "ץ": "צ" };
 function normalizeHebrew(str = "") {
   let s = String(str)
-    .replace(/[\u0591-\u05C7]/g, "")  
-    .replace(/[\u05F3\u05F4'"]/g, "") 
+    .replace(/[\u0591-\u05C7]/g, "")
+    .replace(/[\u05F3\u05F4'"]/g, "")
     .replace(/[^\u0590-\u05FF0-9A-Za-z\s-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -104,6 +104,29 @@ const OverviewBlockSchema = new mongoose.Schema(
   },
   { _id: true, timestamps: false }
 );
+const VariationTermSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },          // ה־id שאת מייצרת ב־crypto.randomUUID
+    label: { type: String, required: true },       // "ורוד" / "L" / "256GB"
+    priceType: {
+      type: String,
+      enum: ["none", "addon", "override"],
+      default: "none",
+    },
+    price: { type: Number },                       // תוספת / מחיר סופי (אופציונלי)
+    images: { type: [String], default: [] },       // 👈 כאן התמונות למונח
+  },
+  { _id: false } // אין צורך ב-_id נוסף, יש לך id משלך
+);
+const VariationAttributeSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },        // slug: "color" / "size" / "storage"
+    displayName: { type: String, required: true }, // "צבע" / "מידה"...
+    terms: { type: [VariationTermSchema], default: [] },
+  },
+  { _id: false }
+);
+
 
 
 const DiscountSchema = new mongoose.Schema({
@@ -126,7 +149,7 @@ const PriceSchema = new mongoose.Schema({
 
 const gtinValidator = (v) => {
   if (!v) return true;
-  return /^[0-9]{8,14}$/.test(v); 
+  return /^[0-9]{8,14}$/.test(v);
 };
 
 const variationSchema = new mongoose.Schema({
@@ -140,6 +163,9 @@ const variationSchema = new mongoose.Schema({
   stock: { type: Number, default: 0 },
   inStock: { type: Boolean, default: false },
   images: { type: [String], default: [] },
+  active: { type: Boolean, default: true },      // האם הווריאציה פעילה למכירה
+  _calculatedPrice: { type: Number },            // המחיר שחושב לפי הכללים
+  _manualOverride: { type: Number },             // מחיר ידני אם דרסת את המחושב
 });
 
 const productSchema = new mongoose.Schema({
@@ -166,7 +192,7 @@ const productSchema = new mongoose.Schema({
     text: { type: String, default: "" },
     images: { type: [String], default: [] },
     videos: { type: [String], default: [] },
-     blocks: { type: [OverviewBlockSchema], default: [] },
+    blocks: { type: [OverviewBlockSchema], default: [] },
   },
 
   gtin: { type: String, index: true, sparse: true, validate: [gtinValidator, "GTIN לא חוקי"] },
@@ -178,12 +204,15 @@ const productSchema = new mongoose.Schema({
   currency: { type: String, default: "ILS" },
   price: { type: PriceSchema, required: true },
   discount: { type: DiscountSchema, required: false },
-
+  variationsConfig: {
+    priceRule: { type: String, default: "base" },  // או מה שבחרת אצלך (לוגיקה בפרונט)
+    attributes: { type: [VariationAttributeSchema], default: [] },
+  },
   defaultVariationId: {
     type: mongoose.Schema.Types.ObjectId,
-    required: false, 
+    required: false,
   },
- 
+
   variations: [variationSchema],
 
   stock: { type: Number, default: 0 },
@@ -231,6 +260,7 @@ const productSchema = new mongoose.Schema({
     requiresDelivery: { type: Boolean, default: false },
     cost: { type: Number, default: 0 },
     notes: { type: String, default: "" },
+    timeDays: { type: Number, default: 2, min: 0 },
   },
 
   isDeleted: { type: Boolean, default: false, index: true },
@@ -248,7 +278,7 @@ const productSchema = new mongoose.Schema({
   },
 
   wishlistCount: { type: Number, default: 0, min: 0 },
-    _importSkipPriceValidation: { type: Boolean, default: false, select: false },
+  _importSkipPriceValidation: { type: Boolean, default: false, select: false },
   lastPurchasedAt: { type: Date },
 
   legacyPrice: { type: Number },
@@ -257,7 +287,7 @@ const productSchema = new mongoose.Schema({
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
-    // --- קישור מלא לעץ קטגוריות ---
+  // --- קישור מלא לעץ קטגוריות ---
   primaryCategoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
   categoryPathIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
   categoryFullSlug: { type: String, index: true }, // <<<< חשוב בשביל /by-category
@@ -272,9 +302,11 @@ const productSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
-productSchema.index({ storeId: 1, sku: 1 },  { unique: true, sparse: true });
+productSchema.index({ storeId: 1, sku: 1 }, { unique: true, sparse: true });
 productSchema.index({ storeId: 1, slug: 1 }, { unique: true, sparse: true });
 productSchema.index({ storeId: 1, gtin: 1 }, { unique: true, sparse: true });
+// CRITICAL: Unique index for variation SKUs to prevent race conditions
+productSchema.index({ storeId: 1, "variations.sku": 1 }, { unique: true, sparse: true });
 
 productSchema.index({ title: "text", brand: "text", model: "text", description: "text" });
 
@@ -291,7 +323,19 @@ productSchema.index({ primaryCategoryId: 1 });
 productSchema.index({ categoryPathIds: 1 });
 productSchema.index({ categoryFullSlug: 1 }); // לשאילתת by-category
 
+productSchema.pre("validate", function (next) {
+  // אם יש וריאציות ואין עדיין ברירת מחדל – נקח את הראשונה
+  if (Array.isArray(this.variations) && this.variations.length > 0) {
+    if (!this.defaultVariationId) {
+      this.defaultVariationId = this.variations[0]._id;
+    }
+  } else {
+    // אם אין וריאציות – ודא שלא נשאר defaultVariationId ישן
+    this.defaultVariationId = undefined;
+  }
 
+  next();
+});
 productSchema.pre("save", function (next) {
   if (Array.isArray(this.variations) && this.variations.length > 0) {
     this.stock = this.variations.reduce((sum, v) => sum + (v.stock || 0), 0);
@@ -339,6 +383,20 @@ productSchema.pre("validate", function (next) {
   if (this.scheduledAt && this.visibleUntil && this.visibleUntil < this.scheduledAt) {
     return next(new Error("visibleUntil must be after scheduledAt"));
   }
+  next();
+});
+
+productSchema.pre("validate", function (next) {
+  // אם יש וריאציות ואין עדיין ברירת מחדל – נקח את הראשונה
+  if (Array.isArray(this.variations) && this.variations.length > 0) {
+    if (!this.defaultVariationId) {
+      this.defaultVariationId = this.variations[0]._id;
+    }
+  } else {
+    // אם אין וריאציות – ודא שלא נשאר defaultVariationId ישן
+    this.defaultVariationId = undefined;
+  }
+
   next();
 });
 
