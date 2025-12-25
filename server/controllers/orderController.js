@@ -14,6 +14,11 @@ export class OrderController {
 console.log("userId",userId)
 console.log("req.body",req.body)
 console.log("orderPayload",orderPayload)
+      // לוג זמני - הדפסת req.body בתחילת יצירת הזמנה
+      console.log("[ORDER CONTROLLER] req.body", JSON.stringify(req.body, null, 2));
+      // לוג זמני - הדפסת כל גוף הבקשה שמתקבל בשרת
+      console.log("[ORDER CONTROLLER] req.body", JSON.stringify(req.body, null, 2));
+      
       const order = await orderService.createOrder(userId, orderPayload);
       
       // קופונים רק למשתמשים מחוברים
